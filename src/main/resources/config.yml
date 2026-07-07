@@ -1,0 +1,325 @@
+# =======================================================
+#                    TeamsPlugin Config
+#      Every setting the plugin uses lives in here.
+# =======================================================
+
+general:
+  # Prefix used in all plugin chat messages
+  prefix: "&8[&bTeams&8] &r"
+  # Language file to use from /lang folder (en.yml, fr.yml, etc)
+  language: "en"
+  # Enable debug logging to console
+  debug: false
+  # Save data every X minutes (auto-save)
+  autosave-interval-minutes: 5
+
+team-creation:
+  # Minimum / maximum characters for a team name
+  min-name-length: 3
+  max-name-length: 16
+  # Minimum / maximum characters for a team tag (shown in chat/tab)
+  min-tag-length: 2
+  max-tag-length: 5
+  # Allow color codes in team names
+  allow-color-codes: true
+  # Regex whitelist pattern for team names
+  name-regex: "^[a-zA-Z0-9_]+$"
+  # Cost to create a team (requires Vault economy, ignored if 0)
+  creation-cost: 0.0
+  # Cooldown in seconds before a player can create another team after leaving one
+  creation-cooldown-seconds: 300
+  # Block duplicate/case-insensitive team names
+  block-duplicate-names: true
+
+team-limits:
+  # Maximum members per team (0 = unlimited)
+  max-members: 20
+  # Maximum number of team homes that can be set
+  max-homes: 1
+  # Maximum allies a team can have
+  max-allies: 5
+  # Maximum enemies a team can declare
+  max-enemies: 10
+  # Maximum length of the team description/MOTD
+  max-description-length: 100
+  # Maximum team level (used with the leveling/perks system below)
+  max-level: 50
+
+roles:
+  # Role hierarchy from lowest to highest. Feel free to rename.
+  hierarchy:
+    - "MEMBER"
+    - "MODERATOR"
+    - "CO_LEADER"
+    - "LEADER"
+  # Permissions per role
+  permissions:
+    MEMBER:
+      can-invite: false
+      can-kick: false
+      can-set-home: false
+      can-edit-description: false
+      can-manage-relations: false
+      can-promote: false
+      can-access-bank: false
+      can-withdraw-bank: false
+    MODERATOR:
+      can-invite: true
+      can-kick: false
+      can-set-home: false
+      can-edit-description: false
+      can-manage-relations: false
+      can-promote: false
+      can-access-bank: true
+      can-withdraw-bank: false
+    CO_LEADER:
+      can-invite: true
+      can-kick: true
+      can-set-home: true
+      can-edit-description: true
+      can-manage-relations: true
+      can-promote: false
+      can-access-bank: true
+      can-withdraw-bank: true
+    LEADER:
+      can-invite: true
+      can-kick: true
+      can-set-home: true
+      can-edit-description: true
+      can-manage-relations: true
+      can-promote: true
+      can-access-bank: true
+      can-withdraw-bank: true
+
+invites:
+  # How long an invite stays valid before expiring (seconds)
+  expire-seconds: 60
+  # Require confirmation click in GUI instead of just chat command
+  require-gui-confirmation: true
+  # Allow players to invite offline players (invite queued until they join)
+  allow-offline-invites: true
+
+home:
+  # Teleport delay in seconds before /team home teleports (0 = instant)
+  teleport-delay-seconds: 3
+  # Cancel teleport if the player moves during the delay
+  cancel-on-move: true
+  # Cooldown between uses of /team home in seconds
+  cooldown-seconds: 30
+  # Cost of teleporting home (Vault economy, 0 = free)
+  teleport-cost: 0.0
+
+chat:
+  # Enable team-only chat channel toggle (/team chat)
+  enable-team-chat: true
+  # Format for team chat messages
+  team-chat-format: "&8[&bTeam&8] &7{role} &f{player}&8: &f{message}"
+  # Format for team announcements (leader broadcasts)
+  announcement-format: "&8[&6Announce&8] &e{team}&8: &f{message}"
+  # Show a tag prefix like [TAG] before player names in global chat
+  show-tag-in-global-chat: true
+  global-chat-tag-format: "&7[&b{tag}&7] &f{player}&8: &f{message}"
+
+relations:
+  # Enable alliance system
+  enable-allies: true
+  # Enable enemy/rivalry declarations
+  enable-enemies: true
+  # Require both teams to accept an alliance request
+  mutual-alliance-required: true
+  # Friendly fire settings
+  friendly-fire:
+    within-team: false
+    between-allies: false
+    between-enemies: true
+    neutral-default: true
+
+territory:
+  # Enable claiming land for teams (grid/chunk based)
+  enable-claims: true
+  # Max claimed chunks per team (0 = unlimited)
+  max-claims: 25
+  # Cost per chunk claim (Vault economy)
+  claim-cost-per-chunk: 0.0
+  # Require claims to be contiguous (touching existing claims)
+  require-contiguous-claims: true
+  # Buffer distance in chunks required between two different teams' territory
+  claim-buffer-chunks: 1
+  # Allow non-members to build in claimed territory
+  allow-outsider-build: false
+  # Allow non-members to open containers/interact in claimed territory
+  allow-outsider-interact: false
+  # Protect claimed territory from explosions (creeper/tnt/etc)
+  protect-from-explosions: true
+  # Worlds where claiming is disabled entirely
+  disabled-worlds:
+    - "world_the_end"
+
+bank:
+  # Enable a shared team bank (requires Vault)
+  enable-team-bank: true
+  # Starting balance for new teams
+  starting-balance: 0.0
+  # Maximum balance a team bank can hold (0 = unlimited)
+  max-balance: 1000000.0
+  # Tax percentage taken on deposits (0 = none)
+  deposit-tax-percent: 0.0
+
+leveling:
+  # Enable team leveling / XP system
+  enable-leveling: true
+  # XP required for level 2 (scales upward using the multiplier below)
+  base-xp-required: 1000
+  # Multiplier applied per level (exponential growth)
+  xp-multiplier: 1.35
+  # XP granted for various actions
+  xp-sources:
+    mob-kill: 5
+    player-kill: 25
+    claim-chunk: 10
+    playtime-per-hour: 15
+  # Perks unlocked at certain levels (purely config-driven, read by plugin)
+  perks:
+    5:
+      extra-claims: 5
+      extra-homes: 0
+    10:
+      extra-claims: 10
+      extra-homes: 1
+    25:
+      extra-claims: 20
+      extra-homes: 1
+    50:
+      extra-claims: 50
+      extra-homes: 2
+
+pvp:
+  # Enable team-based PvP tracking (kills/deaths between teams)
+  track-team-pvp-stats: true
+  # Grace period after joining a team where a player can't be attacked (seconds)
+  join-invulnerability-seconds: 10
+  # Enable team elimination war-mode events
+  enable-war-mode: false
+
+disband:
+  # Require confirmation (GUI or chat) before disbanding
+  require-confirmation: true
+  # Cooldown in seconds before the same player can create a new team after disbanding
+  cooldown-after-disband-seconds: 600
+  # Refund percentage of creation cost when disbanding
+  refund-percent-on-disband: 50
+
+storage:
+  # Storage backend: YAML, SQLITE, or MYSQL
+  type: "YAML"
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "teamsplugin"
+    username: "root"
+    password: "password"
+    use-ssl: false
+    table-prefix: "teams_"
+
+integrations:
+  vault:
+    enabled: true
+  placeholderapi:
+    enabled: true
+  worldguard:
+    enabled: false
+  discord-webhook:
+    enabled: false
+    url: ""
+    notify-on-create: true
+    notify-on-disband: true
+    notify-on-war: true
+
+gui:
+  # Master toggle for the GUI system
+  enabled: true
+  # Sound played when opening any team GUI
+  open-sound: "UI_BUTTON_CLICK"
+  # Sound played on a successful action (invite sent, promote, etc)
+  success-sound: "ENTITY_PLAYER_LEVELUP"
+  # Sound played on an error / denied action
+  error-sound: "ENTITY_VILLAGER_NO"
+
+  main-menu:
+    title: "&8&lTeam Menu"
+    size: 27
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    items:
+      info:
+        slot: 10
+        material: "BOOK"
+        name: "&bTeam Info"
+      members:
+        slot: 12
+        material: "PLAYER_HEAD"
+        name: "&aMembers"
+      home:
+        slot: 13
+        material: "RED_BED"
+        name: "&cTeam Home"
+      relations:
+        slot: 14
+        material: "IRON_SWORD"
+        name: "&eAllies & Enemies"
+      bank:
+        slot: 16
+        material: "GOLD_INGOT"
+        name: "&6Team Bank"
+      settings:
+        slot: 22
+        material: "COMPARATOR"
+        name: "&7Team Settings"
+
+  members-menu:
+    title: "&8&lTeam Members"
+    size: 54
+    show-online-status: true
+    online-name-color: "&a"
+    offline-name-color: "&7"
+
+  invite-menu:
+    title: "&8&lPending Invites"
+    size: 27
+    accept-material: "LIME_DYE"
+    deny-material: "RED_DYE"
+
+  relations-menu:
+    title: "&8&lAllies & Enemies"
+    size: 45
+    ally-material: "LIME_WOOL"
+    enemy-material: "RED_WOOL"
+    neutral-material: "GRAY_WOOL"
+
+  confirm-menu:
+    title: "&8&lAre you sure?"
+    size: 27
+    confirm-slot: 11
+    deny-slot: 15
+    confirm-material: "LIME_CONCRETE"
+    deny-material: "RED_CONCRETE"
+
+  team-list-menu:
+    title: "&8&lAll Teams"
+    size: 54
+    teams-per-page: 45
+    sort-by: "LEVEL" # LEVEL, MEMBERS, NAME, CLAIMS
+
+messages:
+  no-permission: "&cYou don't have permission to do that."
+  no-team: "&cYou are not in a team."
+  already-in-team: "&cYou are already in a team."
+  team-created: "&aTeam &b{team} &acreated successfully!"
+  team-disbanded: "&cYour team has been disbanded."
+  invite-sent: "&aInvite sent to &b{player}&a."
+  invite-received: "&bYou have been invited to join &e{team}&b. Type /team join {team} to accept."
+  player-kicked: "&c{player} &7has been kicked from the team."
+  not-enough-permission-role: "&cYour role does not allow this action."
+  team-full: "&cThat team is full."
+  invalid-name: "&cInvalid team name. Check length and allowed characters."
+  cooldown-active: "&cYou must wait {time} before doing that again."

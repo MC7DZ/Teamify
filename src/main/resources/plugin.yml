@@ -1,0 +1,28 @@
+name: Teamify
+version: '1.0.0'
+main: gg.MC7DZ.teamify.Teamify
+api-version: '1.21'
+load: POSTWORLD
+author: Claude
+description: A fully configurable Teams plugin with GUIs.
+
+commands:
+  team:
+    description: Main team command
+    usage: /team [create|invite|kick|leave|disband|home|sethome|chat|info|list|gui|join|promote|demote]
+    aliases: [t, teams]
+  teamadmin:
+    description: Admin commands for teams
+    usage: /teamadmin [delete|reload|forcedisband]
+    permission: teams.admin
+
+permissions:
+  teams.admin:
+    description: Access to admin commands
+    default: op
+  teams.create:
+    description: Allows creating a team
+    default: true
+  teams.use:
+    description: Base permission for all team usage
+    default: true
