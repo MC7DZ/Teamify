@@ -1,7 +1,9 @@
 package gg.MC7DZ.teamify;
 
 import gg.MC7DZ.teamify.commands.TeamAdminCommand;
+import gg.MC7DZ.teamify.commands.TeamAdminTabCompleter;
 import gg.MC7DZ.teamify.commands.TeamCommand;
+import gg.MC7DZ.teamify.commands.TeamTabCompleter;
 import gg.MC7DZ.teamify.config.ConfigManager;
 import gg.MC7DZ.teamify.listeners.GuiListener;
 import gg.MC7DZ.teamify.listeners.PlayerListener;
@@ -26,7 +28,9 @@ public final class Teamify extends JavaPlugin {
         this.teamManager.loadAll();
 
         getCommand("team").setExecutor(new TeamCommand(this));
+        getCommand("team").setTabCompleter(new TeamTabCompleter(this));
         getCommand("teamadmin").setExecutor(new TeamAdminCommand(this));
+        getCommand("teamadmin").setTabCompleter(new TeamAdminTabCompleter(this));
 
         this.playerListener = new PlayerListener(this);
         getServer().getPluginManager().registerEvents(playerListener, this);

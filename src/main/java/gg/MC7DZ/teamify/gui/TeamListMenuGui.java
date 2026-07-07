@@ -33,7 +33,6 @@ public class TeamListMenuGui extends GuiHolder {
         Comparator<Team> comparator = switch (sortBy) {
             case "MEMBERS" -> Comparator.comparingInt(Team::getSize).reversed();
             case "NAME" -> Comparator.comparing(Team::getName, String.CASE_INSENSITIVE_ORDER);
-            case "CLAIMS" -> Comparator.comparingInt(t -> t.getClaimedChunks().size());
             default -> Comparator.comparingInt(Team::getLevel).reversed();
         };
         teams.sort(comparator);
@@ -45,8 +44,7 @@ public class TeamListMenuGui extends GuiHolder {
             ItemStack item = GuiItem.simple(Material.WHITE_BANNER,
                     "&b" + team.getName() + " &7[" + team.getTag() + "]",
                     "&7Level: &f" + team.getLevel(),
-                    "&7Members: &f" + team.getSize(),
-                    "&7Claims: &f" + team.getClaimedChunks().size());
+                    "&7Members: &f" + team.getSize());
             inv.setItem(slot, item);
             slotToTeam.put(slot, team.getId());
             slot++;

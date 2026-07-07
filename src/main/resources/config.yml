@@ -5,7 +5,7 @@
 
 general:
   # Prefix used in all plugin chat messages
-  prefix: "&8[&bTeams&8] &r"
+  prefix: "&8[&bnbts&8] &r"
   # Language file to use from /lang folder (en.yml, fr.yml, etc)
   language: "en"
   # Enable debug logging to console
@@ -127,37 +127,16 @@ relations:
   enable-enemies: true
   # Require both teams to accept an alliance request
   mutual-alliance-required: true
-  # Friendly fire settings
+  # Friendly fire settings (PVP)
   friendly-fire:
-    within-team: false
-    between-allies: false
+    within-team: true
+    between-allies: true
     between-enemies: true
     neutral-default: true
 
-territory:
-  # Enable claiming land for teams (grid/chunk based)
-  enable-claims: true
-  # Max claimed chunks per team (0 = unlimited)
-  max-claims: 25
-  # Cost per chunk claim (Vault economy)
-  claim-cost-per-chunk: 0.0
-  # Require claims to be contiguous (touching existing claims)
-  require-contiguous-claims: true
-  # Buffer distance in chunks required between two different teams' territory
-  claim-buffer-chunks: 1
-  # Allow non-members to build in claimed territory
-  allow-outsider-build: false
-  # Allow non-members to open containers/interact in claimed territory
-  allow-outsider-interact: false
-  # Protect claimed territory from explosions (creeper/tnt/etc)
-  protect-from-explosions: true
-  # Worlds where claiming is disabled entirely
-  disabled-worlds:
-    - "world_the_end"
-
 bank:
   # Enable a shared team bank (requires Vault)
-  enable-team-bank: true
+  enable-team-bank: false
   # Starting balance for new teams
   starting-balance: 0.0
   # Maximum balance a team bank can hold (0 = unlimited)
@@ -167,7 +146,7 @@ bank:
 
 leveling:
   # Enable team leveling / XP system
-  enable-leveling: true
+  enable-leveling: false
   # XP required for level 2 (scales upward using the multiplier below)
   base-xp-required: 1000
   # Multiplier applied per level (exponential growth)
@@ -308,7 +287,7 @@ gui:
     title: "&8&lAll Teams"
     size: 54
     teams-per-page: 45
-    sort-by: "LEVEL" # LEVEL, MEMBERS, NAME, CLAIMS
+    sort-by: "LEVEL" # LEVEL, MEMBERS, NAME
 
 messages:
   no-permission: "&cYou don't have permission to do that."

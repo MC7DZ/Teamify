@@ -15,7 +15,6 @@ public class Team {
     private final Map<UUID, TeamRole> members = new LinkedHashMap<>();
     private final Map<UUID, RelationType> relations = new HashMap<>();
     private final Map<Integer, Location> homes = new HashMap<>();
-    private final Set<Long> claimedChunks = new HashSet<>();
     private final List<UUID> pendingInvites = new ArrayList<>();
 
     private double bankBalance;
@@ -70,8 +69,6 @@ public class Team {
     public Map<Integer, Location> getHomes() { return homes; }
     public Location getHome(int index) { return homes.get(index); }
     public void setHome(int index, Location loc) { homes.put(index, loc); }
-
-    public Set<Long> getClaimedChunks() { return claimedChunks; }
 
     public List<UUID> getPendingInvites() { return pendingInvites; }
     public void addInvite(UUID uuid) { if (!pendingInvites.contains(uuid)) pendingInvites.add(uuid); }

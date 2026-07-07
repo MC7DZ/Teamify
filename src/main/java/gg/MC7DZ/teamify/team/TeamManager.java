@@ -140,9 +140,6 @@ public class TeamManager {
                     }
                 }
 
-                List<Long> chunks = cfg.getLongList("claimed-chunks");
-                team.getClaimedChunks().addAll(chunks);
-
                 teamsById.put(id, team);
             } catch (Exception ex) {
                 plugin.getLogger().warning("Failed to load team file " + file.getName() + ": " + ex.getMessage());
@@ -176,7 +173,6 @@ public class TeamManager {
         for (Map.Entry<Integer, Location> e : team.getHomes().entrySet()) {
             cfg.set("homes." + e.getKey(), e.getValue());
         }
-        cfg.set("claimed-chunks", new ArrayList<>(team.getClaimedChunks()));
 
         try {
             cfg.save(new File(dataFolder, team.getId() + ".yml"));

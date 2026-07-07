@@ -73,11 +73,6 @@ public class ConfigManager {
     public boolean isEnemiesEnabled() { return getConfig().getBoolean("relations.enable-enemies", true); }
     public boolean isMutualAllianceRequired() { return getConfig().getBoolean("relations.mutual-alliance-required", true); }
 
-    // ---- Territory ----
-    public boolean isClaimsEnabled() { return getConfig().getBoolean("territory.enable-claims", true); }
-    public int getMaxClaims() { return getConfig().getInt("territory.max-claims", 25); }
-    public boolean isRequireContiguousClaims() { return getConfig().getBoolean("territory.require-contiguous-claims", true); }
-
     // ---- Bank ----
     public boolean isBankEnabled() { return getConfig().getBoolean("bank.enable-team-bank", true); }
     public double getStartingBalance() { return getConfig().getDouble("bank.starting-balance", 0.0); }
