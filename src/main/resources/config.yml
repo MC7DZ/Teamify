@@ -123,7 +123,7 @@ home:
 
 chat:
   # Enable team-only chat channel toggle (/team chat)
-  enable-team-chat: true
+  enable-team-chat: false
   # Format for team chat messages
   team-chat-format: "&8[&bTeam&8] &7{role} &f{player}&8: &f{message}"
   # Format for team announcements (leader broadcasts)
