@@ -86,8 +86,16 @@ public class InviteMenuGui extends GuiHolder {
             team.removeInvite(uuid);
             plugin.getTeamManager().addMember(team, uuid, TeamRole.MEMBER);
             plugin.getTeamManager().saveTeam(team);
+            plugin.getVisibilityManager().refreshTeamAndAllies(team);
             p.sendMessage(plugin.getConfigManager().getPrefix() +
                     plugin.getConfigManager().color("&aYou joined &b" + team.getName() + "&a!"));
+            for (UUID memberId : team.getMembers().keySet()) {
+                if (memberId.equals(uuid)) continue;
+                Player member = org.bukkit.Bukkit.getPlayer(memberId);
+                if (member != null) {
+                    member.sendMessage(plugin.getConfigManager().getMessage("player-joined-broadcast", "player", p.getName()));
+                }
+            }
         } else if (slot == denySlot) {
             p.closeInventory();
             team.removeInvite(uuid);

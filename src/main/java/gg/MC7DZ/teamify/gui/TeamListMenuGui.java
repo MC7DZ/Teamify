@@ -41,10 +41,14 @@ public class TeamListMenuGui extends GuiHolder {
         int slot = 0;
         for (Team team : teams) {
             if (slot >= size) break;
-            ItemStack item = GuiItem.simple(Material.WHITE_BANNER,
-                    "&b" + team.getName() + " &7[" + team.getTag() + "]",
+            List<String> lore = List.of(
                     "&7Level: &f" + team.getLevel(),
                     "&7Members: &f" + team.getSize());
+            ItemStack item = team.hasCustomItem()
+                    ? GuiItem.withOverrides(team.getCustomItem(), team.getColoredName() + " &7[" + team.getTag() + "]", lore)
+                    : GuiItem.simple(Material.WHITE_BANNER,
+                        team.getColoredName() + " &7[" + team.getTag() + "]",
+                        lore.toArray(new String[0]));
             inv.setItem(slot, item);
             slotToTeam.put(slot, team.getId());
             slot++;

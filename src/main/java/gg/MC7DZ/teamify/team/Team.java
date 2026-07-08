@@ -1,6 +1,8 @@
 package gg.MC7DZ.teamify.team;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 
@@ -16,12 +18,20 @@ public class Team {
     private final Map<UUID, RelationType> relations = new HashMap<>();
     private final Map<Integer, Location> homes = new HashMap<>();
     private final List<UUID> pendingInvites = new ArrayList<>();
+    private final List<UUID> pendingAllyInvites = new ArrayList<>();
 
     private double bankBalance;
     private int level = 1;
     private long xp = 0;
     private boolean teamChatToggleDefault = false;
+    private boolean pvpEnabled = true;
     private long createdAt;
+
+    // Customization: a chat/scoreboard color for the team, and a custom
+    // "team item" (used as the team's icon in GUIs / lists). Both are
+    // player-configurable from the settings menu.
+    private ChatColor color = ChatColor.WHITE;
+    private ItemStack customItem;
 
     public Team(UUID id, String name, String tag, UUID owner) {
         this.id = id;
@@ -75,14 +85,56 @@ public class Team {
     public void removeInvite(UUID uuid) { pendingInvites.remove(uuid); }
     public boolean hasInvite(UUID uuid) { return pendingInvites.contains(uuid); }
 
+    // Pending alliance requests: team IDs of teams that have requested an
+    // alliance with this team and are awaiting acceptance.
+    public List<UUID> getPendingAllyInvites() { return pendingAllyInvites; }
+    public void addAllyInvite(UUID teamId) { if (!pendingAllyInvites.contains(teamId)) pendingAllyInvites.add(teamId); }
+    public void removeAllyInvite(UUID teamId) { pendingAllyInvites.remove(teamId); }
+    public boolean hasAllyInvite(UUID teamId) { return pendingAllyInvites.contains(teamId); }
+
+    public int getAllyCount() {
+        int count = 0;
+        for (RelationType type : relations.values()) {
+            if (type == RelationType.ALLY) count++;
+        }
+        return count;
+    }
+
     public double getBankBalance() { return bankBalance; }
     public void setBankBalance(double bankBalance) { this.bankBalance = bankBalance; }
+
+    /**
+     * Adds money to the bank, optionally capped at {@code maxBalance}
+     * (0/negative means unlimited). Returns the amount actually deposited
+     * (may be less than requested if the cap was hit).
+     */
+    public double deposit(double amount, double maxBalance) {
+        if (amount <= 0) return 0;
+        double room = maxBalance > 0 ? Math.max(0, maxBalance - bankBalance) : amount;
+        double toAdd = Math.min(amount, room);
+        bankBalance += toAdd;
+        return toAdd;
+    }
+
     public void deposit(double amount) { this.bankBalance += amount; }
+
     public boolean withdraw(double amount) {
-        if (bankBalance < amount) return false;
+        if (amount <= 0 || bankBalance < amount) return false;
         bankBalance -= amount;
         return true;
     }
+
+    // ---- Customization ----
+    public ChatColor getColor() { return color == null ? ChatColor.WHITE : color; }
+    public void setColor(ChatColor color) { this.color = color == null ? ChatColor.WHITE : color; }
+
+    /** Team name prefixed with its custom color, ready to drop into a message. */
+    public String getColoredName() { return getColor() + name; }
+
+    /** The custom icon representing this team, or null if none was set. */
+    public ItemStack getCustomItem() { return customItem; }
+    public void setCustomItem(ItemStack customItem) { this.customItem = customItem; }
+    public boolean hasCustomItem() { return customItem != null; }
 
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
@@ -93,6 +145,9 @@ public class Team {
 
     public boolean isTeamChatToggleDefault() { return teamChatToggleDefault; }
     public void setTeamChatToggleDefault(boolean teamChatToggleDefault) { this.teamChatToggleDefault = teamChatToggleDefault; }
+
+    public boolean isPvpEnabled() { return pvpEnabled; }
+    public void setPvpEnabled(boolean pvpEnabled) { this.pvpEnabled = pvpEnabled; }
 
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }

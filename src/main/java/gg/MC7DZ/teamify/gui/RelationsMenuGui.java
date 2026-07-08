@@ -5,6 +5,7 @@ import gg.MC7DZ.teamify.team.RelationType;
 import gg.MC7DZ.teamify.team.Team;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -28,12 +29,10 @@ public class RelationsMenuGui extends GuiHolder {
 
     private void build() {
         ConfigurationSection cfg = plugin.getConfig().getConfigurationSection("gui.relations-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Allies & Enemies"));
+        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Allies"));
         int size = cfg.getInt("size", 45);
 
         Material allyMat = parse(cfg.getString("ally-material", "LIME_WOOL"), Material.LIME_WOOL);
-        Material enemyMat = parse(cfg.getString("enemy-material", "RED_WOOL"), Material.RED_WOOL);
-        Material neutralMat = parse(cfg.getString("neutral-material", "GRAY_WOOL"), Material.GRAY_WOOL);
 
         Inventory inv = Bukkit.createInventory(this, size, title);
 
@@ -42,25 +41,35 @@ public class RelationsMenuGui extends GuiHolder {
             if (slot >= size) break;
             UUID otherId = entry.getKey();
             RelationType type = entry.getValue();
+            // Only allies are shown here - enemies/neutral relations still
+            // exist under the hood (PVP, /team allyinvite, etc) but aren't
+            // surfaced in this menu.
+            if (type != RelationType.ALLY) continue;
             Team other = plugin.getTeamManager().getTeam(otherId);
             if (other == null) continue;
 
-            Material mat = switch (type) {
-                case ALLY -> allyMat;
-                case ENEMY -> enemyMat;
-                default -> neutralMat;
-            };
-
-            ItemStack item = GuiItem.simple(mat,
-                    "&f" + other.getName(),
-                    "&7Relation: " + type.name(),
-                    "&7Level: " + other.getLevel());
+            List<String> lore = new ArrayList<>(List.of(
+                    "&7Relation: &aALLY",
+                    "&7Level: " + other.getLevel(),
+                    "&7Online: &f" + countVisibleOnline(other)));
+            ItemStack item = other.hasCustomItem()
+                    ? GuiItem.withOverrides(other.getCustomItem(), other.getColoredName(), lore)
+                    : GuiItem.simple(allyMat, other.getColoredName(), lore.toArray(new String[0]));
             inv.setItem(slot, item);
             slotToTeam.put(slot, otherId);
             slot++;
         }
 
         setInventory(inv);
+    }
+
+    /** Counts how many members of an allied team are currently online. */
+    private int countVisibleOnline(Team allyTeam) {
+        int count = 0;
+        for (UUID memberId : allyTeam.getMembers().keySet()) {
+            if (Bukkit.getOfflinePlayer(memberId).isOnline()) count++;
+        }
+        return count;
     }
 
     private Material parse(String s, Material fallback) {

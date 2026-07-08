@@ -5,12 +5,13 @@ api-version: '1.21'
 load: POSTWORLD
 author: Claude
 description: A fully configurable Teams plugin with GUIs.
+softdepend: [Vault]
 
 commands:
   team:
     description: Main team command
-    usage: /team [create|invite|kick|leave|disband|home|sethome|chat|info|list|gui|join|promote|demote]
-    aliases: [t, teams]
+    usage: /team [create|invite|kick|leave|disband|home|sethome|chat|info|list|gui|join|promote|demote|transfer|settings|pvp|allychat|allyinvite|allyleave|bank|reload]
+    aliases: [t, teams, teamify]
   teamadmin:
     description: Admin commands for teams
     usage: /teamadmin [delete|reload|forcedisband]
@@ -26,3 +27,77 @@ permissions:
   teams.use:
     description: Base permission for all team usage
     default: true
+  # Per-subcommand permission nodes. All default to true so every player can
+  # use every subcommand out of the box; deny a specific node (e.g. via a
+  # permissions plugin) to hide/block that one subcommand for a player or
+  # group without touching the others. Commands are additionally gated by
+  # team membership, role permissions, and the relevant config.yml toggles.
+  teams.command.create:
+    description: Allows /team create
+    default: true
+  teams.command.invite:
+    description: Allows /team invite
+    default: true
+  teams.command.kick:
+    description: Allows /team kick
+    default: true
+  teams.command.leave:
+    description: Allows /team leave
+    default: true
+  teams.command.disband:
+    description: Allows /team disband
+    default: true
+  teams.command.home:
+    description: Allows /team home
+    default: true
+  teams.command.sethome:
+    description: Allows /team sethome
+    default: true
+  teams.command.chat:
+    description: Allows /team chat
+    default: true
+  teams.command.info:
+    description: Allows /team info
+    default: true
+  teams.command.list:
+    description: Allows /team list
+    default: true
+  teams.command.gui:
+    description: Allows /team gui
+    default: true
+  teams.command.join:
+    description: Allows /team join
+    default: true
+  teams.command.promote:
+    description: Allows /team promote
+    default: true
+  teams.command.demote:
+    description: Allows /team demote
+    default: true
+  teams.command.transfer:
+    description: Allows /team transfer
+    default: true
+  teams.command.settings:
+    description: Allows /team settings
+    default: true
+  teams.command.pvp:
+    description: Allows /team pvp
+    default: true
+  teams.command.allychat:
+    description: Allows /team allychat
+    default: true
+  teams.command.allyinvite:
+    description: Allows /team allyinvite
+    default: true
+  teams.command.allyleave:
+    description: Allows /team allyleave
+    default: true
+  teams.command.bank:
+    description: Allows /team bank (deposit/withdraw/balance)
+    default: true
+  teams.bank.withdraw:
+    description: Allows withdrawing money from the team bank (still subject to the role permission can-withdraw-bank)
+    default: true
+  teams.command.reload:
+    description: Allows /team reload
+    default: op

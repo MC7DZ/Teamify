@@ -84,14 +84,14 @@ public class MainMenuGui extends GuiHolder {
             }
             case "relations" -> new RelationsMenuGui(plugin, p, team).open();
             case "bank" -> {
-                p.closeInventory();
-                p.sendMessage(plugin.getConfigManager().getPrefix() +
-                        plugin.getConfigManager().color("&6Team Bank Balance: &f" + team.getBankBalance()));
+                if (!plugin.getConfigManager().isBankEnabled()) {
+                    p.closeInventory();
+                    p.sendMessage(plugin.getConfigManager().getMessage("bank-disabled"));
+                } else {
+                    new BankMenuGui(plugin, p, team).open();
+                }
             }
-            case "settings" -> {
-                p.closeInventory();
-                p.sendMessage(plugin.getConfigManager().getPrefix() + "Settings menu coming soon.");
-            }
+            case "settings" -> new SettingsMenuGui(plugin, p, team).open();
         }
     }
 }

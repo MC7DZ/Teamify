@@ -1,23 +1,57 @@
 package gg.MC7DZ.teamify.listeners;
 
 import gg.MC7DZ.teamify.Teamify;
+import gg.MC7DZ.teamify.team.RelationType;
 import gg.MC7DZ.teamify.team.Team;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 public class PlayerListener implements Listener {
 
+    /** What the player's next chat message should be interpreted as. */
+    public enum PendingInputType { BANK_DEPOSIT, BANK_WITHDRAW }
+
     private final Teamify plugin;
     private final Set<UUID> teamChatToggled = new HashSet<>();
+    private final Set<UUID> allyChatToggled = new HashSet<>();
+    private final Map<UUID, PendingInputType> pendingInput = new HashMap<>();
 
     public PlayerListener(Teamify plugin) {
         this.plugin = plugin;
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        // New logins (and reconnecting members) need their "see invisible
+        // teammates/allies" scoreboard built right away rather than waiting
+        // for the periodic refresh task.
+        plugin.getVisibilityManager().refresh(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        teamChatToggled.remove(event.getPlayer().getUniqueId());
+        allyChatToggled.remove(event.getPlayer().getUniqueId());
+        pendingInput.remove(event.getPlayer().getUniqueId());
+    }
+
+    /** Marks the player's very next chat message as input for a GUI flow (e.g. bank amount). */
+    public void awaitInput(UUID uuid, PendingInputType type) {
+        pendingInput.put(uuid, type);
+    }
+
+    public void cancelPendingInput(UUID uuid) {
+        pendingInput.remove(uuid);
     }
 
     public boolean isTeamChatToggled(UUID uuid) {
@@ -30,30 +64,101 @@ public class PlayerListener implements Listener {
         }
     }
 
+    public boolean isAllyChatToggled(UUID uuid) {
+        return allyChatToggled.contains(uuid);
+    }
+
+    public void toggleAllyChat(UUID uuid) {
+        if (!allyChatToggled.add(uuid)) {
+            allyChatToggled.remove(uuid);
+        }
+    }
+
     @EventHandler
     public void onChat(AsyncPlayerChatEvent event) {
-        if (!plugin.getConfigManager().isTeamChatEnabled()) return;
         Player player = event.getPlayer();
-        if (!teamChatToggled.contains(player.getUniqueId())) return;
-
         Team team = plugin.getTeamManager().getTeamOf(player.getUniqueId());
-        if (team == null) {
-            teamChatToggled.remove(player.getUniqueId());
+
+        PendingInputType pending = pendingInput.remove(player.getUniqueId());
+        if (pending != null) {
+            event.setCancelled(true);
+            String message = event.getMessage().trim();
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                if (message.equalsIgnoreCase("cancel")) {
+                    player.sendMessage(plugin.getConfigManager().getPrefix() + plugin.getConfigManager().color("&7Cancelled."));
+                    return;
+                }
+                if (team == null) {
+                    player.sendMessage(plugin.getConfigManager().getMessage("no-team"));
+                    return;
+                }
+                switch (pending) {
+                    case BANK_DEPOSIT -> plugin.getTeamCommand().bankDeposit(player, team, message);
+                    case BANK_WITHDRAW -> plugin.getTeamCommand().bankWithdraw(player, team, message);
+                }
+            });
             return;
         }
 
-        event.setCancelled(true);
+        if (plugin.getConfigManager().isTeamChatEnabled() && teamChatToggled.contains(player.getUniqueId())) {
+            if (team == null) {
+                teamChatToggled.remove(player.getUniqueId());
+            } else {
+                event.setCancelled(true);
+                sendTeamChat(player, team, event.getMessage());
+                return;
+            }
+        }
+
+        if (plugin.getConfigManager().isAlliesEnabled() && plugin.getConfigManager().isAllyChatEnabled()
+                && allyChatToggled.contains(player.getUniqueId())) {
+            if (team == null) {
+                allyChatToggled.remove(player.getUniqueId());
+            } else {
+                event.setCancelled(true);
+                sendAllyChat(player, team, event.getMessage());
+            }
+        }
+    }
+
+    private void sendTeamChat(Player player, Team team, String message) {
         String format = plugin.getConfigManager().color(plugin.getConfigManager().getTeamChatFormat());
         String role = team.getRole(player.getUniqueId()).name();
-        String message = format
+        String out = format
                 .replace("{role}", role)
                 .replace("{player}", player.getName())
-                .replace("{message}", event.getMessage());
+                .replace("{message}", message);
 
         for (UUID memberId : team.getMembers().keySet()) {
             Player member = plugin.getServer().getPlayer(memberId);
             if (member != null) {
-                member.sendMessage(message);
+                member.sendMessage(out);
+            }
+        }
+    }
+
+    private void sendAllyChat(Player player, Team team, String message) {
+        String format = plugin.getConfigManager().color(plugin.getConfigManager().getAllyChatFormat());
+        String role = team.getRole(player.getUniqueId()).name();
+        String out = format
+                .replace("{role}", role)
+                .replace("{player}", player.getName())
+                .replace("{team}", team.getName())
+                .replace("{message}", message);
+
+        // Send to own team members...
+        for (UUID memberId : team.getMembers().keySet()) {
+            Player member = plugin.getServer().getPlayer(memberId);
+            if (member != null) member.sendMessage(out);
+        }
+        // ...and to every allied team's members.
+        for (var entry : team.getRelations().entrySet()) {
+            if (entry.getValue() != RelationType.ALLY) continue;
+            Team allyTeam = plugin.getTeamManager().getTeam(entry.getKey());
+            if (allyTeam == null) continue;
+            for (UUID memberId : allyTeam.getMembers().keySet()) {
+                Player member = plugin.getServer().getPlayer(memberId);
+                if (member != null) member.sendMessage(out);
             }
         }
     }

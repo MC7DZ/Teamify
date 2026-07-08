@@ -1,0 +1,114 @@
+# =======================================================
+#                ملف لغة Teamify - العربية
+# =======================================================
+# هذا الملف يحتوي فقط على رسائل الشات.
+# باقي الإعدادات (الرتب، الحدود، الواجهات...) تبقى في config.yml
+
+messages:
+  no-permission: "&cلا تملك صلاحية القيام بهذا."
+  no-team: "&cأنت لست في فريق."
+  already-in-team: "&cأنت بالفعل في فريق."
+  team-created: "&aتم إنشاء فريق &b{team} &aبنجاح!"
+  team-disbanded: "&cتم حل فريقك."
+  invite-sent: "&aتم إرسال دعوة إلى &b{player}&a."
+  invite-received: "&bلقد تمت دعوتك للانضمام إلى &e{team}&b. اكتب /team join {team} للقبول."
+  player-kicked: "&cتم طرد &7{player} &7من الفريق."
+  not-enough-permission-role: "&cرتبتك لا تسمح لك بهذا الإجراء."
+  team-full: "&cهذا الفريق ممتلئ."
+  invalid-name: "&cاسم الفريق غير صالح. تحقق من الطول والأحرف المسموح بها."
+  cooldown-active: "&cعليك الانتظار {time} قبل القيام بهذا مجددًا."
+  pvp-enabled: "&aقتال الفريق الآن &lمفعّل&a."
+  pvp-disabled: "&cقتال الفريق الآن &lمعطّل&c."
+  pvp-locked: "&cتبديل قتال الفريق مقفل لأن friendly-fire.within-team مفعّل في الإعدادات."
+  config-reloaded: "&aتم إعادة تحميل الإعدادات."
+
+  # الطرد
+  cant-kick-yourself: "&cلا يمكنك طرد نفسك. استخدم /team leave أو /team disband بدلاً من ذلك."
+  cant-kick-owner: "&cلا يمكنك طرد مالك الفريق."
+  cant-kick-higher-rank: "&cلا يمكنك طرد شخص برتبة تساوي أو أعلى من رتبتك."
+  player-not-in-team: "&cهذا اللاعب ليس في فريقك."
+  kicked-from-team: "&cتم طردك من &f{team} &cبواسطة &f{player}&c."
+  player-kicked-broadcast: "&7تم طرد {player} من الفريق بواسطة &f{kicker}&7."
+
+  # المغادرة
+  left-team: "&7غادرت &f{team}&7."
+  player-left-broadcast: "&7{player} غادر الفريق."
+
+  # الانضمام
+  player-joined-broadcast: "&aانضم {player} إلى الفريق!"
+
+  # الترقية
+  cant-promote-yourself: "&cلا يمكنك ترقية نفسك."
+  already-highest-rank: "&cهذا اللاعب يملك بالفعل أعلى رتبة."
+  cant-promote-own-rank: "&cلا يمكنك ترقية أحد إلى رتبتك أو أعلى منها."
+  promoted-to-leader: "&a{player} أصبح الآن قائد الفريق. أنت الآن نائب قائد."
+  player-promoted: "&aتمت ترقية {player} إلى {role}."
+  promoted-notify: "&aتمت ترقيتك إلى &b{role} &aفي &f{team}&a!"
+  promoted-broadcast: "&aتمت ترقية {player} إلى &b{role}&a."
+
+  # التخفيض
+  cant-demote-yourself: "&cلا يمكنك تخفيض رتبتك بنفسك."
+  cant-demote-owner: "&cلا يمكنك تخفيض رتبة مالك الفريق."
+  cant-demote-higher-rank: "&cلا يمكنك تخفيض رتبة شخص يساويك أو أعلى منك رتبة."
+  player-demoted: "&aتم تخفيض {player} إلى {role}."
+  demoted-notify: "&cتم تخفيضك إلى &7{role} &cفي &f{team}&c."
+  demoted-broadcast: "&7تم تخفيض {player} إلى {role}."
+
+  # تغيير رتبة المالك لنفسه
+  owner-role-changed: "&aتم تعيين رتبتك إلى {role}."
+
+  # نقل الملكية
+  ownership-transferred: "&a{player} أصبح الآن مالك الفريق والقائد. أنت الآن {role}."
+  ownership-transferred-notify: "&aأنت الآن مالك &f{team}&a!"
+  ownership-transferred-broadcast: "&e{player} أصبح الآن مالك الفريق."
+
+  # حل الفريق
+  team-disbanded-member: "&cتم حل فريقك &f{team} &cبواسطة المالك."
+
+  # أوامر معطلة
+  command-disabled: "&cهذا الأمر معطل من إعدادات السيرفر."
+
+  # المنزل
+  no-home-set: "&cفريقك لم يقم بتعيين منزل بعد."
+
+  # الحلفاء
+  allies-disabled: "&cنظام التحالف معطل."
+  ally-chat-disabled: "&cشات التحالف معطل."
+  ally-invalid-team: "&cهذا الفريق غير موجود."
+  ally-cant-self: "&cلا يمكنك التحالف مع فريقك."
+  already-allied: "&cفريقك متحالف بالفعل مع {team}."
+  already-enemies: "&cلا يمكنك التحالف مع فريق أنت في حرب معه."
+  max-allies-reached: "&cفريقك وصل للحد الأقصى من الحلفاء."
+  ally-invite-sent: "&aتم إرسال طلب تحالف إلى &b{team}&a."
+  ally-invite-received: "&b{team} &7طلب تحالفًا. اكتب /team allyinvite {team} للقبول."
+  ally-added: "&aفريقك أصبح الآن متحالفًا مع &b{team}&a!"
+  no-ally-invite: "&cهذا الفريق لم يرسل لك طلب تحالف. استخدم /team allyinvite {team} لإرسال طلب."
+  not-allied: "&cفريقك ليس متحالفًا مع {team}."
+  ally-removed: "&7فريقك لم يعد متحالفًا مع &f{team}&7."
+  ally-chat-enabled: "&aتم تفعيل شات التحالف."
+  ally-chat-disabled-toggle: "&7تم تعطيل شات التحالف."
+
+  # البنك
+  bank-disabled: "&cبنك الفريق معطل."
+  bank-no-economy: "&cلم يتم العثور على إضافة اقتصاد (Vault)، لذلك لا يمكن لبنك الفريق نقل المال الحقيقي الآن."
+  bank-balance: "&6رصيد بنك الفريق: &f{amount}"
+  bank-invalid-amount: "&cأدخل مبلغًا صحيحًا موجبًا."
+  bank-insufficient-player-funds: "&cلا تملك هذا القدر من المال."
+  bank-insufficient-team-funds: "&cبنك الفريق لا يملك هذا القدر من المال."
+  bank-max-balance: "&cبنك الفريق وصل بالفعل للحد الأقصى للرصيد."
+  bank-transaction-failed: "&cفشلت العملية. حاول مرة أخرى."
+  bank-cant-withdraw-role: "&cرتبتك لا تسمح لك بالسحب من بنك الفريق."
+  bank-deposit-success: "&aتم إيداع &f{amount} &aفي بنك الفريق. الرصيد الجديد: &f{balance}&a."
+  bank-withdraw-success: "&aتم سحب &f{amount} &aمن بنك الفريق. الرصيد الجديد: &f{balance}&a."
+  bank-deposit-broadcast: "&7{player} أودع &f{amount} &7في بنك الفريق."
+  bank-withdraw-broadcast: "&7{player} سحب &f{amount} &7من بنك الفريق."
+
+  # تخصيص الفريق (اللون والعنصر المخصص)
+  team-color-changed: "&aتم تعيين لون الفريق إلى {color}."
+  team-color-disabled: "&cتخصيص لون الفريق معطل."
+  team-item-disabled: "&cتخصيص عنصر الفريق معطل."
+  team-item-apply-empty: "&cضع عنصرًا في الخانة أولاً ثم اضغط تطبيق."
+  team-item-applied: "&aتم تحديث عنصر فريقك! تم إرجاع عنصرك إليك."
+  team-item-cleared: "&7تمت إعادة تعيين عنصر الفريق للافتراضي."
+
+  # إعدادات رؤية اللاعبين المختفين

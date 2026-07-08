@@ -63,7 +63,7 @@ public class TeamManager {
         }
         teamsById.remove(team.getId());
         disbandCooldowns.put(team.getOwner(), System.currentTimeMillis());
-        File f = new File(dataFolder, team.getId() + ".yml");
+        File f = teamFile(team);
         if (f.exists()) f.delete();
     }
 
@@ -75,6 +75,49 @@ public class TeamManager {
     public void removeMember(Team team, UUID player) {
         team.removeMember(player);
         memberToTeam.remove(player);
+    }
+
+    // ---------------- Alliances ----------------
+
+    /**
+     * Sends (or, if the target already sent one to us, accepts) an alliance
+     * request between two teams.
+     *
+     * @return ALLY_ADDED if an alliance was formed immediately, INVITE_SENT if
+     *         a request was queued awaiting the other team's acceptance.
+     */
+    public enum AllyInviteResult { ALLY_ADDED, INVITE_SENT }
+
+    public AllyInviteResult requestAlly(Team from, Team to, boolean mutualRequired) {
+        if (!mutualRequired || from.hasAllyInvite(to.getId())) {
+            // Either mutual confirmation isn't required, or the other team
+            // already asked us first -> form the alliance immediately.
+            setAllied(from, to);
+            from.removeAllyInvite(to.getId());
+            to.removeAllyInvite(from.getId());
+            return AllyInviteResult.ALLY_ADDED;
+        }
+        to.addAllyInvite(from.getId());
+        saveTeam(to);
+        return AllyInviteResult.INVITE_SENT;
+    }
+
+    public void setAllied(Team a, Team b) {
+        a.setRelation(b.getId(), RelationType.ALLY);
+        b.setRelation(a.getId(), RelationType.ALLY);
+        saveTeam(a);
+        saveTeam(b);
+    }
+
+    public void removeAlly(Team a, Team b) {
+        a.setRelation(b.getId(), RelationType.NEUTRAL);
+        b.setRelation(a.getId(), RelationType.NEUTRAL);
+        saveTeam(a);
+        saveTeam(b);
+    }
+
+    public boolean areAllied(Team a, Team b) {
+        return a.getRelation(b.getId()) == RelationType.ALLY;
     }
 
     public long getCreationCooldownRemaining(UUID player, int cooldownSeconds) {
@@ -102,10 +145,21 @@ public class TeamManager {
         for (File file : Objects.requireNonNull(dataFolder.listFiles((d, n) -> n.endsWith(".yml")))) {
             try {
                 YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
-                UUID id = UUID.fromString(file.getName().replace(".yml", ""));
                 String name = cfg.getString("name");
                 String tag = cfg.getString("tag");
                 UUID owner = UUID.fromString(cfg.getString("owner"));
+
+                // Team files are now named after the team's name rather than
+                // its UUID. The id is stored inside the file; for files saved
+                // by an older version (named <uuid>.yml with no "id" field),
+                // fall back to reading the id from the filename instead.
+                UUID id;
+                String idStr = cfg.getString("id");
+                if (idStr != null) {
+                    id = UUID.fromString(idStr);
+                } else {
+                    id = UUID.fromString(file.getName().replace(".yml", ""));
+                }
 
                 Team team = new Team(id, name, tag, owner);
                 team.setDescription(cfg.getString("description"));
@@ -113,6 +167,26 @@ public class TeamManager {
                 team.setLevel(cfg.getInt("level", 1));
                 team.setXp(cfg.getLong("xp", 0));
                 team.setCreatedAt(cfg.getLong("created-at", System.currentTimeMillis()));
+                team.setPvpEnabled(cfg.getBoolean("pvp-enabled", true));
+
+                String colorName = cfg.getString("color");
+                if (colorName != null) {
+                    try {
+                        team.setColor(org.bukkit.ChatColor.valueOf(colorName));
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
+                Object rawItem = cfg.get("custom-item");
+                if (rawItem instanceof org.bukkit.inventory.ItemStack itemStack) {
+                    team.setCustomItem(itemStack);
+                }
+
+                for (String uuidStr : cfg.getStringList("pending-ally-invites")) {
+                    try {
+                        team.addAllyInvite(UUID.fromString(uuidStr));
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
 
                 team.getMembers().clear();
                 ConfigurationSection membersSec = cfg.getConfigurationSection("members");
@@ -141,6 +215,14 @@ public class TeamManager {
                 }
 
                 teamsById.put(id, team);
+
+                // Migrate an old <uuid>.yml file to the new <name>.yml naming
+                // on next load, so it doesn't get re-read as a stray file.
+                File expected = teamFile(team);
+                if (!file.equals(expected)) {
+                    file.delete();
+                    saveTeam(team);
+                }
             } catch (Exception ex) {
                 plugin.getLogger().warning("Failed to load team file " + file.getName() + ": " + ex.getMessage());
             }
@@ -155,6 +237,7 @@ public class TeamManager {
 
     public void saveTeam(Team team) {
         YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("id", team.getId().toString());
         cfg.set("name", team.getName());
         cfg.set("tag", team.getTag());
         cfg.set("owner", team.getOwner().toString());
@@ -163,6 +246,15 @@ public class TeamManager {
         cfg.set("level", team.getLevel());
         cfg.set("xp", team.getXp());
         cfg.set("created-at", team.getCreatedAt());
+        cfg.set("pvp-enabled", team.isPvpEnabled());
+        cfg.set("color", team.getColor().name());
+        if (team.hasCustomItem()) {
+            cfg.set("custom-item", team.getCustomItem());
+        }
+
+        List<String> allyInvites = new ArrayList<>();
+        for (UUID id : team.getPendingAllyInvites()) allyInvites.add(id.toString());
+        cfg.set("pending-ally-invites", allyInvites);
 
         for (Map.Entry<UUID, TeamRole> e : team.getMembers().entrySet()) {
             cfg.set("members." + e.getKey(), e.getValue().name());
@@ -175,9 +267,31 @@ public class TeamManager {
         }
 
         try {
-            cfg.save(new File(dataFolder, team.getId() + ".yml"));
+            cfg.save(teamFile(team));
         } catch (IOException e) {
             plugin.getLogger().warning("Failed to save team " + team.getName() + ": " + e.getMessage());
         }
+    }
+
+    /**
+     * Renames a team's data file to match its current name (call this after
+     * changing a team's name, if a rename feature is ever added) - deletes
+     * the old file and re-saves under the new one.
+     */
+    public void renameTeamFile(Team team, String oldName) {
+        File oldFile = new File(dataFolder, sanitizeFileName(oldName) + ".yml");
+        if (oldFile.exists()) oldFile.delete();
+        saveTeam(team);
+    }
+
+    /** The file a team is stored in: <sanitized team name>.yml */
+    private File teamFile(Team team) {
+        return new File(dataFolder, sanitizeFileName(team.getName()) + ".yml");
+    }
+
+    /** Strips anything that isn't filesystem-safe from a team name for use as a filename. */
+    private String sanitizeFileName(String name) {
+        if (name == null) return "unnamed";
+        return name.replaceAll("[^a-zA-Z0-9_\\-]", "_");
     }
 }

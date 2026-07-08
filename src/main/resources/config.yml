@@ -5,7 +5,7 @@
 
 general:
   # Prefix used in all plugin chat messages
-  prefix: "&8[&bnbts&8] &r"
+  prefix: "&8✦ &b&lTeamify &8✦ &r"
   # Language file to use from /lang folder (en.yml, fr.yml, etc)
   language: "en"
   # Enable debug logging to console
@@ -63,6 +63,8 @@ roles:
       can-promote: false
       can-access-bank: false
       can-withdraw-bank: false
+      can-toggle-pvp: false
+      can-customize-team: false
     MODERATOR:
       can-invite: true
       can-kick: false
@@ -72,6 +74,8 @@ roles:
       can-promote: false
       can-access-bank: true
       can-withdraw-bank: false
+      can-toggle-pvp: false
+      can-customize-team: false
     CO_LEADER:
       can-invite: true
       can-kick: true
@@ -81,6 +85,8 @@ roles:
       can-promote: false
       can-access-bank: true
       can-withdraw-bank: true
+      can-toggle-pvp: true
+      can-customize-team: true
     LEADER:
       can-invite: true
       can-kick: true
@@ -90,6 +96,8 @@ roles:
       can-promote: true
       can-access-bank: true
       can-withdraw-bank: true
+      can-toggle-pvp: true
+      can-customize-team: true
 
 invites:
   # How long an invite stays valid before expiring (seconds)
@@ -100,6 +108,10 @@ invites:
   allow-offline-invites: true
 
 home:
+  # Master toggle for the /team home command. Default false (disabled).
+  enable-home: false
+  # Master toggle for the /team sethome command. Default false (disabled).
+  enable-sethome: false
   # Teleport delay in seconds before /team home teleports (0 = instant)
   teleport-delay-seconds: 3
   # Cancel teleport if the player moves during the delay
@@ -121,18 +133,35 @@ chat:
   global-chat-tag-format: "&7[&b{tag}&7] &f{player}&8: &f{message}"
 
 relations:
-  # Enable alliance system
+  # Enable alliance system (enables/disables /team allyinvite, /team allyleave, /team allychat)
   enable-allies: true
   # Enable enemy/rivalry declarations
   enable-enemies: true
   # Require both teams to accept an alliance request
   mutual-alliance-required: true
+  # Enable the /team allychat command (only checked if enable-allies is also true)
+  enable-ally-chat: true
+  # How long an ally invite stays valid before expiring (seconds)
+  ally-invite-expire-seconds: 60
+  # Format for ally chat messages
+  ally-chat-format: "&8[&aAlly&8] &7{team} &7{role} &f{player}&8: &f{message}"
   # Friendly fire settings (PVP)
   friendly-fire:
     within-team: true
     between-allies: true
     between-enemies: true
     neutral-default: true
+
+# This mirrors vanilla's own team visibility option - the same thing
+# /minecraft:team modify <team> seeFriendlyInvisibles true does - but scoped
+# to Teamify's teams/allies. When enabled, invisible teammates/allies become
+# actually visible in-game to the rest of the team. This is a global,
+# server-enforced setting - there is no per-team toggle.
+visibility:
+  see-members-when-invis:
+    default: false
+  see-allies-when-invis:
+    default: false
 
 bank:
   # Enable a shared team bank (requires Vault)
@@ -143,6 +172,29 @@ bank:
   max-balance: 1000000.0
   # Tax percentage taken on deposits (0 = none)
   deposit-tax-percent: 0.0
+
+team-customization:
+  # Lets teams pick a color (used for their name/tag in menus & messages)
+  # and a custom item (their icon in the team list / relations menus),
+  # both editable from /team settings. Requires the can-customize-team
+  # role permission.
+  enable-color: true
+  enable-custom-item: true
+  # The color a new team starts with
+  default-color: "WHITE"
+  # Colors players can cycle through in the settings menu
+  available-colors:
+    - "WHITE"
+    - "RED"
+    - "GOLD"
+    - "YELLOW"
+    - "GREEN"
+    - "AQUA"
+    - "BLUE"
+    - "LIGHT_PURPLE"
+    - "DARK_PURPLE"
+    - "GRAY"
+    - "BLACK"
 
 leveling:
   # Enable team leveling / XP system
@@ -155,21 +207,16 @@ leveling:
   xp-sources:
     mob-kill: 5
     player-kill: 25
-    claim-chunk: 10
     playtime-per-hour: 15
   # Perks unlocked at certain levels (purely config-driven, read by plugin)
   perks:
     5:
-      extra-claims: 5
       extra-homes: 0
     10:
-      extra-claims: 10
       extra-homes: 1
     25:
-      extra-claims: 20
       extra-homes: 1
     50:
-      extra-claims: 50
       extra-homes: 2
 
 pvp:
@@ -184,9 +231,13 @@ disband:
   # Require confirmation (GUI or chat) before disbanding
   require-confirmation: true
   # Cooldown in seconds before the same player can create a new team after disbanding
-  cooldown-after-disband-seconds: 600
+  cooldown-after-disband-seconds: 60
   # Refund percentage of creation cost when disbanding
   refund-percent-on-disband: 50
+
+transfer:
+  # Require confirmation (GUI) before transferring team ownership
+  require-confirmation: true
 
 storage:
   # Storage backend: YAML, SQLITE, or MYSQL
@@ -201,6 +252,7 @@ storage:
     table-prefix: "teams_"
 
 integrations:
+  #those might not work they are experimantal and didnt touch them much
   vault:
     enabled: true
   placeholderapi:
@@ -217,12 +269,23 @@ integrations:
 gui:
   # Master toggle for the GUI system
   enabled: true
+  # Sounds below use modern Minecraft sound-event keys (the same names you'd
+  # type in /playsound, minus the "minecraft:" namespace) - not the old
+  # Bukkit Sound enum names like "ENTITY_PLAYER_LEVELUP".
   # Sound played when opening any team GUI
-  open-sound: "UI_BUTTON_CLICK"
+  open-sound: "ui.button.click"
   # Sound played on a successful action (invite sent, promote, etc)
-  success-sound: "ENTITY_PLAYER_LEVELUP"
+  success-sound: "entity.player.levelup"
   # Sound played on an error / denied action
-  error-sound: "ENTITY_VILLAGER_NO"
+  error-sound: "entity.villager.no"
+
+  # NOTE: individual GUI items also support two optional per-item keys
+  # wherever an item is built from a config section (see the "settings"
+  # item below for an example):
+  #   custom-model-data: 1001   # lets a resource pack swap the item's texture
+  #   glow: true                # adds an enchant glint with no visible enchant
+  # These aren't set on every item by default - add them to whichever items
+  # you want a custom look for.
 
   main-menu:
     title: "&8&lTeam Menu"
@@ -254,6 +317,8 @@ gui:
         slot: 22
         material: "COMPARATOR"
         name: "&7Team Settings"
+        # Example: uncomment to give this item a custom resource-pack texture
+        # custom-model-data: 1001
 
   members-menu:
     title: "&8&lTeam Members"
@@ -269,11 +334,9 @@ gui:
     deny-material: "RED_DYE"
 
   relations-menu:
-    title: "&8&lAllies & Enemies"
+    title: "&8&lAllies"
     size: 45
     ally-material: "LIME_WOOL"
-    enemy-material: "RED_WOOL"
-    neutral-material: "GRAY_WOOL"
 
   confirm-menu:
     title: "&8&lAre you sure?"
@@ -287,7 +350,39 @@ gui:
     title: "&8&lAll Teams"
     size: 54
     teams-per-page: 45
-    sort-by: "LEVEL" # LEVEL, MEMBERS, NAME
+    sort-by: "NAME" # LEVEL, MEMBERS, NAME
+
+  settings-menu:
+    title: "&8&lTeam Settings"
+    size: 27
+    pvp-toggle-slot: 13
+    pvp-on-material: "LIME_DYE"
+    pvp-off-material: "GRAY_DYE"
+    pvp-locked-material: "BARRIER"
+    # Cycles through team-customization.available-colors (left-click: next,
+    # right-click: previous). Requires can-customize-team.
+    color-slot: 11
+    color-material: "WHITE_DYE"
+    # An empty slot the player drops their desired icon item into, then
+    # confirms with the apply button below. Requires can-customize-team.
+    item-slot: 15
+    item-placeholder-material: "ITEM_FRAME"
+    item-apply-slot: 16
+    item-apply-material: "LIME_CONCRETE"
+    item-clear-slot: 20
+    item-clear-material: "RED_CONCRETE"
+
+  bank-menu:
+    title: "&8&lTeam Bank"
+    size: 27
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    balance-slot: 13
+    balance-material: "GOLD_INGOT"
+    deposit-slot: 11
+    deposit-material: "LIME_DYE"
+    withdraw-slot: 15
+    withdraw-material: "RED_DYE"
 
 messages:
   no-permission: "&cYou don't have permission to do that."
@@ -296,9 +391,48 @@ messages:
   team-created: "&aTeam &b{team} &acreated successfully!"
   team-disbanded: "&cYour team has been disbanded."
   invite-sent: "&aInvite sent to &b{player}&a."
-  invite-received: "&bYou have been invited to join &e{team}&b. Type /team join {team} to accept."
+  invite-received: "&bYou have been invited to join &e{team}&b."
   player-kicked: "&c{player} &7has been kicked from the team."
   not-enough-permission-role: "&cYour role does not allow this action."
   team-full: "&cThat team is full."
   invalid-name: "&cInvalid team name. Check length and allowed characters."
   cooldown-active: "&cYou must wait {time} before doing that again."
+  pvp-enabled: "&aTeam PVP is now &lON&a."
+  pvp-disabled: "&cTeam PVP is now &lOFF&c."
+  pvp-locked: "&cTeam PVP toggle is locked because friendly-fire.within-team is enabled in the config."
+  config-reloaded: "&aConfiguration reloaded."
+  kicked-from-team: "&cYou have been kicked from &f{team}&c by &f{player}&c."
+  player-kicked-broadcast: "&7{player} was kicked from the team by &f{kicker}&7."
+  left-team: "&7You left &f{team}&7."
+  player-left-broadcast: "&7{player} has left the team."
+  player-joined-broadcast: "&a{player} has joined the team!"
+  promoted-notify: "&aYou were promoted to &b{role}&a in &f{team}&a!"
+  promoted-broadcast: "&a{player} was promoted to &b{role}&a."
+  demoted-notify: "&cYou were demoted to &7{role}&c in &f{team}&c."
+  demoted-broadcast: "&7{player} was demoted to {role}."
+  ownership-transferred-notify: "&aYou are now the owner of &f{team}&a!"
+  ownership-transferred-broadcast: "&e{player} is now the team owner."
+  team-disbanded-member: "&cYour team &f{team} &chas been disbanded by the owner."
+
+  # Bank
+  bank-disabled: "&cThe team bank is disabled."
+  bank-no-economy: "&cNo economy plugin (Vault) was found, so the team bank can't move real money right now."
+  bank-balance: "&6Team Bank Balance: &f{amount}"
+  bank-invalid-amount: "&cEnter a valid positive amount."
+  bank-insufficient-player-funds: "&cYou don't have that much money."
+  bank-insufficient-team-funds: "&cThe team bank doesn't have that much money."
+  bank-max-balance: "&cThe team bank is already at its maximum balance."
+  bank-transaction-failed: "&cThat transaction failed. Please try again."
+  bank-cant-withdraw-role: "&cYour role isn't allowed to withdraw from the team bank."
+  bank-deposit-success: "&aDeposited &f{amount} &ainto the team bank. New balance: &f{balance}&a."
+  bank-withdraw-success: "&aWithdrew &f{amount} &afrom the team bank. New balance: &f{balance}&a."
+  bank-deposit-broadcast: "&7{player} deposited &f{amount} &7into the team bank."
+  bank-withdraw-broadcast: "&7{player} withdrew &f{amount} &7from the team bank."
+
+  # Team customization (color & custom item)
+  team-color-changed: "&aTeam color set to {color}."
+  team-color-disabled: "&cTeam color customization is disabled."
+  team-item-disabled: "&cTeam item customization is disabled."
+  team-item-apply-empty: "&cPut an item in the slot first, then click apply."
+  team-item-applied: "&aYour team's item has been updated! You got your item back."
+  team-item-cleared: "&7Team item reset to default."
