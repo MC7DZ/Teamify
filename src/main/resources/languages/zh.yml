@@ -1,0 +1,127 @@
+# =======================================================
+#                Teamify Language File - Chinese
+# =======================================================
+# This file only holds chat messages. All other settings
+# (roles, limits, GUI, etc) stay in config.yml.
+#
+# Placeholders like {player}, {team}, {time} are replaced
+# automatically where supported.
+#
+# IMPORTANT: Please translate the values below.
+
+messages:
+  no-permission: "&c你没有权限这样做。"
+  no-team: "&c你不在一个队伍中。"
+  already-in-team: "&c你已经在一个队伍中。"
+  team-created: "&a队伍 &b{team} &a创建成功！"
+  team-disbanded: "&c你的队伍已被解散。"
+  invite-sent: "&a邀请已发送给 &b{player}&a。"
+  invite-received: "&b你已收到加入 &e{team}&b 的邀请。输入 /team join {team} 接受。"
+  player-kicked: "&c{player} &7已被踢出队伍。"
+  not-enough-permission-role: "&c你的角色没有足够的权限执行此操作。"
+  team-full: "&c该队伍已满。"
+  invalid-name: "&c队伍名称无效。请检查长度和允许的字符。"
+  cooldown-active: "&c你必须等待 {time} 才能再次执行此操作。"
+  pvp-enabled: "&a队伍PVP现在 &l已启用&a。"
+  pvp-disabled: "&c队伍PVP现在 &l已禁用&c。"
+  pvp-locked: "&c队伍PVP切换被锁定，因为配置中启用了friendly-fire.within-team。"
+  config-reloaded: "&a配置已重新加载。"
+
+  # Kick
+  cant-kick-yourself: "&c你不能踢出自己。请使用 /team leave 或 /team disband 代替。"
+  cant-kick-owner: "&c你不能踢出队伍所有者。"
+  cant-kick-higher-rank: "&c你不能踢出与你等级相同或更高的人。"
+  player-not-in-team: "&c该玩家不在你的队伍中。"
+  kicked-from-team: "&c你已被 &f{player}&c 从 &f{team}&c 踢出。"
+  player-kicked-broadcast: "&7{player} 被 &f{kicker}&7 踢出队伍。"
+
+  # Leave
+  left-team: "&7你离开了 &f{team}&7。"
+  player-left-broadcast: "&7{player} 离开了队伍。"
+
+  # Join
+  player-joined-broadcast: "&a{player} 已加入队伍！"
+
+  # Promote
+  cant-promote-yourself: "&c你不能晋升自己。"
+  already-highest-rank: "&c该玩家已拥有最高等级。"
+  cant-promote-own-rank: "&c你不能将某人晋升到与你相同或更高的等级。"
+  promoted-to-leader: "&a{player} 现在是队伍领袖。你现在是副领袖。"
+  player-promoted: "&a{player} 已晋升为 {role}。"
+  promoted-notify: "&a你已在 &f{team}&a 中晋升为 &b{role}&a！"
+  promoted-broadcast: "&a{player} 已晋升为 &b{role}&a。"
+
+  # Demote
+  cant-demote-yourself: "&c你不能降级自己。"
+  cant-demote-owner: "&c你不能降级队伍所有者。"
+  cant-demote-higher-rank: "&c你不能降级与你等级相同或更高的人。"
+  player-demoted: "&a{player} 已降级为 {role}。"
+  demoted-notify: "&c你已在 &f{team}&c 中降级为 &7{role}&c。"
+  demoted-broadcast: "&7{player} 已降级为 {role}。"
+
+  # Owner self rank change
+  owner-role-changed: "&a你的等级已设置为 {role}。"
+
+  # Ownership transfer
+  ownership-transferred: "&a{player} 现在是队伍所有者和领袖。你现在是 {role}。"
+  ownership-transferred-notify: "&a你现在是 &f{team}&a 的所有者！"
+  ownership-transferred-broadcast: "&e{player} 现在是队伍所有者。"
+
+  # Disband
+  team-disbanded-member: "&c你的队伍 &f{team} &c已被所有者解散。"
+
+  # Disabled commands
+  command-disabled: "&c此命令已被服务器配置禁用。"
+
+  # Home
+  no-home-set: "&c你的队伍没有设置家。"
+
+  # Allies
+  allies-disabled: "&c联盟系统已禁用。"
+  ally-chat-disabled: "&c盟友聊天已禁用。"
+  ally-invalid-team: "&c该队伍不存在。"
+  ally-cant-self: "&c你不能与自己的队伍结盟。"
+  already-allied: "&c你的队伍已与 {team} 结盟。"
+  already-enemies: "&c你不能与你正在交战的队伍结盟。"
+  max-allies-reached: "&c你的队伍已达到最大盟友数量。"
+  ally-invite-sent: "&a联盟请求已发送给 &b{team}&a。"
+  ally-invite-received: "&b{team} &7已请求结盟。输入 /team allyinvite {team} 接受。"
+  ally-added: "&a你的队伍现在已与 &b{team}&a 结盟！"
+  no-ally-invite: "&c该队伍没有邀请你结盟。使用 /team allyinvite {team} 发送请求。"
+  not-allied: "&c你的队伍未与 {team} 结盟。"
+  ally-removed: "&7你的队伍不再与 &f{team}&7 结盟。"
+  ally-chat-enabled: "&a盟友聊天已启用。"
+  ally-chat-disabled-toggle: "&7盟友聊天已禁用。"
+
+  # Bank
+  bank-disabled: "&c队伍银行已禁用。"
+  bank-no-economy: "&c未找到经济插件 (Vault)，因此队伍银行目前无法转移真实货币。"
+  bank-balance: "&6队伍银行余额: &f{amount}"
+  bank-invalid-amount: "&c请输入有效的正数金额。"
+  bank-insufficient-player-funds: "&c你没有那么多钱。"
+  bank-insufficient-team-funds: "&c队伍银行没有那么多钱。"
+  bank-max-balance: "&c队伍银行已达到最大余额。"
+  bank-transaction-failed: "&c交易失败。请重试。"
+  bank-cant-withdraw-role: "&c你的角色不允许从队伍银行提款。"
+  bank-deposit-success: "&a已存入 &f{amount} &a到队伍银行。新余额: &f{balance}&a。"
+  bank-withdraw-success: "&a已从队伍银行取出 &f{amount} &a。新余额: &f{balance}&a。"
+  bank-deposit-broadcast: "&7{player} 存入了 &f{amount} &7到队伍银行。"
+  bank-withdraw-broadcast: "&7{player} 从队伍银行取出了 &f{amount} &7。"
+
+  # Team customization (color & custom item)
+  team-color-changed: "&a队伍颜色已设置为 {color}。"
+  team-color-disabled: "&c队伍颜色自定义已禁用。"
+  team-item-disabled: "&c队伍物品自定义已禁用。"
+  team-item-apply-empty: "&c请先将物品放入槽位，然后点击应用。"
+  team-item-applied: "&a你的队伍物品已更新！你已取回你的物品。"
+  team-item-cleared: "&7队伍物品已重置为默认值。"
+  team-description-disabled: "&c队伍描述已禁用。"
+  team-description-prompt: "&a在聊天中输入你的队伍新描述（或“取消”）。"
+  team-description-changed: "&a队伍描述已更新！"
+  team-description-too-long: "&c该描述过长（最多 {max} 个字符）。"
+  team-description-cleared: "&7队伍描述已清除。"
+  team-tag-prompt: "&a在聊天中输入你的队伍新标签（或“取消”）。"
+  invalid-tag-length: "&c队伍标签长度无效。必须在 {min} 到 {max} 个字符之间。"
+  team-tag-changed: "&a队伍标签已更改为 &f{tag}&a。"
+
+  # Invisibility visibility toggles
