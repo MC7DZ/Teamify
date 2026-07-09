@@ -34,7 +34,9 @@ public class TeamAdminCommand implements CommandExecutor {
         switch (sub) {
             case "reload" -> {
                 cm.reload();
-                sender.sendMessage(cm.getPrefix() + cm.color("&aConfig reloaded."));
+                boolean economyHooked = plugin.getEconomyManager().setup();
+                sender.sendMessage(cm.getPrefix() + cm.color("&aConfig reloaded."
+                        + (economyHooked ? " &7(Vault economy hooked)" : " &7(Vault economy not available)")));
             }
             case "delete", "forcedisband" -> {
                 if (args.length < 2) {

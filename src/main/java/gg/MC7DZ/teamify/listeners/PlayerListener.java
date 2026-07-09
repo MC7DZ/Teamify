@@ -3,10 +3,11 @@ package gg.MC7DZ.teamify.listeners;
 import gg.MC7DZ.teamify.Teamify;
 import gg.MC7DZ.teamify.team.RelationType;
 import gg.MC7DZ.teamify.team.Team;
+import io.papermc.paper.event.player.AsyncChatEvent;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -19,7 +20,7 @@ import java.util.UUID;
 public class PlayerListener implements Listener {
 
     /** What the player's next chat message should be interpreted as. */
-    public enum PendingInputType { BANK_DEPOSIT, BANK_WITHDRAW }
+    public enum PendingInputType { BANK_DEPOSIT, BANK_WITHDRAW, TEAM_DESCRIPTION, TEAM_TAG }
 
     private final Teamify plugin;
     private final Set<UUID> teamChatToggled = new HashSet<>();
@@ -75,14 +76,15 @@ public class PlayerListener implements Listener {
     }
 
     @EventHandler
-    public void onChat(AsyncPlayerChatEvent event) {
+    public void onChat(AsyncChatEvent event) {
         Player player = event.getPlayer();
         Team team = plugin.getTeamManager().getTeamOf(player.getUniqueId());
+        String plainMessage = PlainTextComponentSerializer.plainText().serialize(event.message());
 
         PendingInputType pending = pendingInput.remove(player.getUniqueId());
         if (pending != null) {
             event.setCancelled(true);
-            String message = event.getMessage().trim();
+            String message = plainMessage.trim();
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 if (message.equalsIgnoreCase("cancel")) {
                     player.sendMessage(plugin.getConfigManager().getPrefix() + plugin.getConfigManager().color("&7Cancelled."));
@@ -95,6 +97,28 @@ public class PlayerListener implements Listener {
                 switch (pending) {
                     case BANK_DEPOSIT -> plugin.getTeamCommand().bankDeposit(player, team, message);
                     case BANK_WITHDRAW -> plugin.getTeamCommand().bankWithdraw(player, team, message);
+                    case TEAM_DESCRIPTION -> plugin.getTeamCommand().setDescription(player, team, message);
+                    case TEAM_TAG -> {
+                        String newTag = message;
+                        int minTagLength = plugin.getConfigManager().getMinTagLength();
+                        int maxTagLength = plugin.getConfigManager().getMaxTagLength();
+                        boolean allowColorCodes = plugin.getConfigManager().isAllowColorCodes();
+
+                        if (newTag.length() < minTagLength || newTag.length() > maxTagLength) {
+                            player.sendMessage(plugin.getConfigManager().getMessage("invalid-tag-length",
+                                    "min", String.valueOf(minTagLength),
+                                    "max", String.valueOf(maxTagLength)));
+                            return;
+                        }
+
+                        if (!allowColorCodes) {
+                            newTag = newTag.replaceAll("(?i)&([0-9a-fk-or])", ""); // Strip color codes
+                        }
+
+                        team.setTag(newTag);
+                        plugin.getTeamManager().saveTeam(team);
+                        player.sendMessage(plugin.getConfigManager().getMessage("team-tag-changed", "tag", newTag));
+                    }
                 }
             });
             return;
@@ -105,7 +129,7 @@ public class PlayerListener implements Listener {
                 teamChatToggled.remove(player.getUniqueId());
             } else {
                 event.setCancelled(true);
-                sendTeamChat(player, team, event.getMessage());
+                sendTeamChat(player, team, plainMessage);
                 return;
             }
         }
@@ -116,7 +140,7 @@ public class PlayerListener implements Listener {
                 allyChatToggled.remove(player.getUniqueId());
             } else {
                 event.setCancelled(true);
-                sendAllyChat(player, team, event.getMessage());
+                sendAllyChat(player, team, plainMessage);
             }
         }
     }

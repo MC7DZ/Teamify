@@ -69,6 +69,14 @@ public class TeamTabCompleter implements TabCompleter {
                 return filter(names, args[1]);
             }
 
+            if (sub.equals("joinrequest")) {
+                // suggest all team names (player isn't in a team yet)
+                List<String> names = tm.getTeams().stream()
+                        .map(Team::getName)
+                        .collect(Collectors.toList());
+                return filter(names, args[1]);
+            }
+
             if (sub.equals("allyinvite")) {
                 Team team = tm.getTeamOf(player.getUniqueId());
                 if (team == null) return Collections.emptyList();
@@ -98,6 +106,10 @@ public class TeamTabCompleter implements TabCompleter {
 
             if (sub.equals("bank")) {
                 return filter(List.of("deposit", "withdraw", "balance"), args[1]);
+            }
+
+            if (sub.equals("description")) {
+                return filter(List.of("clear"), args[1]);
             }
         }
 

@@ -20,13 +20,13 @@ public final class TeamCommandAccess {
     /** Every subcommand the plugin exposes, in suggestion order. */
     public static final List<String> ALL_SUBCOMMANDS = List.of(
             "create", "invite", "kick", "leave", "disband", "home", "sethome",
-            "chat", "info", "list", "gui", "join", "promote", "demote", "transfer",
+            "chat", "info", "list", "gui", "join", "joinrequest", "requests", "promote", "demote", "transfer",
             "settings", "pvp", "allychat", "allyinvite", "allyleave",
-            "bank", "reload"
+            "bank", "description", "echest", "reload"
     );
 
     /** Subcommands usable by a player who is not currently in a team. */
-    public static final List<String> NO_TEAM_SUBCOMMANDS = List.of("create", "join", "list");
+    public static final List<String> NO_TEAM_SUBCOMMANDS = List.of("create", "join", "joinrequest", "list");
 
     private TeamCommandAccess() {
     }
@@ -68,7 +68,13 @@ public final class TeamCommandAccess {
         }
 
         if (team == null) {
-            return NO_TEAM_SUBCOMMANDS.contains(sub);
+            // For commands usable by players not in a team, also check specific config toggles
+            return switch (sub) {
+                case "create", "join" -> true;
+                case "joinrequest" -> cm.isSendJoinRequestEnabled();
+                case "list" -> cm.isListCommandEnabled();
+                default -> false; // Should not happen for NO_TEAM_SUBCOMMANDS
+            };
         }
 
         TeamRole role = team.getRole(player.getUniqueId());
@@ -77,7 +83,10 @@ public final class TeamCommandAccess {
         return switch (sub) {
             case "create" -> false; // already in a team
             case "join" -> true; // harmless to always show; handler validates invites
-            case "list", "info", "gui", "settings", "pvp", "leave", "disband" -> true;
+            case "joinrequest" -> false; // already in a team
+            case "requests" -> true; // handler/GUI still gate accept/deny on can-invite / can-manage-relations
+            case "info", "gui", "settings", "pvp", "leave", "disband" -> true;
+            case "list" -> cm.isListCommandEnabled(); // Check config for list command
             case "home" -> cm.isHomeCommandEnabled();
             case "sethome" -> cm.isSetHomeCommandEnabled() && rolePerm(plugin, role, "can-set-home");
             case "invite" -> rolePerm(plugin, role, "can-invite");
@@ -87,6 +96,8 @@ public final class TeamCommandAccess {
             case "chat" -> cm.isTeamChatEnabled();
             case "allyinvite", "allyleave" -> cm.isAlliesEnabled() && rolePerm(plugin, role, "can-manage-relations");
             case "bank" -> cm.isBankEnabled() && rolePerm(plugin, role, "can-access-bank");
+            case "description" -> cm.isTeamDescriptionEnabled() && rolePerm(plugin, role, "can-edit-description");
+            case "echest" -> cm.isEchestEnabled() && rolePerm(plugin, role, "can-access-echest");
             case "allychat" -> cm.isAlliesEnabled() && cm.isAllyChatEnabled();
             case "reload" -> player.hasPermission("teams.admin");
             default -> true;

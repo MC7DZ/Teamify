@@ -1,6 +1,7 @@
 package gg.MC7DZ.teamify.config;
 
 import gg.MC7DZ.teamify.Teamify;
+import gg.MC7DZ.teamify.gui.GuiHolder; // Import GuiHolder
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -18,11 +19,13 @@ public class ConfigManager {
 
     private final Teamify plugin;
     private YamlConfiguration langConfig;
+    private YamlConfiguration guiConfig;
     private String loadedLanguage;
 
     public ConfigManager(Teamify plugin) {
         this.plugin = plugin;
         loadLanguage();
+        loadGuiConfig();
     }
 
     public FileConfiguration getConfig() {
@@ -32,6 +35,16 @@ public class ConfigManager {
     public void reload() {
         plugin.reloadConfig();
         loadLanguage();
+        loadGuiConfig();
+        // GUI classes read from Teamify#getGuiConfig(), which is a separate
+        // FileConfiguration instance from the one loaded above - reload it
+        // too, or edits to gui.yml would never show up until a server restart.
+        plugin.reloadGuiConfig();
+
+        // After reloading configs, refresh all currently open GUIs
+        for (GuiHolder gui : GuiHolder.getActiveGuis()) {
+            gui.rebuild();
+        }
     }
 
     public String getPrefix() {
@@ -86,6 +99,22 @@ public class ConfigManager {
         this.loadedLanguage = language;
     }
 
+    private void loadGuiConfig() {
+        File guiFile = new File(plugin.getDataFolder(), "gui.yml");
+        if (!guiFile.exists()) {
+            plugin.saveResource("gui.yml", false);
+        }
+        this.guiConfig = YamlConfiguration.loadConfiguration(guiFile);
+        try (InputStream defStream = plugin.getResource("gui.yml")) {
+            if (defStream != null) {
+                YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                        new InputStreamReader(defStream, StandardCharsets.UTF_8));
+                this.guiConfig.setDefaults(defaults);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     public String getLoadedLanguage() {
         return loadedLanguage;
     }
@@ -94,10 +123,6 @@ public class ConfigManager {
         String raw = null;
         if (langConfig != null) {
             raw = langConfig.getString("messages." + path);
-        }
-        if (raw == null) {
-            // Fall back to config.yml's own messages section for backwards compatibility.
-            raw = getConfig().getString("messages." + path);
         }
         if (raw == null) {
             raw = "&cMissing message: " + path;
@@ -117,12 +142,19 @@ public class ConfigManager {
         return s == null ? "" : ChatColor.translateAlternateColorCodes('&', s);
     }
 
+    // ---- General ----
+    public boolean isListCommandEnabled() { return getConfig().getBoolean("general.enable-list-command", true); }
+
     // ---- Team creation ----
     public int getMinNameLength() { return getConfig().getInt("team-creation.min-name-length", 3); }
     public int getMaxNameLength() { return getConfig().getInt("team-creation.max-name-length", 16); }
+    public int getMinTagLength() { return getConfig().getInt("team-creation.min-tag-length", 2); }
+    public int getMaxTagLength() { return getConfig().getInt("team-creation.max-tag-length", 5); }
+    public boolean isAllowColorCodes() { return getConfig().getBoolean("team-creation.allow-color-codes", true); }
     public String getNameRegex() { return getConfig().getString("team-creation.name-regex", "^[a-zA-Z0-9_]+$"); }
     public int getCreationCooldownSeconds() { return getConfig().getInt("team-creation.creation-cooldown-seconds", 300); }
     public boolean isBlockDuplicateNames() { return getConfig().getBoolean("team-creation.block-duplicate-names", true); }
+    public double getCreationCost() { return getConfig().getDouble("team-creation.creation-cost", 0.0); }
 
     // ---- Team limits ----
     public int getMaxMembers() { return getConfig().getInt("team-limits.max-members", 20); }
@@ -137,10 +169,14 @@ public class ConfigManager {
     public int getHomeTeleportDelay() { return getConfig().getInt("home.teleport-delay-seconds", 3); }
     public boolean isCancelOnMove() { return getConfig().getBoolean("home.cancel-on-move", true); }
     public int getHomeCooldownSeconds() { return getConfig().getInt("home.cooldown-seconds", 30); }
+    public double getTeleportCost() { return getConfig().getDouble("home.teleport-cost", 0.0); }
 
     // ---- Chat ----
     public boolean isTeamChatEnabled() { return getConfig().getBoolean("chat.enable-team-chat", true); }
     public String getTeamChatFormat() { return getConfig().getString("chat.team-chat-format", "&8[&bTeam&8] &7{role} &f{player}&8: &f{message}"); }
+
+    // ---- Join requests ----
+    public boolean isSendJoinRequestEnabled() { return getConfig().getBoolean("join-requests.send-join-request", true); }
 
     // ---- Relations ----
     public boolean isAlliesEnabled() { return getConfig().getBoolean("relations.enable-allies", true); }
@@ -158,12 +194,29 @@ public class ConfigManager {
 
     // ---- Bank ----
     public boolean isBankEnabled() { return getConfig().getBoolean("bank.enable-team-bank", true); }
+
+    // ---- Team Enderchest ----
+    public boolean isEchestEnabled() { return getConfig().getBoolean("echest.enable-echest", false); }
+    /** Number of usable slots in the shared team echest, clamped to a single 54-slot inventory. */
+    public int getEchestSlots() {
+        int slots = getConfig().getInt("echest.slots", 54);
+        return Math.max(1, Math.min(54, slots));
+    }
+    public String getEchestFillerItem() { return getConfig().getString("echest.filler-item", "GRAY_STAINED_GLASS_PANE"); }
     public double getStartingBalance() { return getConfig().getDouble("bank.starting-balance", 0.0); }
     public double getMaxBalance() { return getConfig().getDouble("bank.max-balance", 1000000.0); }
+
+    // ---- Integrations ----
+    public boolean isPlaceholderApiEnabled() { return getConfig().getBoolean("integrations.placeholderapi.enabled", true); }
+
+    // ---- Kills ----
+    public boolean isCountTeamKillsEnabled() { return getConfig().getBoolean("kills.count-team-kills", false); }
 
     // ---- Team customization (color & custom item) ----
     public boolean isTeamColorEnabled() { return getConfig().getBoolean("team-customization.enable-color", true); }
     public boolean isTeamItemEnabled() { return getConfig().getBoolean("team-customization.enable-custom-item", true); }
+    public boolean isTeamDescriptionEnabled() { return getConfig().getBoolean("team-customization.enable-description", true); }
+    public boolean isShowDescriptionInList() { return getConfig().getBoolean("team-customization.show-description-in-list", true); }
     public String getDefaultTeamColorName() { return getConfig().getString("team-customization.default-color", "WHITE"); }
     public java.util.List<String> getAvailableTeamColors() {
         java.util.List<String> colors = getConfig().getStringList("team-customization.available-colors");
@@ -179,15 +232,16 @@ public class ConfigManager {
     public boolean isDisbandConfirmationRequired() { return getConfig().getBoolean("disband.require-confirmation", true); }
     public boolean isTransferConfirmationRequired() { return getConfig().getBoolean("transfer.require-confirmation", true); }
     public int getDisbandCooldownSeconds() { return getConfig().getInt("disband.cooldown-after-disband-seconds", 600); }
+    public int getRefundPercentOnDisband() { return getConfig().getInt("disband.refund-percent-on-disband", 50); }
 
     // ---- Storage ----
     public String getStorageType() { return getConfig().getString("storage.type", "YAML"); }
 
     // ---- GUI ----
-    public boolean isGuiEnabled() { return getConfig().getBoolean("gui.enabled", true); }
+    public boolean isGuiEnabled() { return guiConfig.getBoolean("gui.enabled", true); }
     // These are modern Minecraft sound-event keys (e.g. "ui.button.click"),
     // resolved via the Registry-based SoundUtil - not old Sound enum names.
-    public String getGuiOpenSound() { return getConfig().getString("gui.open-sound", "ui.button.click"); }
-    public String getGuiSuccessSound() { return getConfig().getString("gui.success-sound", "entity.player.levelup"); }
-    public String getGuiErrorSound() { return getConfig().getString("gui.error-sound", "entity.villager.no"); }
+    public String getGuiOpenSound() { return guiConfig.getString("gui.open-sound", "ui.button.click"); }
+    public String getGuiSuccessSound() { return guiConfig.getString("gui.success-sound", "entity.player.levelup"); }
+    public String getGuiErrorSound() { return guiConfig.getString("gui.error-sound", "entity.villager.no"); }
 }

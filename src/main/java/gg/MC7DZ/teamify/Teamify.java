@@ -9,9 +9,18 @@ import gg.MC7DZ.teamify.economy.EconomyManager;
 import gg.MC7DZ.teamify.listeners.GuiListener;
 import gg.MC7DZ.teamify.listeners.PlayerListener;
 import gg.MC7DZ.teamify.listeners.TeamPvpListener;
+import gg.MC7DZ.teamify.placeholder.TeamifyExpansion;
 import gg.MC7DZ.teamify.team.TeamManager;
 import gg.MC7DZ.teamify.visibility.VisibilityManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 public final class Teamify extends JavaPlugin {
 
@@ -23,12 +32,14 @@ public final class Teamify extends JavaPlugin {
     private VisibilityManager visibilityManager;
     private EconomyManager economyManager;
     private TeamCommand teamCommand;
+    private FileConfiguration guiConfig;
 
     @Override
     public void onEnable() {
         instance = this;
 
         saveDefaultConfig();
+        saveDefaultGuiConfig(); // Save default gui.yml
         this.configManager = new ConfigManager(this);
         this.teamManager = new TeamManager(this);
         this.teamManager.loadAll();
@@ -45,6 +56,8 @@ public final class Teamify extends JavaPlugin {
         getCommand("team").setTabCompleter(new TeamTabCompleter(this));
         getCommand("teamadmin").setExecutor(new TeamAdminCommand(this));
         getCommand("teamadmin").setTabCompleter(new TeamAdminTabCompleter(this));
+
+        registerPlaceholderApi();
 
         this.playerListener = new PlayerListener(this);
         getServer().getPluginManager().registerEvents(playerListener, this);
@@ -78,6 +91,63 @@ public final class Teamify extends JavaPlugin {
             }
         }
         getLogger().info("Teamify has been disabled.");
+    }
+
+    /**
+     * Registers the "teamify" PlaceholderAPI expansion (e.g. %teamify_bank%)
+     * if PlaceholderAPI is installed and the integration is enabled in
+     * config.yml. Safe to call even when PlaceholderAPI isn't present -
+     * this only touches PlaceholderAPI classes once we've confirmed the
+     * plugin is loaded, so there's no hard compile/runtime dependency.
+     */
+    private void registerPlaceholderApi() {
+        if (!configManager.isPlaceholderApiEnabled()) {
+            getLogger().info("PlaceholderAPI integration disabled in config.yml, skipping.");
+            return;
+        }
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            getLogger().info("PlaceholderAPI not found - %teamify_...% placeholders will be unavailable.");
+            return;
+        }
+        try {
+            new TeamifyExpansion(this).register();
+            getLogger().info("Hooked into PlaceholderAPI (%teamify_bank%, %teamify_kills%, etc).");
+        } catch (Throwable t) {
+            getLogger().warning("Failed to register PlaceholderAPI expansion: " + t.getMessage());
+        }
+    }
+
+    public void saveDefaultGuiConfig() {
+        File guiFile = new File(getDataFolder(), "gui.yml");
+        if (!guiFile.exists()) {
+            saveResource("gui.yml", false);
+        }
+        this.guiConfig = YamlConfiguration.loadConfiguration(guiFile);
+        try (InputStream defStream = getResource("gui.yml")) {
+            if (defStream != null) {
+                YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                        new InputStreamReader(defStream, StandardCharsets.UTF_8));
+                this.guiConfig.setDefaults(defaults);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    public void reloadGuiConfig() {
+        File guiFile = new File(getDataFolder(), "gui.yml");
+        this.guiConfig = YamlConfiguration.loadConfiguration(guiFile);
+        try (InputStream defStream = getResource("gui.yml")) {
+            if (defStream != null) {
+                YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                        new InputStreamReader(defStream, StandardCharsets.UTF_8));
+                this.guiConfig.setDefaults(defaults);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    public FileConfiguration getGuiConfig() {
+        return guiConfig;
     }
 
     public static Teamify getInstance() {

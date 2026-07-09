@@ -1,6 +1,5 @@
 package gg.MC7DZ.teamify.gui;
 
-import gg.MC7DZ.teamify.Teamify;
 import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.team.TeamRole;
 import org.bukkit.Bukkit;
@@ -12,6 +11,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,44 +22,86 @@ import java.util.UUID;
  */
 public class InviteMenuGui extends GuiHolder {
 
-    private final Teamify plugin;
     private final Team team;
     private int acceptSlot;
     private int denySlot;
+    private int backButtonSlot = -1; // Initialize with an invalid slot
 
-    public InviteMenuGui(Teamify plugin, Player viewer, Team team) {
+    public InviteMenuGui(Player viewer, Team team) {
         super(viewer);
-        this.plugin = plugin;
         this.team = team;
         build();
     }
 
-    private void build() {
-        ConfigurationSection cfg = plugin.getConfig().getConfigurationSection("gui.invite-menu");
+    protected void build() {
+        ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.invite-menu");
         String title = plugin.getConfigManager().color(cfg.getString("title", "&8Pending Invites"));
-        int size = cfg.getInt("size", 27);
-
-        Material acceptMat;
-        Material denyMat;
-        try {
-            acceptMat = Material.valueOf(cfg.getString("accept-material", "LIME_DYE"));
-        } catch (IllegalArgumentException e) {
-            acceptMat = Material.LIME_DYE;
+        int size = cfg.getInt("size", 54);
+        
+        // Load slots from gui.yml items section
+        ConfigurationSection itemsCfg = cfg.getConfigurationSection("items");
+        if (itemsCfg != null) {
+            acceptSlot = itemsCfg.getInt("accept.slot", 30);
+            denySlot = itemsCfg.getInt("deny.slot", 32);
+            backButtonSlot = itemsCfg.getInt("back.slot", 45);
+        } else {
+            // Fallback to default hardcoded slots if items section is missing
+            acceptSlot = 30;
+            denySlot = 32;
+            backButtonSlot = 45;
         }
-        try {
-            denyMat = Material.valueOf(cfg.getString("deny-material", "RED_DYE"));
-        } catch (IllegalArgumentException e) {
-            denyMat = Material.RED_DYE;
+
+        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+
+        // Fill empty slots if configured
+        if (cfg.getBoolean("fill-empty-slots", true)) {
+            Material filler;
+            try {
+                filler = Material.valueOf(cfg.getString("filler-item", "GRAY_STAINED_GLASS_PANE"));
+            } catch (IllegalArgumentException e) {
+                filler = Material.GRAY_STAINED_GLASS_PANE;
+            }
+            List<Integer> fillerSlots = cfg.getIntegerList("filler-slots");
+            if (fillerSlots != null && !fillerSlots.isEmpty()) {
+                fillSlots(inv, filler, fillerSlots);
+            } else {
+                // Fallback to filling all empty slots if no specific filler-slots are defined
+                for (int i = 0; i < size; i++) {
+                    inv.setItem(i, GuiItem.simple(filler, " "));
+                }
+            }
         }
 
-        acceptSlot = size / 2 - 2;
-        denySlot = size / 2 + 2;
+        // Handle back button
+        if (itemsCfg != null && itemsCfg.contains("back")) {
+            ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
+            if (backButtonData != null) {
+                setBackButton(inv, backButtonSlot,
+                        plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
+                        backButtonData.getStringList("lore"));
+            }
+        }
 
-        Inventory inv = Bukkit.createInventory(this, size, title);
-        inv.setItem(size / 2, GuiItem.simple(Material.PAPER, "&bInvite from &f" + team.getName(),
-                "&7Click accept or deny below."));
-        inv.setItem(acceptSlot, GuiItem.simple(acceptMat, "&aAccept"));
-        inv.setItem(denySlot, GuiItem.simple(denyMat, "&cDeny"));
+        // Central item for invite details
+        if (itemsCfg != null && itemsCfg.contains("invite-info")) {
+            inv.setItem(itemsCfg.getInt("invite-info.slot", 22), GuiItem.fromConfig(itemsCfg.getConfigurationSection("invite-info"), "team", team.getName()));
+        } else {
+            inv.setItem(22, GuiItem.simple(Material.PAPER, "&bInvite from &f" + team.getName(),
+                    "&7Click accept or deny below."));
+        }
+
+        // Accept and Deny buttons
+        if (itemsCfg != null && itemsCfg.contains("accept")) {
+            inv.setItem(acceptSlot, GuiItem.fromConfig(itemsCfg.getConfigurationSection("accept")));
+        } else {
+            inv.setItem(acceptSlot, GuiItem.simple(Material.LIME_DYE, "&aAccept"));
+        }
+        if (itemsCfg != null && itemsCfg.contains("deny")) {
+            inv.setItem(denySlot, GuiItem.fromConfig(itemsCfg.getConfigurationSection("deny")));
+        } else {
+            inv.setItem(denySlot, GuiItem.simple(Material.RED_DYE, "&cDeny"));
+        }
+
         setInventory(inv);
     }
 
@@ -67,6 +109,11 @@ public class InviteMenuGui extends GuiHolder {
     public void onClick(int slot, ClickType clickType) {
         Player p = getViewer();
         UUID uuid = p.getUniqueId();
+
+        if (slot == backButtonSlot) {
+            p.closeInventory(); // Just close, as there's no specific "previous" GUI for invites
+            return;
+        }
 
         if (slot == acceptSlot) {
             p.closeInventory();

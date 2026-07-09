@@ -1,7 +1,7 @@
 package gg.MC7DZ.teamify.gui;
 
-import gg.MC7DZ.teamify.Teamify;
 import gg.MC7DZ.teamify.team.Team;
+import gg.MC7DZ.teamify.team.TeamRole;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -11,28 +11,29 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MainMenuGui extends GuiHolder {
 
-    private final Teamify plugin;
     private final Team team;
     private final Map<Integer, String> slotActions = new HashMap<>();
+    private int backButtonSlot = -1; // Initialize with an invalid slot
 
-    public MainMenuGui(Teamify plugin, Player viewer, Team team) {
+    public MainMenuGui(Player viewer, Team team) {
         super(viewer);
-        this.plugin = plugin;
         this.team = team;
         build();
     }
 
-    private void build() {
-        ConfigurationSection cfg = plugin.getConfig().getConfigurationSection("gui.main-menu");
+    protected void build() {
+        ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.main-menu");
         String title = plugin.getConfigManager().color(cfg.getString("title", "&8Team Menu"));
-        int size = cfg.getInt("size", 27);
+        int size = cfg.getInt("size", 54);
 
-        Inventory inv = Bukkit.createInventory(this, size, title);
+        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
 
+        // Fill empty slots if configured
         if (cfg.getBoolean("fill-empty-slots", true)) {
             Material filler;
             try {
@@ -40,9 +41,14 @@ public class MainMenuGui extends GuiHolder {
             } catch (IllegalArgumentException e) {
                 filler = Material.GRAY_STAINED_GLASS_PANE;
             }
-            ItemStack fillItem = GuiItem.simple(filler, " ");
-            for (int i = 0; i < size; i++) {
-                inv.setItem(i, fillItem);
+            List<Integer> fillerSlots = cfg.getIntegerList("filler-slots");
+            if (fillerSlots != null && !fillerSlots.isEmpty()) {
+                fillSlots(inv, filler, fillerSlots);
+            } else {
+                // Fallback to filling all empty slots if no specific filler-slots are defined
+                for (int i = 0; i < size; i++) {
+                    inv.setItem(i, GuiItem.simple(filler, " "));
+                }
             }
         }
 
@@ -51,12 +57,23 @@ public class MainMenuGui extends GuiHolder {
             for (String key : items.getKeys(false)) {
                 ConfigurationSection itemSec = items.getConfigurationSection(key);
                 int slot = itemSec.getInt("slot");
-                ItemStack item = GuiItem.fromConfig(itemSec,
-                        "team", team.getName(),
-                        "level", String.valueOf(team.getLevel()),
-                        "members", String.valueOf(team.getSize()));
-                inv.setItem(slot, item);
-                slotActions.put(slot, key);
+
+                if (key.equals("back")) {
+                    backButtonSlot = slot;
+                    ConfigurationSection backButtonCfg = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
+                    if (backButtonCfg != null) {
+                        setBackButton(inv, backButtonSlot,
+                                plugin.getConfigManager().color(backButtonCfg.getString("name", "&cBack")),
+                                backButtonCfg.getStringList("lore"));
+                    }
+                } else {
+                    ItemStack item = GuiItem.fromConfig(itemSec,
+                            "team", team.getName(),
+                            "level", String.valueOf(team.getLevel()),
+                            "members", String.valueOf(team.getSize()));
+                    inv.setItem(slot, item);
+                    slotActions.put(slot, key);
+                }
             }
         }
 
@@ -65,9 +82,15 @@ public class MainMenuGui extends GuiHolder {
 
     @Override
     public void onClick(int slot, ClickType clickType) {
+        Player p = getViewer();
+
+        if (slot == backButtonSlot) {
+            p.closeInventory();
+            return;
+        }
+
         String action = slotActions.get(slot);
         if (action == null) return;
-        Player p = getViewer();
 
         switch (action) {
             case "info" -> {
@@ -77,21 +100,48 @@ public class MainMenuGui extends GuiHolder {
                                 " &7| &bLevel: &f" + team.getLevel() +
                                 " &7| &bMembers: &f" + team.getSize()));
             }
-            case "members" -> new MembersMenuGui(plugin, p, team).open();
+            case "members" -> new MembersMenuGui(p, team).open();
             case "home" -> {
                 p.closeInventory();
                 p.performCommand("team home");
             }
-            case "relations" -> new RelationsMenuGui(plugin, p, team).open();
+            case "relations" -> new RelationsMenuGui(p, team).open();
             case "bank" -> {
                 if (!plugin.getConfigManager().isBankEnabled()) {
                     p.closeInventory();
                     p.sendMessage(plugin.getConfigManager().getMessage("bank-disabled"));
                 } else {
-                    new BankMenuGui(plugin, p, team).open();
+                    new BankMenuGui(p, team).open();
                 }
             }
-            case "settings" -> new SettingsMenuGui(plugin, p, team).open();
+            case "settings" -> new SettingsMenuGui(p, team).open();
+            case "echest" -> {
+                if (!plugin.getConfigManager().isEchestEnabled()) {
+                    p.closeInventory();
+                    p.sendMessage(plugin.getConfigManager().getMessage("echest-disabled"));
+                } else {
+                    TeamRole role = team.getRole(p.getUniqueId());
+                    if (role == null || !plugin.getConfig().getBoolean(
+                            "roles.permissions." + role.name() + ".can-access-echest", false)) {
+                        p.closeInventory();
+                        p.sendMessage(plugin.getConfigManager().getMessage("not-enough-permission-role"));
+                        return;
+                    }
+                    java.util.UUID activeViewerId = EchestMenuGui.getActiveViewer(team.getId());
+                    if (activeViewerId != null && !activeViewerId.equals(p.getUniqueId())) {
+                        org.bukkit.entity.Player activeViewer = org.bukkit.Bukkit.getPlayer(activeViewerId);
+                        String viewerName = activeViewer != null
+                                ? activeViewer.getName()
+                                : plugin.getConfigManager().color("&7Unknown");
+                        p.closeInventory();
+                        p.sendMessage(plugin.getConfigManager().getMessage("echest-in-use", "player", viewerName));
+                        return;
+                    }
+                    new EchestMenuGui(p, team).open();
+                }
+            }
+            case "teams-list" -> new TeamListMenuGui(p).open();
+            case "requests" -> new RequestsMenuGui(p, team).open();
         }
     }
 }

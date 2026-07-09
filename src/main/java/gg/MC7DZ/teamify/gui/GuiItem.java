@@ -1,15 +1,26 @@
 package gg.MC7DZ.teamify.gui;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.ChatColor;
+import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.profile.PlayerTextures;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Builds ItemStacks from config sections, e.g.:
@@ -24,10 +35,33 @@ import java.util.List;
  *   custom-model-data: 1001
  *   # Optional - adds an enchant glint without showing an enchantment.
  *   glow: false
+ * <p>
+ * Uses Paper/Adventure's Component-based ItemMeta#displayName(Component) and
+ * ItemMeta#lore(List&lt;Component&gt;) instead of the deprecated legacy
+ * String-based setDisplayName/setLore. '&' color codes from config.yml are
+ * translated into Components via LegacyComponentSerializer, and italics is
+ * explicitly disabled to match legacy default rendering (Adventure defaults
+ * lore/names to italic otherwise).
  */
 public final class GuiItem {
 
     private GuiItem() {}
+
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
+
+    /** Converts a legacy '&'-coded string into a non-italic Component. */
+    private static Component toComponent(String legacyText) {
+        return LEGACY.deserialize(legacyText == null ? "" : legacyText)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false);
+    }
+
+    private static List<Component> toComponentLore(List<String> lines) {
+        List<Component> out = new ArrayList<>(lines.size());
+        for (String line : lines) {
+            out.add(toComponent(line));
+        }
+        return out;
+    }
 
     public static ItemStack fromConfig(ConfigurationSection section, String... placeholders) {
         if (section == null) {
@@ -44,17 +78,24 @@ public final class GuiItem {
         if (meta != null) {
             String name = section.getString("name", "&fItem");
             name = applyPlaceholders(name, placeholders);
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
+            meta.displayName(toComponent(name));
 
             List<String> lore = section.getStringList("lore");
-            List<String> colored = new ArrayList<>();
+            List<String> processed = new ArrayList<>();
             for (String line : lore) {
-                colored.add(ChatColor.translateAlternateColorCodes('&', applyPlaceholders(line, placeholders)));
+                processed.add(applyPlaceholders(line, placeholders));
             }
-            meta.setLore(colored);
+            meta.lore(toComponentLore(processed));
 
             if (section.contains("custom-model-data")) {
                 meta.setCustomModelData(section.getInt("custom-model-data"));
+            }
+
+            // Optional "texture" (base64 skin data, same format as back-button)
+            // - only applies to PLAYER_HEAD items, since it needs a SkullMeta.
+            String texture = section.getString("texture");
+            if (texture != null && !texture.isEmpty() && mat == Material.PLAYER_HEAD && meta instanceof SkullMeta) {
+                applyTexture((SkullMeta) meta, texture);
             }
 
             item.setItemMeta(meta);
@@ -79,13 +120,10 @@ public final class GuiItem {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
+            meta.displayName(toComponent(name));
             if (lore.length > 0) {
-                List<String> colored = new ArrayList<>();
-                for (String line : lore) {
-                    colored.add(ChatColor.translateAlternateColorCodes('&', line));
-                }
-                meta.setLore(colored);
+                List<String> lines = new ArrayList<>(List.of(lore));
+                meta.lore(toComponentLore(lines));
             }
             if (customModelData != null) {
                 meta.setCustomModelData(customModelData);
@@ -99,6 +137,55 @@ public final class GuiItem {
     }
 
     /**
+     * Creates a player head with a custom texture.
+     * @param base64Texture The base64 encoded JSON string containing the texture URL.
+     * @param name The display name of the item.
+     * @param lore The lore lines of the item.
+     * @return An ItemStack representing the custom player head.
+     */
+    public static ItemStack playerHead(String base64Texture, String name, String... lore) {
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta) head.getItemMeta();
+        if (meta == null) return head;
+
+        applyTexture(meta, base64Texture);
+
+        // Apply name and lore
+        meta.displayName(toComponent(name));
+        if (lore.length > 0) {
+            List<String> lines = new ArrayList<>(List.of(lore));
+            meta.lore(toComponentLore(lines));
+        }
+        head.setItemMeta(meta);
+        return head;
+    }
+
+    /**
+     * Applies a base64-encoded skin texture (same format used by the
+     * back-button config, i.e. a base64 blob decoding to
+     * {"textures":{"SKIN":{"url":"..."}}}) to a player head's SkullMeta.
+     */
+    private static void applyTexture(SkullMeta meta, String base64Texture) {
+        com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID()); // Random UUID
+        PlayerTextures textures = profile.getTextures();
+
+        try {
+            byte[] decodedBytes = Base64.getDecoder().decode(base64Texture);
+            String decodedString = new String(decodedBytes);
+            JsonObject json = JsonParser.parseString(decodedString).getAsJsonObject();
+            String textureUrl = json.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
+            textures.setSkin(new URL(textureUrl));
+        } catch (MalformedURLException e) {
+            System.err.println("Malformed URL for player head texture: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error decoding or parsing player head texture: " + e.getMessage());
+        }
+
+        profile.setTextures(textures);
+        meta.setPlayerProfile(profile);
+    }
+
+    /**
      * Clones an existing item (e.g. a team's custom icon) and overrides its
      * display name/lore, keeping the material/custom-model-data intact.
      * Used to show a team's custom item in menus with contextual lore.
@@ -108,12 +195,8 @@ public final class GuiItem {
         item.setAmount(1);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
-            List<String> colored = new ArrayList<>();
-            for (String line : lore) {
-                colored.add(ChatColor.translateAlternateColorCodes('&', line));
-            }
-            meta.setLore(colored);
+            meta.displayName(toComponent(name));
+            meta.lore(toComponentLore(lore));
             item.setItemMeta(meta);
         }
         return item;

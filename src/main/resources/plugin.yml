@@ -5,12 +5,18 @@ api-version: '1.21'
 load: POSTWORLD
 author: Claude
 description: A fully configurable Teams plugin with GUIs.
-softdepend: [Vault]
+softdepend: [Vault, PlaceholderAPI]
+
+# List any config files that should be copied to the plugin's data folder on first run.
+# These files will also be reloaded via /teamadmin reload.
+config-files:
+  - config.yml
+  - gui.yml
 
 commands:
   team:
     description: Main team command
-    usage: /team [create|invite|kick|leave|disband|home|sethome|chat|info|list|gui|join|promote|demote|transfer|settings|pvp|allychat|allyinvite|allyleave|bank|reload]
+    usage: /team [create|invite|kick|leave|disband|home|sethome|chat|info|list|gui|join|joinrequest|requests|promote|demote|transfer|settings|pvp|allychat|allyinvite|allyleave|bank|description|echest|reload]
     aliases: [t, teams, teamify]
   teamadmin:
     description: Admin commands for teams
@@ -68,6 +74,12 @@ permissions:
   teams.command.join:
     description: Allows /team join
     default: true
+  teams.command.joinrequest:
+    description: Allows /team joinrequest (ask to join a team without an invite)
+    default: true
+  teams.command.requests:
+    description: Allows /team requests (view pending join/alliance requests)
+    default: true
   teams.command.promote:
     description: Allows /team promote
     default: true
@@ -97,6 +109,12 @@ permissions:
     default: true
   teams.bank.withdraw:
     description: Allows withdrawing money from the team bank (still subject to the role permission can-withdraw-bank)
+    default: true
+  teams.command.description:
+    description: Allows /team description (open a chat prompt to set the team's description)
+    default: true
+  teams.command.echest:
+    description: Allows /team echest (open the shared team enderchest)
     default: true
   teams.command.reload:
     description: Allows /team reload

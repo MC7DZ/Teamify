@@ -12,6 +12,8 @@ general:
   debug: false
   # Save data every X minutes (auto-save)
   autosave-interval-minutes: 5
+  # Enable the /team list command
+  enable-list-command: true
 
 team-creation:
   # Minimum / maximum characters for a team name
@@ -39,7 +41,7 @@ team-limits:
   # Maximum allies a team can have
   max-allies: 5
   # Maximum enemies a team can declare
-  max-enemies: 10
+  max-enemies: 0 # Changed to 0
   # Maximum length of the team description/MOTD
   max-description-length: 100
   # Maximum team level (used with the leveling/perks system below)
@@ -65,6 +67,7 @@ roles:
       can-withdraw-bank: false
       can-toggle-pvp: false
       can-customize-team: false
+      can-access-echest: false
     MODERATOR:
       can-invite: true
       can-kick: false
@@ -76,6 +79,7 @@ roles:
       can-withdraw-bank: false
       can-toggle-pvp: false
       can-customize-team: false
+      can-access-echest: false
     CO_LEADER:
       can-invite: true
       can-kick: true
@@ -87,6 +91,7 @@ roles:
       can-withdraw-bank: true
       can-toggle-pvp: true
       can-customize-team: true
+      can-access-echest: true
     LEADER:
       can-invite: true
       can-kick: true
@@ -98,6 +103,7 @@ roles:
       can-withdraw-bank: true
       can-toggle-pvp: true
       can-customize-team: true
+      can-access-echest: true
 
 invites:
   # How long an invite stays valid before expiring (seconds)
@@ -106,6 +112,13 @@ invites:
   require-gui-confirmation: true
   # Allow players to invite offline players (invite queued until they join)
   allow-offline-invites: true
+
+join-requests:
+  # Lets players who aren't in a team ask to join one directly via
+  # /team joinrequest <teamName>, without needing an invite first. The
+  # target team's leader/officers (anyone with can-invite) see the request
+  # in the Requests menu (main menu -> Request) and can accept or deny it.
+  send-join-request: true
 
 home:
   # Master toggle for the /team home command. Default false (disabled).
@@ -134,13 +147,13 @@ chat:
 
 relations:
   # Enable alliance system (enables/disables /team allyinvite, /team allyleave, /team allychat)
-  enable-allies: true
+  enable-allies: false
   # Enable enemy/rivalry declarations
-  enable-enemies: true
+  enable-enemies: false # Changed to false
   # Require both teams to accept an alliance request
   mutual-alliance-required: true
   # Enable the /team allychat command (only checked if enable-allies is also true)
-  enable-ally-chat: true
+  enable-ally-chat: false
   # How long an ally invite stays valid before expiring (seconds)
   ally-invite-expire-seconds: 60
   # Format for ally chat messages
@@ -149,8 +162,17 @@ relations:
   friendly-fire:
     within-team: true
     between-allies: true
-    between-enemies: true
+    between-enemies: false # Changed to false
     neutral-default: true
+
+kills:
+  # Whether killing a member of your own team counts toward that team's
+  # kill stats (shown in the team list menu and the members menu, and via
+  # the %teamify_kills% / %teamify_kills_player% placeholders). Only
+  # relevant when relations.friendly-fire.within-team (or a team's own
+  # /team pvp toggle) actually allows team members to hurt each other in
+  # the first place - if friendly fire is off, no kill can happen anyway.
+  count-team-kills: false
 
 # This mirrors vanilla's own team visibility option - the same thing
 # /minecraft:team modify <team> seeFriendlyInvisibles true does - but scoped
@@ -173,6 +195,17 @@ bank:
   # Tax percentage taken on deposits (0 = none)
   deposit-tax-percent: 0.0
 
+echest:
+  # Enable the shared team ender chest (/team echest)
+  enable-echest: false
+  # How many slots of the chest are usable. The GUI itself is always a
+  # 54-slot (6-row) inventory - anything above this number stays locked
+  # and shows the filler item below instead. Must be between 1 and 54.
+  # Example: set to 50 and the last 4 slots (51-54) are locked.
+  slots: 54
+  # Item shown in the locked slots beyond the "slots" value above.
+  filler-item: "GRAY_STAINED_GLASS_PANE"
+
 team-customization:
   # Lets teams pick a color (used for their name/tag in menus & messages)
   # and a custom item (their icon in the team list / relations menus),
@@ -180,6 +213,12 @@ team-customization:
   # role permission.
   enable-color: true
   enable-custom-item: true
+  # Lets teams set a short description/MOTD via /team description, which
+  # opens a chat prompt for the player to type it in. Requires the
+  # can-edit-description role permission below.
+  enable-description: true
+  # Show team description in the /team list command
+  show-description-in-list: true
   # The color a new team starts with
   default-color: "WHITE"
   # Colors players can cycle through in the settings menu
@@ -195,7 +234,7 @@ team-customization:
     - "DARK_PURPLE"
     - "GRAY"
     - "BLACK"
-
+  # still in development
 leveling:
   # Enable team leveling / XP system
   enable-leveling: false
@@ -224,8 +263,6 @@ pvp:
   track-team-pvp-stats: true
   # Grace period after joining a team where a player can't be attacked (seconds)
   join-invulnerability-seconds: 10
-  # Enable team elimination war-mode events
-  enable-war-mode: false
 
 disband:
   # Require confirmation (GUI or chat) before disbanding
@@ -252,187 +289,16 @@ storage:
     table-prefix: "teams_"
 
 integrations:
-  #those might not work they are experimantal and didnt touch them much
+  # Removed: those might not work they are experimantal and didnt touch them much
   vault:
     enabled: true
   placeholderapi:
     enabled: true
-  worldguard:
-    enabled: false
-  discord-webhook:
-    enabled: false
-    url: ""
-    notify-on-create: true
-    notify-on-disband: true
-    notify-on-war: true
-
-gui:
-  # Master toggle for the GUI system
-  enabled: true
-  # Sounds below use modern Minecraft sound-event keys (the same names you'd
-  # type in /playsound, minus the "minecraft:" namespace) - not the old
-  # Bukkit Sound enum names like "ENTITY_PLAYER_LEVELUP".
-  # Sound played when opening any team GUI
-  open-sound: "ui.button.click"
-  # Sound played on a successful action (invite sent, promote, etc)
-  success-sound: "entity.player.levelup"
-  # Sound played on an error / denied action
-  error-sound: "entity.villager.no"
-
-  # NOTE: individual GUI items also support two optional per-item keys
-  # wherever an item is built from a config section (see the "settings"
-  # item below for an example):
-  #   custom-model-data: 1001   # lets a resource pack swap the item's texture
-  #   glow: true                # adds an enchant glint with no visible enchant
-  # These aren't set on every item by default - add them to whichever items
-  # you want a custom look for.
-
-  main-menu:
-    title: "&8&lTeam Menu"
-    size: 27
-    fill-empty-slots: true
-    filler-item: "GRAY_STAINED_GLASS_PANE"
-    items:
-      info:
-        slot: 10
-        material: "BOOK"
-        name: "&bTeam Info"
-      members:
-        slot: 12
-        material: "PLAYER_HEAD"
-        name: "&aMembers"
-      home:
-        slot: 13
-        material: "RED_BED"
-        name: "&cTeam Home"
-      relations:
-        slot: 14
-        material: "IRON_SWORD"
-        name: "&eAllies & Enemies"
-      bank:
-        slot: 16
-        material: "GOLD_INGOT"
-        name: "&6Team Bank"
-      settings:
-        slot: 22
-        material: "COMPARATOR"
-        name: "&7Team Settings"
-        # Example: uncomment to give this item a custom resource-pack texture
-        # custom-model-data: 1001
-
-  members-menu:
-    title: "&8&lTeam Members"
-    size: 54
-    show-online-status: true
-    online-name-color: "&a"
-    offline-name-color: "&7"
-
-  invite-menu:
-    title: "&8&lPending Invites"
-    size: 27
-    accept-material: "LIME_DYE"
-    deny-material: "RED_DYE"
-
-  relations-menu:
-    title: "&8&lAllies"
-    size: 45
-    ally-material: "LIME_WOOL"
-
-  confirm-menu:
-    title: "&8&lAre you sure?"
-    size: 27
-    confirm-slot: 11
-    deny-slot: 15
-    confirm-material: "LIME_CONCRETE"
-    deny-material: "RED_CONCRETE"
-
-  team-list-menu:
-    title: "&8&lAll Teams"
-    size: 54
-    teams-per-page: 45
-    sort-by: "NAME" # LEVEL, MEMBERS, NAME
-
-  settings-menu:
-    title: "&8&lTeam Settings"
-    size: 27
-    pvp-toggle-slot: 13
-    pvp-on-material: "LIME_DYE"
-    pvp-off-material: "GRAY_DYE"
-    pvp-locked-material: "BARRIER"
-    # Cycles through team-customization.available-colors (left-click: next,
-    # right-click: previous). Requires can-customize-team.
-    color-slot: 11
-    color-material: "WHITE_DYE"
-    # An empty slot the player drops their desired icon item into, then
-    # confirms with the apply button below. Requires can-customize-team.
-    item-slot: 15
-    item-placeholder-material: "ITEM_FRAME"
-    item-apply-slot: 16
-    item-apply-material: "LIME_CONCRETE"
-    item-clear-slot: 20
-    item-clear-material: "RED_CONCRETE"
-
-  bank-menu:
-    title: "&8&lTeam Bank"
-    size: 27
-    fill-empty-slots: true
-    filler-item: "GRAY_STAINED_GLASS_PANE"
-    balance-slot: 13
-    balance-material: "GOLD_INGOT"
-    deposit-slot: 11
-    deposit-material: "LIME_DYE"
-    withdraw-slot: 15
-    withdraw-material: "RED_DYE"
-
-messages:
-  no-permission: "&cYou don't have permission to do that."
-  no-team: "&cYou are not in a team."
-  already-in-team: "&cYou are already in a team."
-  team-created: "&aTeam &b{team} &acreated successfully!"
-  team-disbanded: "&cYour team has been disbanded."
-  invite-sent: "&aInvite sent to &b{player}&a."
-  invite-received: "&bYou have been invited to join &e{team}&b."
-  player-kicked: "&c{player} &7has been kicked from the team."
-  not-enough-permission-role: "&cYour role does not allow this action."
-  team-full: "&cThat team is full."
-  invalid-name: "&cInvalid team name. Check length and allowed characters."
-  cooldown-active: "&cYou must wait {time} before doing that again."
-  pvp-enabled: "&aTeam PVP is now &lON&a."
-  pvp-disabled: "&cTeam PVP is now &lOFF&c."
-  pvp-locked: "&cTeam PVP toggle is locked because friendly-fire.within-team is enabled in the config."
-  config-reloaded: "&aConfiguration reloaded."
-  kicked-from-team: "&cYou have been kicked from &f{team}&c by &f{player}&c."
-  player-kicked-broadcast: "&7{player} was kicked from the team by &f{kicker}&7."
-  left-team: "&7You left &f{team}&7."
-  player-left-broadcast: "&7{player} has left the team."
-  player-joined-broadcast: "&a{player} has joined the team!"
-  promoted-notify: "&aYou were promoted to &b{role}&a in &f{team}&a!"
-  promoted-broadcast: "&a{player} was promoted to &b{role}&a."
-  demoted-notify: "&cYou were demoted to &7{role}&c in &f{team}&c."
-  demoted-broadcast: "&7{player} was demoted to {role}."
-  ownership-transferred-notify: "&aYou are now the owner of &f{team}&a!"
-  ownership-transferred-broadcast: "&e{player} is now the team owner."
-  team-disbanded-member: "&cYour team &f{team} &chas been disbanded by the owner."
-
-  # Bank
-  bank-disabled: "&cThe team bank is disabled."
-  bank-no-economy: "&cNo economy plugin (Vault) was found, so the team bank can't move real money right now."
-  bank-balance: "&6Team Bank Balance: &f{amount}"
-  bank-invalid-amount: "&cEnter a valid positive amount."
-  bank-insufficient-player-funds: "&cYou don't have that much money."
-  bank-insufficient-team-funds: "&cThe team bank doesn't have that much money."
-  bank-max-balance: "&cThe team bank is already at its maximum balance."
-  bank-transaction-failed: "&cThat transaction failed. Please try again."
-  bank-cant-withdraw-role: "&cYour role isn't allowed to withdraw from the team bank."
-  bank-deposit-success: "&aDeposited &f{amount} &ainto the team bank. New balance: &f{balance}&a."
-  bank-withdraw-success: "&aWithdrew &f{amount} &afrom the team bank. New balance: &f{balance}&a."
-  bank-deposit-broadcast: "&7{player} deposited &f{amount} &7into the team bank."
-  bank-withdraw-broadcast: "&7{player} withdrew &f{amount} &7from the team bank."
-
-  # Team customization (color & custom item)
-  team-color-changed: "&aTeam color set to {color}."
-  team-color-disabled: "&cTeam color customization is disabled."
-  team-item-disabled: "&cTeam item customization is disabled."
-  team-item-apply-empty: "&cPut an item in the slot first, then click apply."
-  team-item-applied: "&aYour team's item has been updated! You got your item back."
-  team-item-cleared: "&7Team item reset to default."
+  # Removed: worldguard:
+  # Removed:   enabled: false
+  # Removed: discord-webhook:
+  # Removed:   enabled: false
+  # Removed:   url: ""
+  # Removed:   notify-on-create: true
+  # Removed:   notify-on-disband: true
+  # Removed:   notify-on-war: true

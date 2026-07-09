@@ -15,12 +15,15 @@ public class Team {
     private UUID owner;
 
     private final Map<UUID, TeamRole> members = new LinkedHashMap<>();
+    private final Map<UUID, Integer> kills = new HashMap<>();
     private final Map<UUID, RelationType> relations = new HashMap<>();
     private final Map<Integer, Location> homes = new HashMap<>();
     private final List<UUID> pendingInvites = new ArrayList<>();
     private final List<UUID> pendingAllyInvites = new ArrayList<>();
+    private final List<UUID> pendingJoinRequests = new ArrayList<>();
 
     private double bankBalance;
+    private double creationCostPaid = 0.0;
     private int level = 1;
     private long xp = 0;
     private boolean teamChatToggleDefault = false;
@@ -32,6 +35,12 @@ public class Team {
     // player-configurable from the settings menu.
     private ChatColor color = ChatColor.WHITE;
     private ItemStack customItem;
+
+    // Shared team ender chest contents. Always sized to a full 54-slot
+    // inventory internally regardless of the configured usable slot count,
+    // so shrinking config.yml's echest.slots never discards items - they're
+    // just inaccessible until the limit is raised again.
+    private ItemStack[] echestContents = new ItemStack[54];
 
     public Team(UUID id, String name, String tag, UUID owner) {
         this.id = id;
@@ -64,6 +73,19 @@ public class Team {
     public TeamRole getRole(UUID uuid) { return members.get(uuid); }
     public void setRole(UUID uuid, TeamRole role) { members.put(uuid, role); }
 
+    // ---- Kills ----
+    public Map<UUID, Integer> getKills() { return kills; }
+    public int getKills(UUID uuid) { return kills.getOrDefault(uuid, 0); }
+    public void setKills(UUID uuid, int amount) { kills.put(uuid, amount); }
+    public void addKill(UUID uuid) { kills.merge(uuid, 1, Integer::sum); }
+
+    /** Sum of kills across every current member of the team. */
+    public int getTotalKills() {
+        int total = 0;
+        for (int amount : kills.values()) total += amount;
+        return total;
+    }
+
     public Map<UUID, RelationType> getRelations() { return relations; }
     public RelationType getRelation(UUID otherTeamId) {
         return relations.getOrDefault(otherTeamId, RelationType.NEUTRAL);
@@ -92,6 +114,14 @@ public class Team {
     public void removeAllyInvite(UUID teamId) { pendingAllyInvites.remove(teamId); }
     public boolean hasAllyInvite(UUID teamId) { return pendingAllyInvites.contains(teamId); }
 
+    // Pending join requests: UUIDs of players (not currently in any team)
+    // who have asked to join this team via /team joinrequest and are
+    // awaiting a leader/officer to accept or deny them.
+    public List<UUID> getPendingJoinRequests() { return pendingJoinRequests; }
+    public void addJoinRequest(UUID player) { if (!pendingJoinRequests.contains(player)) pendingJoinRequests.add(player); }
+    public void removeJoinRequest(UUID player) { pendingJoinRequests.remove(player); }
+    public boolean hasJoinRequest(UUID player) { return pendingJoinRequests.contains(player); }
+
     public int getAllyCount() {
         int count = 0;
         for (RelationType type : relations.values()) {
@@ -102,6 +132,10 @@ public class Team {
 
     public double getBankBalance() { return bankBalance; }
     public void setBankBalance(double bankBalance) { this.bankBalance = bankBalance; }
+
+    /** How much real money (Vault) this team's owner actually paid to create it, used to calculate disband refunds. */
+    public double getCreationCostPaid() { return creationCostPaid; }
+    public void setCreationCostPaid(double creationCostPaid) { this.creationCostPaid = creationCostPaid; }
 
     /**
      * Adds money to the bank, optionally capped at {@code maxBalance}
@@ -153,4 +187,15 @@ public class Team {
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
 
     public int getSize() { return members.size(); }
+
+    // ---- Echest ----
+    /** Always a 54-length array (nulls = empty slots). */
+    public ItemStack[] getEchestContents() { return echestContents; }
+    public void setEchestContents(ItemStack[] contents) {
+        ItemStack[] full = new ItemStack[54];
+        if (contents != null) {
+            System.arraycopy(contents, 0, full, 0, Math.min(contents.length, 54));
+        }
+        this.echestContents = full;
+    }
 }

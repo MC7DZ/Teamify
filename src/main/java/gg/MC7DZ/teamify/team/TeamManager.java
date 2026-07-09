@@ -70,6 +70,16 @@ public class TeamManager {
     public void addMember(Team team, UUID player, TeamRole role) {
         team.addMember(player, role);
         memberToTeam.put(player, team.getId());
+        // A player can only be in one team at a time, so any join requests
+        // they sent to other teams are no longer meaningful - drop them so
+        // they don't linger forever in those teams' request menus.
+        for (Team other : teamsById.values()) {
+            if (other.getId().equals(team.getId())) continue;
+            if (other.hasJoinRequest(player)) {
+                other.removeJoinRequest(player);
+                saveTeam(other);
+            }
+        }
     }
 
     public void removeMember(Team team, UUID player) {
@@ -164,6 +174,7 @@ public class TeamManager {
                 Team team = new Team(id, name, tag, owner);
                 team.setDescription(cfg.getString("description"));
                 team.setBankBalance(cfg.getDouble("bank-balance", 0.0));
+                team.setCreationCostPaid(cfg.getDouble("creation-cost-paid", 0.0));
                 team.setLevel(cfg.getInt("level", 1));
                 team.setXp(cfg.getLong("xp", 0));
                 team.setCreatedAt(cfg.getLong("created-at", System.currentTimeMillis()));
@@ -184,6 +195,13 @@ public class TeamManager {
                 for (String uuidStr : cfg.getStringList("pending-ally-invites")) {
                     try {
                         team.addAllyInvite(UUID.fromString(uuidStr));
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
+
+                for (String uuidStr : cfg.getStringList("pending-join-requests")) {
+                    try {
+                        team.addJoinRequest(UUID.fromString(uuidStr));
                     } catch (IllegalArgumentException ignored) {
                     }
                 }
@@ -211,6 +229,31 @@ public class TeamManager {
                     for (String key : homesSec.getKeys(false)) {
                         Location loc = homesSec.getLocation(key);
                         team.getHomes().put(Integer.parseInt(key), loc);
+                    }
+                }
+
+                ConfigurationSection killsSec = cfg.getConfigurationSection("kills");
+                if (killsSec != null) {
+                    for (String key : killsSec.getKeys(false)) {
+                        try {
+                            team.setKills(UUID.fromString(key), killsSec.getInt(key));
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                    }
+                }
+
+                ConfigurationSection echestSec = cfg.getConfigurationSection("echest");
+                if (echestSec != null) {
+                    org.bukkit.inventory.ItemStack[] echest = team.getEchestContents();
+                    for (String key : echestSec.getKeys(false)) {
+                        try {
+                            int idx = Integer.parseInt(key);
+                            Object raw = echestSec.get(key);
+                            if (idx >= 0 && idx < echest.length && raw instanceof org.bukkit.inventory.ItemStack item) {
+                                echest[idx] = item;
+                            }
+                        } catch (NumberFormatException ignored) {
+                        }
                     }
                 }
 
@@ -256,6 +299,10 @@ public class TeamManager {
         for (UUID id : team.getPendingAllyInvites()) allyInvites.add(id.toString());
         cfg.set("pending-ally-invites", allyInvites);
 
+        List<String> joinRequests = new ArrayList<>();
+        for (UUID id : team.getPendingJoinRequests()) joinRequests.add(id.toString());
+        cfg.set("pending-join-requests", joinRequests);
+
         for (Map.Entry<UUID, TeamRole> e : team.getMembers().entrySet()) {
             cfg.set("members." + e.getKey(), e.getValue().name());
         }
@@ -264,6 +311,24 @@ public class TeamManager {
         }
         for (Map.Entry<Integer, Location> e : team.getHomes().entrySet()) {
             cfg.set("homes." + e.getKey(), e.getValue());
+        }
+        for (Map.Entry<UUID, Integer> e : team.getKills().entrySet()) {
+            cfg.set("kills." + e.getKey(), e.getValue());
+        }
+
+        // Echest contents - only write the array if at least one slot is
+        // non-empty, keeping team files clean for teams that never use it.
+        org.bukkit.inventory.ItemStack[] echest = team.getEchestContents();
+        boolean anyEchestItem = false;
+        for (org.bukkit.inventory.ItemStack item : echest) {
+            if (item != null) { anyEchestItem = true; break; }
+        }
+        if (anyEchestItem) {
+            for (int i = 0; i < echest.length; i++) {
+                if (echest[i] != null) {
+                    cfg.set("echest." + i, echest[i]);
+                }
+            }
         }
 
         try {

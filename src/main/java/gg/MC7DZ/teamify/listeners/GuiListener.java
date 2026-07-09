@@ -5,6 +5,7 @@ import gg.MC7DZ.teamify.gui.GuiHolder;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent; // Import InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.InventoryHolder;
 
@@ -56,6 +57,14 @@ public class GuiListener implements Listener {
                 event.setCancelled(true);
                 return;
             }
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        InventoryHolder holder = event.getInventory().getHolder();
+        if (holder instanceof GuiHolder guiHolder) {
+            guiHolder.onGuiClose(); // Call the new method to remove from active GUIs
         }
     }
 }

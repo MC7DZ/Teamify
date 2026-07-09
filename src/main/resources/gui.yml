@@ -1,0 +1,392 @@
+gui:
+  enabled: true
+  open-sound: "ui.button.click"
+  success-sound: "entity.player.levelup"
+  error-sound: "entity.villager.no"
+  back-button:
+    texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmIxODhjMTI1NTcyMjdkNGViNTQ3ZjJiYmY0ZDVkZjNjMzZjYjQ2ZDQzNTYxMzhkZDYzZTdjMTEzOGY2OWE0YyJ9fX0="
+    name: "&c&lBack"
+    lore:
+      - "&7Click to return to the previous menu."
+  main-menu:
+    title: "&8&lTeam Hub"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
+    items:
+      info:
+        slot: 11
+        material: "ENCHANTED_BOOK"
+        glow: true
+        name: "&b&lTeam Information"
+        lore:
+          - "&7View your team's details"
+          - "&7and statistics."
+      members:
+        slot: 13
+        material: "PLAYER_HEAD"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmIxODhjMTI1NTcyMjdkNGViNTQ3ZjJiYmY0ZDVkZjNjMzZjYjQ2ZDQzNTYxMzhkZDYzZTdjMTEzOGY2OWE0YyJ9fX0="
+        name: "&a&lMembers"
+        lore:
+          - "&7Manage your team members."
+          - "&7Online &a● &7Offline &c●"
+      home:
+        slot: 15
+        material: "RED_BED"
+        glow: true
+        name: "&c&lTeam Home"
+        lore:
+          - "&7Teleport to your team's"
+          - "&7designated home location."
+      relations:
+        slot: 20
+        material: "NETHERITE_SWORD"
+        glow: true
+        name: "&e&lRelations"
+        lore:
+          - "&7Manage and see allies "
+      bank:
+        slot: 22
+        material: "CHEST"
+        glow: true
+        name: "&6&lTeam Bank"
+        lore:
+          - "&7Deposit or withdraw funds."
+      settings:
+        slot: 24
+        material: "LEVER"
+        name: "&7&lSettings"
+        lore:
+          - "&7Configure your team's"
+          - "&7preferences and options."
+      echest:
+        slot: 29
+        material: "ENDER_CHEST"
+        glow: true
+        name: "&5&lTeam Echest"
+        lore:
+          - "&7Open the shared team"
+          - "&7enderchest."
+      teams-list:
+        slot: 33
+        material: "WRITABLE_BOOK"
+        glow: true
+        name: "&b&lTeams List"
+        lore:
+          - "&7Browse all teams on"
+          - "&7the server."
+      requests:
+        slot: 31
+        material: "PAPER"
+        glow: true
+        name: "&e&lRequests"
+        lore:
+          - "&7View pending join requests"
+          - "&7and alliance requests."
+      back:
+        slot: 45
+  members-menu:
+    title: "&8&lTeam Members"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
+    show-online-status: true
+    online-name-color: "&a"
+    offline-name-color: "&7"
+    item-name-format: "{color}{name}"
+    item-lore:
+      - "&7Role: &f{role}"
+      - "&7Kills: &f{kills}"
+      - "&7Status: {status_color}{status}"
+      - ""
+      - "&eClick to manage this member."
+    items:
+      back:
+        slot: 45
+
+  # NEW: opened when clicking a member's head in members-menu above. Shown
+  # options depend on which of these are defined here - remove any of
+  # kick/promote/demote/transfer to hide that option entirely. Every option
+  # still routes through confirm-menu before doing anything.
+  # Placeholders available on these items: {player}, {role} (target's current role)
+  member-actions-menu:
+    title: "&8&lManage {player}"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
+    items:
+      kick:
+        slot: 20
+        material: "BARRIER"
+        glow: true
+        name: "&c&lKick {player}"
+        lore:
+          - "&7Remove {player} from the team."
+          - "&7Current role: &f{role}"
+      promote:
+        slot: 22
+        material: "LIME_DYE"
+        glow: true
+        name: "&a&lPromote {player}"
+        lore:
+          - "&7Move {player} up one rank."
+          - "&7Current role: &f{role}"
+      demote:
+        slot: 24
+        material: "RED_DYE"
+        glow: true
+        name: "&6&lDemote {player}"
+        lore:
+          - "&7Move {player} down one rank."
+          - "&7Current role: &f{role}"
+      transfer:
+        slot: 31
+        material: "NETHER_STAR"
+        glow: true
+        name: "&d&lTransfer Ownership"
+        lore:
+          - "&7Make {player} the new team owner."
+          - "&7Only usable by the current owner."
+      back:
+        slot: 45
+
+  invite-menu:
+    title: "&8&lPending Invites"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
+    accept-material: "LIME_CONCRETE"
+    deny-material: "RED_CONCRETE"
+    items:
+      back:
+        slot: 45
+      invite-info:
+        slot: 22
+        material: "PAPER"
+        glow: true
+        name: "&bInvite from &f{team}"
+        lore:
+          - "&7Accept or decline below."
+      accept:
+        slot: 30
+        material: "LIME_CONCRETE"
+        glow: true
+        name: "&a&lAccept"
+        lore:
+          - "&7Join the team."
+      deny:
+        slot: 32
+        material: "RED_CONCRETE"
+        glow: true
+        name: "&c&lDeny"
+        lore:
+          - "&7Decline the invitation."
+
+  # Shown when clicking "Requests" in the main menu. Lists join requests
+  # from players wanting to join your team (player heads) followed by
+  # alliance requests from other teams wanting to ally with yours (eye of
+  # ender), each in their own configurable item template below.
+  # Left-click an entry to accept it, right-click to deny it.
+  # Placeholders for join-request-item: {player}
+  # Placeholders for ally-request-item: {team}, {tag}, {level}, {members}
+  requests-menu:
+    title: "&8&lRequests"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
+    join-request-item:
+      material: "PLAYER_HEAD"
+      glow: true
+      name: "&a&l{player}"
+      lore:
+        - "&7Wants to join your team."
+        - ""
+        - "&aLeft-click to accept"
+        - "&cRight-click to deny"
+    ally-request-item:
+      material: "ENDER_EYE"
+      glow: true
+      name: "&b&l{team}"
+      lore:
+        - "&7Requests an alliance with your team."
+        - "&7Tag: &f{tag}"
+        - "&7Level: &f{level}"
+        - "&7Members: &f{members}"
+        - ""
+        - "&aLeft-click to accept"
+        - "&cRight-click to deny"
+    items:
+      back:
+        slot: 45
+
+  # NOTE: allies no longer just show info on click - clicking an ally here
+  # now opens confirm-menu asking to leave the alliance (requires
+  # can-manage-relations, same permission /team allyleave uses).
+  relations-menu:
+    title: "&8&lDiplomacy"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
+    ally-material: "LIME_WOOL"
+    item-name-format: "{name}"
+    item-lore:
+      - "&7Relation: &a{relation}"
+      - "&7Tag: &f{tag}"
+      - "&7Level: &f{level}"
+      - "&7Members: &f{members}"
+      - "&7Online: &f{online}"
+      - ""
+      - "&cClick to leave this alliance."
+    items:
+      back:
+        slot: 45
+  confirm-menu:
+    title: "&8&lConfirm Action"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
+    confirm-slot: 20
+    deny-slot: 24
+    confirm-material: "LIME_CONCRETE"
+    deny-material: "RED_CONCRETE"
+    items:
+      back:
+        slot: 45
+  team-list-menu:
+    title: "&8&lAll Teams"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [45, 46, 47, 48, 49, 50, 51, 52, 53]
+    teams-per-page: 36
+    sort-by: "NAME"
+    item-name-format: "{color}{name} &7[{tag}]"
+    item-lore:
+      - "&7Level: &f{level}"
+      - "&7Members: &f{members}"
+      - "&7Tag: &f{tag}"
+      - "&7Owner: &f{owner_name}"
+      - "&7Bank: &f{bank_balance}"
+      - "&7XP: &f{xp}"
+      - "&7Allies: &f{allies}"
+      - "&7Homes: &f{homes_count}"
+      - "&7Kills: &f{kills}"
+      - "&7Created: &f{created_date}"
+      - ""
+      - "&7Description:"
+      - "&f{description}"
+    items:
+      back:
+        slot: 45
+  settings-menu:
+    title: "&8&lTeam Settings"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
+    items:
+      pvp-toggle:
+        slot: 20
+        material: "GOLDEN_SWORD"
+        glow: true
+        name: "&c&lPVP Toggle"
+        lore:
+          - "&7Current: {pvp_status}"
+          - "&7Click to change."
+      color:
+        slot: 22
+        material: "LEATHER_HELMET"
+        glow: true
+        name: "&b&lTeam Color"
+        lore:
+          - "&7Change your team's"
+          - "&7display color."
+      description:
+        slot: 24
+        material: "WRITABLE_BOOK"
+        name: "&b&lDescription"
+        lore:
+          - "&7Update your team's"
+          - "&7public description."
+      tag-change:
+        slot: 29
+        material: "NAME_TAG"
+        glow: true
+        name: "&b&lChange Tag"
+        lore:
+          - "&7Current: &f{tag}"
+          - "&7Click to set a new tag."
+          - "&7Min length: {min_tag_length}"
+          - "&7Max length: {max_tag_length}"
+      item-apply:
+        slot: 30
+        material: "LIME_CONCRETE"
+        glow: true
+        name: "&a&lApply Icon"
+        lore:
+          - "&7Set the item in the slot above"
+          - "&7as your team's custom icon."
+          - "&7Your item will be returned."
+      item-clear:
+        slot: 32
+        material: "RED_CONCRETE"
+        glow: true
+        name: "&c&lClear Icon"
+        lore:
+          - "&7Reset your team icon to"
+          - "&7the default."
+      item-input:
+        slot: 31
+        material: "BARRIER"
+        name: "&c&lPlace Item Here"
+        lore:
+          - "&7Place the item you want"
+          - "&7to use as your team icon."
+      back:
+        slot: 45
+  # NEW: /team echest. The chest is always 54 slots - how many of those are
+  # actually usable is controlled by echest.slots in config.yml, not here.
+  # Whatever's left over gets filled with locked-filler-item below and can't
+  # be touched. This menu has no back button - it behaves like a plain
+  # chest, closing it just saves the contents.
+  echest-menu:
+    title: "&8&lTeam Enderchest"
+    locked-filler-item: "GRAY_STAINED_GLASS_PANE"
+
+  bank-menu:
+    title: "&8&lTeam Bank"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
+    items:
+      balance:
+        slot: 22
+        material: "GOLD_BLOCK"
+        glow: true
+        name: "&6&lBank Balance"
+        lore:
+          - "&7Balance: &f${amount}"
+      deposit:
+        slot: 20
+        material: "EMERALD"
+        glow: true
+        name: "&a&lDeposit"
+        lore:
+          - "&7Add funds to your team bank."
+      withdraw:
+        slot: 24
+        material: "REDSTONE_BLOCK"
+        glow: true
+        name: "&c&lWithdraw"
+        lore:
+          - "&7Remove funds from your team bank."
+      back:
+        slot: 45

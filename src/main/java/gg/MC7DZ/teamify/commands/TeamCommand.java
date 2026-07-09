@@ -45,7 +45,7 @@ public class TeamCommand implements CommandExecutor {
                 player.sendMessage(cm.getPrefix() + cm.color("&7Use /team info, /team members, etc."));
                 return true;
             }
-            new MainMenuGui(plugin, player, team).open();
+            new MainMenuGui(player, team).open();
             return true;
         }
 
@@ -66,16 +66,31 @@ public class TeamCommand implements CommandExecutor {
             case "sethome" -> handleSetHome(player);
             case "chat" -> handleChatToggle(player);
             case "info" -> handleInfo(player);
-            case "list" -> new TeamListMenuGui(plugin, player).open();
+            case "list" -> {
+                if (!cm.isListCommandEnabled()) {
+                    player.sendMessage(cm.getMessage("command-disabled"));
+                    return true;
+                }
+                new TeamListMenuGui(player).open();
+            }
             case "gui" -> {
                 Team team = tm.getTeamOf(player.getUniqueId());
                 if (team == null) {
                     player.sendMessage(cm.getMessage("no-team"));
                 } else {
-                    new MainMenuGui(plugin, player, team).open();
+                    new MainMenuGui(player, team).open();
                 }
             }
             case "join" -> handleJoin(player, args);
+            case "joinrequest" -> handleJoinRequest(player, args);
+            case "requests" -> {
+                Team team = tm.getTeamOf(player.getUniqueId());
+                if (team == null) {
+                    player.sendMessage(cm.getMessage("no-team"));
+                } else {
+                    new RequestsMenuGui(player, team).open();
+                }
+            }
             case "promote" -> handlePromote(player, args);
             case "demote" -> handleDemote(player, args);
             case "transfer" -> handleTransfer(player, args);
@@ -85,6 +100,8 @@ public class TeamCommand implements CommandExecutor {
             case "allyinvite" -> handleAllyInvite(player, args);
             case "allyleave" -> handleAllyLeave(player, args);
             case "bank" -> handleBank(player, args);
+            case "description" -> handleDescription(player, args);
+            case "echest" -> handleEchest(player);
             case "reload" -> handleReload(player);
             default -> player.sendMessage(cm.getPrefix() + cm.color("&cUnknown subcommand."));
         }
@@ -103,7 +120,7 @@ public class TeamCommand implements CommandExecutor {
             player.sendMessage(cm.getPrefix() + cm.color("&7Use /team pvp to toggle team PVP."));
             return;
         }
-        new SettingsMenuGui(plugin, player, team).open();
+        new SettingsMenuGui(player, team).open();
     }
 
     private void handlePvpToggle(Player player) {
@@ -126,6 +143,98 @@ public class TeamCommand implements CommandExecutor {
         team.setPvpEnabled(!team.isPvpEnabled());
         tm.saveTeam(team);
         player.sendMessage(cm.getMessage(team.isPvpEnabled() ? "pvp-enabled" : "pvp-disabled"));
+    }
+
+    private void handleEchest(Player player) {
+        ConfigManager cm = plugin.getConfigManager();
+        TeamManager tm = plugin.getTeamManager();
+
+        if (!cm.isEchestEnabled()) {
+            player.sendMessage(cm.getMessage("echest-disabled"));
+            return;
+        }
+        Team team = tm.getTeamOf(player.getUniqueId());
+        if (team == null) {
+            player.sendMessage(cm.getMessage("no-team"));
+            return;
+        }
+        TeamRole role = team.getRole(player.getUniqueId());
+        if (role == null || !plugin.getConfig().getBoolean("roles.permissions." + role.name() + ".can-access-echest", false)) {
+            player.sendMessage(cm.getMessage("not-enough-permission-role"));
+            return;
+        }
+
+        // Block if a teammate is already using the echest
+        java.util.UUID activeViewerId = EchestMenuGui.getActiveViewer(team.getId());
+        if (activeViewerId != null && !activeViewerId.equals(player.getUniqueId())) {
+            org.bukkit.entity.Player activeViewer = org.bukkit.Bukkit.getPlayer(activeViewerId);
+            String viewerName = activeViewer != null ? activeViewer.getName() : cm.color("&7Unknown");
+            player.sendMessage(cm.getMessage("echest-in-use", "player", viewerName));
+            return;
+        }
+
+        new EchestMenuGui(player, team).open();
+    }
+
+    private void handleDescription(Player player, String[] args) {
+        ConfigManager cm = plugin.getConfigManager();
+        TeamManager tm = plugin.getTeamManager();
+
+        if (!cm.isTeamDescriptionEnabled()) {
+            player.sendMessage(cm.getMessage("team-description-disabled"));
+            return;
+        }
+        Team team = tm.getTeamOf(player.getUniqueId());
+        if (team == null) {
+            player.sendMessage(cm.getMessage("no-team"));
+            return;
+        }
+        TeamRole role = team.getRole(player.getUniqueId());
+        if (role == null || !plugin.getConfig().getBoolean("roles.permissions." + role.name() + ".can-edit-description", false)) {
+            player.sendMessage(cm.getMessage("not-enough-permission-role"));
+            return;
+        }
+
+        // "/team description clear" wipes it immediately; "/team description <text>"
+        // sets it directly; with no extra args, it opens a chat prompt so the
+        // player can type the description (handled by PlayerListener).
+        if (args.length >= 2 && args[1].equalsIgnoreCase("clear")) {
+            team.setDescription(null);
+            tm.saveTeam(team);
+            player.sendMessage(cm.getMessage("team-description-cleared"));
+            return;
+        }
+
+        if (args.length >= 2) {
+            String description = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
+            setDescription(player, team, description);
+            return;
+        }
+
+        plugin.getPlayerListener().awaitInput(player.getUniqueId(), gg.MC7DZ.teamify.listeners.PlayerListener.PendingInputType.TEAM_DESCRIPTION);
+        player.sendMessage(cm.getMessage("team-description-prompt"));
+    }
+
+    /**
+     * Sets the team's description, applying the max-length check and
+     * persisting the change. Used both by direct command usage and by the
+     * chat-prompt flow (/team description with no arguments).
+     */
+    public void setDescription(Player player, Team team, String description) {
+        ConfigManager cm = plugin.getConfigManager();
+
+        if (description.equalsIgnoreCase("cancel")) {
+            return;
+        }
+
+        if (description.length() > cm.getMaxDescriptionLength()) {
+            player.sendMessage(cm.getMessage("team-description-too-long", "max", String.valueOf(cm.getMaxDescriptionLength())));
+            return;
+        }
+
+        team.setDescription(description);
+        plugin.getTeamManager().saveTeam(team);
+        player.sendMessage(cm.getMessage("team-description-changed"));
     }
 
     private void handleReload(Player player) {
@@ -171,6 +280,23 @@ public class TeamCommand implements CommandExecutor {
 
         String tag = args.length >= 3 ? args[2] : name.substring(0, Math.min(4, name.length())).toUpperCase();
 
+        double creationCost = cm.getCreationCost();
+        if (creationCost > 0) {
+            if (!plugin.getEconomyManager().isEnabled()) {
+                player.sendMessage(cm.getMessage("bank-no-economy"));
+                return;
+            }
+            if (!plugin.getEconomyManager().has(player, creationCost)) {
+                player.sendMessage(cm.getMessage("creation-insufficient-funds",
+                        "cost", plugin.getEconomyManager().format(creationCost)));
+                return;
+            }
+            if (!plugin.getEconomyManager().withdrawPlayer(player, creationCost)) {
+                player.sendMessage(cm.getMessage("bank-transaction-failed"));
+                return;
+            }
+        }
+
         Team team = tm.createTeam(name, tag, player.getUniqueId());
         team.setBankBalance(cm.getStartingBalance());
         try {
@@ -182,6 +308,10 @@ public class TeamCommand implements CommandExecutor {
         plugin.getVisibilityManager().refresh(player);
 
         player.sendMessage(cm.getMessage("team-created", "team", name));
+        if (creationCost > 0) {
+            player.sendMessage(cm.getMessage("creation-cost-charged",
+                    "cost", plugin.getEconomyManager().format(creationCost)));
+        }
     }
 
     private void handleInvite(Player player, String[] args) {
@@ -247,7 +377,7 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (cm.isGuiEnabled()) {
-            new InviteMenuGui(plugin, player, team).open();
+            new InviteMenuGui(player, team).open();
         } else {
             team.removeInvite(player.getUniqueId());
             tm.addMember(team, player.getUniqueId(), TeamRole.MEMBER);
@@ -258,6 +388,60 @@ public class TeamCommand implements CommandExecutor {
                 if (memberId.equals(player.getUniqueId())) continue;
                 Player member = Bukkit.getPlayer(memberId);
                 if (member != null) member.sendMessage(cm.getMessage("player-joined-broadcast", "player", player.getName()));
+            }
+        }
+    }
+
+    private void handleJoinRequest(Player player, String[] args) {
+        ConfigManager cm = plugin.getConfigManager();
+        TeamManager tm = plugin.getTeamManager();
+
+        if (!cm.isSendJoinRequestEnabled()) {
+            player.sendMessage(cm.getMessage("command-disabled"));
+            return;
+        }
+        if (tm.isInTeam(player.getUniqueId())) {
+            player.sendMessage(cm.getMessage("already-in-team"));
+            return;
+        }
+        if (args.length < 2) {
+            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team joinrequest <name>"));
+            return;
+        }
+
+        Team team = tm.getTeamByName(args[1]);
+        if (team == null) {
+            player.sendMessage(cm.getMessage("team-not-found"));
+            return;
+        }
+        int maxMembers = cm.getMaxMembers();
+        if (maxMembers > 0 && team.getSize() >= maxMembers) {
+            player.sendMessage(cm.getMessage("team-full"));
+            return;
+        }
+        if (team.hasJoinRequest(player.getUniqueId())) {
+            player.sendMessage(cm.getMessage("join-request-already-sent", "team", team.getName()));
+            return;
+        }
+
+        team.addJoinRequest(player.getUniqueId());
+        tm.saveTeam(team);
+        player.sendMessage(cm.getMessage("join-request-sent", "team", team.getName()));
+
+        for (UUID memberId : team.getMembers().keySet()) {
+            TeamRole memberRole = team.getRole(memberId);
+            if (memberRole == null || !plugin.getConfig().getBoolean(
+                    "roles.permissions." + memberRole.name() + ".can-invite", false)) {
+                continue;
+            }
+            Player online = Bukkit.getPlayer(memberId);
+            if (online != null) {
+                gg.MC7DZ.teamify.util.MessageUtil.sendClickableInvite(
+                        online,
+                        cm.getMessage("join-request-received", "player", player.getName()),
+                        "&a&l[View Requests]",
+                        "/team requests",
+                        "&7Click to open the Requests menu");
             }
         }
     }
@@ -368,7 +552,7 @@ public class TeamCommand implements CommandExecutor {
         };
 
         if (cm.isDisbandConfirmationRequired() && cm.isGuiEnabled()) {
-            new ConfirmMenuGui(plugin, player, doDisband, () ->
+            new ConfirmMenuGui(player, doDisband, () ->
                     player.sendMessage(cm.getPrefix() + cm.color("&7Disband cancelled."))).open();
         } else {
             doDisband.run();
@@ -454,6 +638,10 @@ public class TeamCommand implements CommandExecutor {
                 " &7| &bTag: &f" + team.getTag() +
                 " &7| &bLevel: &f" + team.getLevel() +
                 " &7| &bMembers: &f" + team.getSize()));
+
+        if (cm.isTeamDescriptionEnabled() && team.getDescription() != null && !team.getDescription().isEmpty()) {
+            player.sendMessage(cm.color("&7" + team.getDescription()));
+        }
     }
 
     private void handlePromote(Player player, String[] args) {
@@ -616,7 +804,7 @@ public class TeamCommand implements CommandExecutor {
         };
 
         if (cm.isTransferConfirmationRequired() && cm.isGuiEnabled()) {
-            new ConfirmMenuGui(plugin, player, doTransfer, () ->
+            new ConfirmMenuGui(player, doTransfer, () ->
                     player.sendMessage(cm.getPrefix() + cm.color("&7Ownership transfer cancelled."))).open();
         } else {
             doTransfer.run();
@@ -644,7 +832,7 @@ public class TeamCommand implements CommandExecutor {
 
         if (args.length < 2) {
             if (cm.isGuiEnabled()) {
-                new BankMenuGui(plugin, player, team).open();
+                new BankMenuGui(player, team).open();
             } else {
                 player.sendMessage(cm.getMessage("bank-balance", "amount", plugin.getEconomyManager().format(team.getBankBalance())));
             }

@@ -40,6 +40,14 @@ messages:
   # Join
   player-joined-broadcast: "&a{player} has joined the team!"
 
+  # Join requests (player -> team, no invite needed)
+  team-not-found: "&cThat team doesn't exist."
+  join-request-sent: "&aJoin request sent to &b{team}&a."
+  join-request-already-sent: "&cYou already have a pending join request to &b{team}&c."
+  join-request-received: "&e{player} &7has requested to join your team."
+  join-request-accepted: "&aYour request to join &b{team} &awas accepted!"
+  join-request-denied: "&cYour request to join &b{team} &cwas denied."
+
   # Promote
   cant-promote-yourself: "&cYou can't promote yourself."
   already-highest-rank: "&cThat player already holds the highest rank."
@@ -113,5 +121,15 @@ messages:
   team-item-apply-empty: "&cPut an item in the slot first, then click apply."
   team-item-applied: "&aYour team's item has been updated! You got your item back."
   team-item-cleared: "&7Team item reset to default."
+  team-description-disabled: "&cTeam descriptions are disabled."
+  echest-disabled: "&cThe team enderchest is disabled."
+  echest-in-use: "&c{player} &7is currently using the team enderchest. Please wait until they close it."
+  team-description-prompt: "&aType your team's new description in chat (or \"cancel\")."
+  team-description-changed: "&aTeam description updated!"
+  team-description-too-long: "&cThat description is too long (max {max} characters)."
+  team-description-cleared: "&7Team description cleared."
+  team-tag-prompt: "&aType your team's new tag in chat (or \"cancel\")."
+  invalid-tag-length: "&cInvalid team tag length. Must be between {min} and {max} characters."
+  team-tag-changed: "&aTeam tag changed to &f{tag}&a."
 
   # Invisibility visibility toggles

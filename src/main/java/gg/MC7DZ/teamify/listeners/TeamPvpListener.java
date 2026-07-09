@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 
 /**
  * Handles the team-internal PVP toggle.
@@ -44,6 +45,32 @@ public class TeamPvpListener implements Listener {
         if (!victimTeam.isPvpEnabled()) {
             event.setCancelled(true);
         }
+    }
+
+    /**
+     * Credits a team kill whenever a player is killed by another player
+     * (directly or via a projectile). Kills are tracked per-member on
+     * the killer's team and persisted immediately.
+     * <p>
+     * Killing your own teammate only counts if kills.count-team-kills is
+     * enabled in config.yml - by default those don't inflate the team's
+     * kill count.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDeath(PlayerDeathEvent event) {
+        Player victim = event.getEntity();
+        Player killer = victim.getKiller();
+        if (killer == null || killer.equals(victim)) return;
+
+        Team killerTeam = plugin.getTeamManager().getTeamOf(killer.getUniqueId());
+        if (killerTeam == null) return;
+
+        Team victimTeam = plugin.getTeamManager().getTeamOf(victim.getUniqueId());
+        boolean sameTeam = victimTeam != null && victimTeam.getId().equals(killerTeam.getId());
+        if (sameTeam && !plugin.getConfigManager().isCountTeamKillsEnabled()) return;
+
+        killerTeam.addKill(killer.getUniqueId());
+        plugin.getTeamManager().saveTeam(killerTeam);
     }
 
     private Player resolveDamager(EntityDamageByEntityEvent event) {

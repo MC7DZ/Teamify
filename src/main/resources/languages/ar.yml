@@ -37,6 +37,14 @@ messages:
   # الانضمام
   player-joined-broadcast: "&aانضم {player} إلى الفريق!"
 
+  # طلبات الانضمام (لاعب -> فريق، بدون دعوة)
+  team-not-found: "&cهذا الفريق غير موجود."
+  join-request-sent: "&aتم إرسال طلب انضمام إلى &b{team}&a."
+  join-request-already-sent: "&cلديك بالفعل طلب انضمام معلق إلى &b{team}&c."
+  join-request-received: "&e{player} &7طلب الانضمام إلى فريقك."
+  join-request-accepted: "&aتم قبول طلب انضمامك إلى &b{team}&a!"
+  join-request-denied: "&cتم رفض طلب انضمامك إلى &b{team}&c."
+
   # الترقية
   cant-promote-yourself: "&cلا يمكنك ترقية نفسك."
   already-highest-rank: "&cهذا اللاعب يملك بالفعل أعلى رتبة."
@@ -110,5 +118,12 @@ messages:
   team-item-apply-empty: "&cضع عنصرًا في الخانة أولاً ثم اضغط تطبيق."
   team-item-applied: "&aتم تحديث عنصر فريقك! تم إرجاع عنصرك إليك."
   team-item-cleared: "&7تمت إعادة تعيين عنصر الفريق للافتراضي."
+  team-description-disabled: "&cوصف الفريق معطل."
+  echest-disabled: "&cصندوق الفريق المشترك معطل."
+  echest-in-use: "&c{player} &7يستخدم صندوق الفريق حالياً. يرجى الانتظار حتى يغلقه."
+  team-description-prompt: "&aاكتب وصف فريقك الجديد في الدردشة (أو اكتب \"cancel\" للإلغاء)."
+  team-description-changed: "&aتم تحديث وصف الفريق!"
+  team-description-too-long: "&cهذا الوصف طويل جدًا (الحد الأقصى {max} حرفًا)."
+  team-description-cleared: "&7تم مسح وصف الفريق."
 
   # إعدادات رؤية اللاعبين المختفين
