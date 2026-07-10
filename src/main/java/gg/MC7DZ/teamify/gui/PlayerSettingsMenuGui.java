@@ -27,8 +27,8 @@ public class PlayerSettingsMenuGui extends GuiHolder {
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.player-settings-menu");
         String title = plugin.getConfigManager().color(cfg.getString("title", "&8Player Settings"));
-        int size = cfg.getInt("size", 27); // Default size for player settings
-
+        int size = cfg.getInt("size", 54); // Updated default size to 54
+        
         Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
 
         // Fill empty slots if configured
@@ -43,6 +43,7 @@ public class PlayerSettingsMenuGui extends GuiHolder {
             if (fillerSlots != null && !fillerSlots.isEmpty()) {
                 fillSlots(inv, filler, fillerSlots);
             } else {
+                // Fallback to filling all empty slots if no specific filler-slots are defined
                 for (int i = 0; i < size; i++) {
                     inv.setItem(i, GuiItem.simple(filler, " "));
                 }
@@ -64,7 +65,7 @@ public class PlayerSettingsMenuGui extends GuiHolder {
                                 backButtonCfg.getStringList("lore"));
                     }
                 } else {
-                    ItemStack item = GuiItem.fromConfig(itemSec);
+                    ItemStack item = GuiItem.fromConfig(getViewer(), itemSec);
                     inv.setItem(slot, item);
                     slotActions.put(slot, key);
                 }
@@ -90,15 +91,27 @@ public class PlayerSettingsMenuGui extends GuiHolder {
         String action = slotActions.get(slot);
         if (action == null) return;
 
-        // Handle specific player settings actions here
         switch (action) {
-            // Example: Toggle a setting
-            // case "toggle-visibility":
-            //     // Logic to toggle player visibility setting
-            //     break;
-            default:
+            case "players-list" -> {
+                if (!plugin.getConfigManager().isPlayersListEnabled()) {
+                    p.closeInventory();
+                    p.sendMessage(plugin.getConfigManager().getMessage("players-list-disabled"));
+                } else {
+                    new PlayersListMenuGui(p).open();
+                }
+            }
+            case "teams-list" -> {
+                if (!plugin.getConfigManager().isListCommandEnabled()) {
+                    p.closeInventory();
+                    p.sendMessage(plugin.getConfigManager().getMessage("command-disabled"));
+                } else {
+                    new TeamListMenuGui(p).open();
+                }
+            }
+            case "personal-requests" -> new PersonalRequestsMenuGui(p).open();
+            default -> {
                 // No specific action for this item yet
-                break;
+            }
         }
     }
 }

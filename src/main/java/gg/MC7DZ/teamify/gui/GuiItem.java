@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player; // Import Player
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -63,7 +64,7 @@ public final class GuiItem {
         return out;
     }
 
-    public static ItemStack fromConfig(ConfigurationSection section, String... placeholders) {
+    public static ItemStack fromConfig(Player viewer, ConfigurationSection section, String... placeholders) {
         if (section == null) {
             return new ItemStack(Material.BARRIER);
         }
@@ -91,11 +92,17 @@ public final class GuiItem {
                 meta.setCustomModelData(section.getInt("custom-model-data"));
             }
 
-            // Optional "texture" (base64 skin data, same format as back-button)
-            // - only applies to PLAYER_HEAD items, since it needs a SkullMeta.
-            String texture = section.getString("texture");
-            if (texture != null && !texture.isEmpty() && mat == Material.PLAYER_HEAD && meta instanceof SkullMeta) {
-                applyTexture((SkullMeta) meta, texture);
+            // Handle mirror-skin-head for PLAYER_HEAD
+            if (mat == Material.PLAYER_HEAD && meta instanceof SkullMeta) {
+                if (section.getBoolean("mirror-skin-head", false)) {
+                    ((SkullMeta) meta).setOwningPlayer(viewer);
+                } else {
+                    // Optional "texture" (base64 skin data, same format as back-button)
+                    String texture = section.getString("texture");
+                    if (texture != null && !texture.isEmpty()) {
+                        applyTexture((SkullMeta) meta, texture);
+                    }
+                }
             }
 
             item.setItemMeta(meta);

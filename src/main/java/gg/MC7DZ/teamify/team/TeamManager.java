@@ -50,6 +50,21 @@ public class TeamManager {
         return memberToTeam.containsKey(player);
     }
 
+    /**
+     * Returns a list of all teams that have a pending invite for the given player.
+     * @param playerUuid The UUID of the player.
+     * @return A List of Team objects that have invited the player.
+     */
+    public List<Team> getPendingTeamInvites(UUID playerUuid) {
+        List<Team> invites = new ArrayList<>();
+        for (Team team : teamsById.values()) {
+            if (team.hasInvite(playerUuid)) {
+                invites.add(team);
+            }
+        }
+        return invites;
+    }
+
     public Team createTeam(String name, String tag, UUID owner) {
         Team team = new Team(UUID.randomUUID(), name, tag, owner);
         teamsById.put(team.getId(), team);

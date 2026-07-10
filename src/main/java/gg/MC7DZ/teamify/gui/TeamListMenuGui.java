@@ -149,7 +149,11 @@ public class TeamListMenuGui extends GuiHolder {
         Player p = getViewer();
 
         if (slot == backButtonSlot) {
-            new MainMenuGui(p, plugin.getTeamManager().getTeamOf(p.getUniqueId())).open();
+            if (plugin.getTeamManager().isInTeam(p.getUniqueId())) {
+                new MainMenuGui(p, plugin.getTeamManager().getTeamOf(p.getUniqueId())).open();
+            } else {
+                new PlayerSettingsMenuGui(p).open();
+            }
             return;
         }
 

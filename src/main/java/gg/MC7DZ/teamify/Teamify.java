@@ -127,10 +127,9 @@ public final class Teamify extends JavaPlugin {
     }
 
     public void saveDefaultGuiConfig() {
+        // Force overwrite gui.yml to ensure latest version is always used
+        saveResource("gui.yml", true);
         File guiFile = new File(getDataFolder(), "gui.yml");
-        if (!guiFile.exists()) {
-            saveResource("gui.yml", false);
-        }
         this.guiConfig = YamlConfiguration.loadConfiguration(guiFile);
         try (InputStream defStream = getResource("gui.yml")) {
             if (defStream != null) {

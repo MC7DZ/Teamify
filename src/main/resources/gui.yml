@@ -4,6 +4,7 @@ gui:
   success-sound: "entity.player.levelup"
   error-sound: "entity.villager.no"
   back-button:
+    material: "PLAYER_HEAD"
     texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmIxODhjMTI1NTcyMjdkNGViNTQ3ZjJiYmY0ZDVkZjNjMzZjYjQ2ZDQzNTYxMzhkZDYzZTdjMTEzOGY2OWE0YyJ9fX0="
     name: "&c&lBack"
     lore:
@@ -26,7 +27,7 @@ gui:
       members:
         slot: 13
         material: "PLAYER_HEAD"
-        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmIxODhjMTI1NTcyMjdkNGViNTQ3ZjJiYmY0ZDVkZjNjMzZjYjQ2ZDQzNTYxMzhkZDYzZTdjMTEzOGY2OWE0YyJ9fX0="
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5miW5lY3JhZnQubmV0L3RleHR1cmUvYmIxODhjMTI1NTcyMjdkNGViNTQ3ZjJiYmY0ZDVkZjNjMzZjYjQ2ZDQzNTYxMzhkZDYzZTdjMTEzOGY2OWE0YyJ9fX0="
         name: "&a&lMembers"
         lore:
           - "&7Manage your team members."
@@ -99,7 +100,7 @@ gui:
       mysettings:
         slot: 53
         material: "PLAYER_HEAD"
-        texture: "mirror"
+        mirror-skin-head: true
         name: "&b&lMy Settings"
         lore:
           - "&7Configure your personal"
@@ -118,7 +119,7 @@ gui:
     offline-name-color: "&7"
     # Base64 head texture shown for offline members. Set to "mirror" (or leave empty)
     # to instead show the player's own real skin even while offline.
-    offline-head-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDhjNTNiY2U4YWU1OGRjNjkyNDkzNDgxOTA5YjcwZTExYWI3ZTk0MjJkOWQ4NzYzNTEyM2QwNzZjNzEzM2UifX19"
+    offline-head-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5miW5lY3JhZnQubmV0L3RleHR1cmUvZDhjNTNiY2U4YWU1OGRjNjkyNDkzNDgxOTA5YjcwZTExYWI3ZTk0MjJkOWQ4NzYzNTEyM2QwNzZjNzEzM2UifX19"
     item-name-format: "{color}{name}"
     item-lore:
       - "&7Role: &f{role}"
@@ -320,7 +321,7 @@ gui:
     offline-item-name-format: "&c{player_name} &7(Offline)"
     # Base64 head texture shown for offline players. Set to "mirror" (or leave empty)
     # to instead show the player's own real skin even while offline.
-    offline-head-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDhjNTNiY2U4YWU1OGRjNjkyNDkzNDgxOTA5YjcwZTExYWI3ZTk0MjJkOWQ4NzYzNTEyM2QwNzZjNzEzM2UifX19"
+    offline-head-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5miW5lY3JhZnQubmV0L3RleHR1cmUvZDhjNTNiY2U4YWU1OGRjNjkyNDkzNDgxOTA5YjcwZTExYWI3ZTk0MjJkOWQ4NzYzNTEyM2QwNzZjNzEzM2UifX19"
     online-item-lore:
       - ""
       - "&7Status: &aOnline"
@@ -442,9 +443,43 @@ gui:
         slot: 45
   player-settings-menu:
     title: "&8&lMy Settings"
-    size: 27
+    size: 54
     fill-empty-slots: true
     filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 52, 53]
+    items:
+      players-list:
+        slot: 50
+        material: "PLAYER_HEAD"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5miW5lY3JhZnQubmV0L3RleHR1cmUvMmUyY2M0MjAxNWU2Njc4ZjhmZDQ5Y2NjMDFmYmY3ODdmMWJhMmMzMmJjZjU1OWEwMTUzMzJmYzVkYjUwIn19fQ=="
+        name: "&b&lPlayers List"
+        lore:
+          - "&7View all players on"
+          - "&7the server."
+      teams-list:
+        slot: 48
+        material: "WRITABLE_BOOK"
+        glow: true
+        name: "&b&lTeams List"
+        lore:
+          - "&7Browse all teams on"
+          - "&7the server."
+      personal-requests:
+        slot: 49
+        material: "PAPER"
+        glow: true
+        name: "&e&lPersonal Requests"
+        lore:
+          - "&7View your personal"
+          - "&7join requests and invites."
+      back:
+        slot: 45
+  personal-requests-menu:
+    title: "&8&lPersonal Requests"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
     items:
       back:
-        slot: 18
+        slot: 45

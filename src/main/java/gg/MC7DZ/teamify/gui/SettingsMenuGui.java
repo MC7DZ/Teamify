@@ -119,8 +119,8 @@ public class SettingsMenuGui extends GuiHolder {
 
             // Use item-apply and item-clear from gui.yml
             if (itemsCfg != null) {
-                inv.setItem(itemApplySlot, GuiItem.fromConfig(itemsCfg.getConfigurationSection("item-apply")));
-                inv.setItem(itemClearSlot, GuiItem.fromConfig(itemsCfg.getConfigurationSection("item-clear")));
+                inv.setItem(itemApplySlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("item-apply")));
+                inv.setItem(itemClearSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("item-clear")));
             }
         }
 

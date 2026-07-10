@@ -112,13 +112,8 @@ public abstract class GuiHolder implements InventoryHolder {
         ConfigurationSection backButtonCfg = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
         if (backButtonCfg == null) return;
 
-        String texture = backButtonCfg.getString("texture");
-        if (texture == null || texture.isEmpty()) {
-            // Fallback to a simple item if texture is not defined
-            inv.setItem(slot, GuiItem.simple(org.bukkit.Material.ARROW, name, lore.toArray(new String[0])));
-        } else {
-            inv.setItem(slot, GuiItem.playerHead(texture, name, lore.toArray(new String[0])));
-        }
+        // Use GuiItem.fromConfig with the viewer and the backButtonCfg
+        inv.setItem(slot, GuiItem.fromConfig(getViewer(), backButtonCfg));
     }
 
     /**
