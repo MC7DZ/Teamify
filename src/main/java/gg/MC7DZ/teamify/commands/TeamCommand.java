@@ -19,6 +19,25 @@ import java.util.regex.Pattern;
 
 public class TeamCommand implements CommandExecutor {
 
+    /**
+     * Resolves a player name to an OfflinePlayer without using the
+     * deprecated Bukkit#getOfflinePlayer(String) overload (which performs a
+     * blocking web lookup). Checks online players first (exact match), then
+     * falls back to Bukkit's cached list of known offline players.
+     */
+    private static OfflinePlayer resolveOfflinePlayer(String name) {
+        Player online = Bukkit.getPlayerExact(name);
+        if (online != null) {
+            return online;
+        }
+        for (OfflinePlayer op : Bukkit.getOfflinePlayers()) {
+            if (name.equalsIgnoreCase(op.getName())) {
+                return op;
+            }
+        }
+        return null;
+    }
+
     private final Teamify plugin;
 
     public TeamCommand(Teamify plugin) {
@@ -245,6 +264,7 @@ public class TeamCommand implements CommandExecutor {
         }
         cm.reload();
         plugin.getEconomyManager().setup();
+        plugin.getPlayerManager().loadPlayers(); // Pick up manual edits to data/players_list.yml (deletions, hidden flag)
         player.sendMessage(cm.getMessage("config-reloaded"));
     }
 
@@ -333,20 +353,47 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
 
+        OfflinePlayer target = resolveOfflinePlayer(args[1]);
+        if (target == null) {
+            player.sendMessage(cm.getPrefix() + cm.color("&cThat player has never played on this server."));
+            return;
+        }
+
+        invitePlayerToTeam(player, team, target);
+    }
+
+    /**
+     * Core invite logic shared by /team invite and any GUI (e.g. clicking a
+     * head in the players-list menu) that wants to send a team invite.
+     * Performs every check handleInvite does (permission, team size, target
+     * already in a team) and sends the same messages, so behavior stays
+     * identical no matter how it's triggered.
+     */
+    public void invitePlayerToTeam(Player player, Team team, OfflinePlayer target) {
+        ConfigManager cm = plugin.getConfigManager();
+        TeamManager tm = plugin.getTeamManager();
+
+        TeamRole role = team.getRole(player.getUniqueId());
+        if (!plugin.getConfig().getBoolean("roles.permissions." + role.name() + ".can-invite", false)) {
+            player.sendMessage(cm.getMessage("not-enough-permission-role"));
+            return;
+        }
+
         int maxMembers = cm.getMaxMembers();
         if (maxMembers > 0 && team.getSize() >= maxMembers) {
             player.sendMessage(cm.getMessage("team-full"));
             return;
         }
 
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
         if (tm.isInTeam(target.getUniqueId())) {
             player.sendMessage(cm.getPrefix() + cm.color("&cThat player is already in a team."));
             return;
         }
 
+        String targetName = target.getName() != null ? target.getName() : "Unknown";
+
         team.addInvite(target.getUniqueId());
-        player.sendMessage(cm.getMessage("invite-sent", "player", args[1]));
+        player.sendMessage(cm.getMessage("invite-sent", "player", targetName));
 
         Player onlineTarget = target.getPlayer();
         if (onlineTarget != null) {
@@ -463,7 +510,11 @@ public class TeamCommand implements CommandExecutor {
             player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team kick <player>"));
             return;
         }
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+        OfflinePlayer target = resolveOfflinePlayer(args[1]);
+        if (target == null) {
+            player.sendMessage(cm.getPrefix() + cm.color("&cThat player has never played on this server."));
+            return;
+        }
         if (!team.isMember(target.getUniqueId())) {
             player.sendMessage(cm.getMessage("player-not-in-team"));
             return;
@@ -661,7 +712,11 @@ public class TeamCommand implements CommandExecutor {
             player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team promote <player>"));
             return;
         }
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+        OfflinePlayer target = resolveOfflinePlayer(args[1]);
+        if (target == null) {
+            player.sendMessage(cm.getPrefix() + cm.color("&cThat player has never played on this server."));
+            return;
+        }
 
         if (target.getUniqueId().equals(player.getUniqueId())) {
             player.sendMessage(cm.getMessage("cant-promote-yourself"));
@@ -718,7 +773,11 @@ public class TeamCommand implements CommandExecutor {
             player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team demote <player>"));
             return;
         }
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+        OfflinePlayer target = resolveOfflinePlayer(args[1]);
+        if (target == null) {
+            player.sendMessage(cm.getPrefix() + cm.color("&cThat player has never played on this server."));
+            return;
+        }
 
         if (target.getUniqueId().equals(player.getUniqueId())) {
             player.sendMessage(cm.getMessage("cant-demote-yourself"));
@@ -771,7 +830,11 @@ public class TeamCommand implements CommandExecutor {
             player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team transfer <player>"));
             return;
         }
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+        OfflinePlayer target = resolveOfflinePlayer(args[1]);
+        if (target == null) {
+            player.sendMessage(cm.getPrefix() + cm.color("&cThat player has never played on this server."));
+            return;
+        }
         if (target.getUniqueId().equals(player.getUniqueId())) {
             player.sendMessage(cm.getPrefix() + cm.color("&cYou already own this team."));
             return;

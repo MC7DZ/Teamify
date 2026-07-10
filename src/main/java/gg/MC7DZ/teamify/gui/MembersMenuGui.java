@@ -14,6 +14,9 @@ import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.*;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 public class MembersMenuGui extends GuiHolder {
 
     private final Team team;
@@ -36,6 +39,7 @@ public class MembersMenuGui extends GuiHolder {
         String offlineColor = plugin.getConfigManager().color(cfg.getString("offline-name-color", "&7"));
         String itemNameFormat = cfg.getString("item-name-format", "{color}{name}");
         List<String> itemLoreConfig = cfg.getStringList("item-lore");
+        String offlineHeadTexture = cfg.getString("offline-head-texture");
 
         Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
 
@@ -80,8 +84,17 @@ public class MembersMenuGui extends GuiHolder {
             reservedSlots.add(backButtonSlot);
         }
 
+        // Sort members: online first, then by name
+        List<Map.Entry<UUID, TeamRole>> sortedMembers = new ArrayList<>(team.getMembers().entrySet());
+        sortedMembers.sort(Comparator
+                .comparing((Map.Entry<UUID, TeamRole> e) -> Bukkit.getOfflinePlayer(e.getKey()).isOnline(), Comparator.reverseOrder())
+                .thenComparing(e -> {
+                    String n = Bukkit.getOfflinePlayer(e.getKey()).getName();
+                    return n != null ? n : "";
+                }, String.CASE_INSENSITIVE_ORDER));
+
         int slot = 0;
-        for (Map.Entry<UUID, TeamRole> entry : team.getMembers().entrySet()) {
+        for (Map.Entry<UUID, TeamRole> entry : sortedMembers) {
             // Skip reserved slots (back button and, if configured, filler slots)
             while (slot < size && reservedSlots.contains(slot)) {
                 slot++;
@@ -96,7 +109,13 @@ public class MembersMenuGui extends GuiHolder {
             ItemStack head = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta meta = (SkullMeta) head.getItemMeta();
             if (meta != null) {
-                meta.setPlayerProfile(Bukkit.createProfile(uuid));
+                boolean useMirror = offlineHeadTexture == null || offlineHeadTexture.isEmpty()
+                        || offlineHeadTexture.equalsIgnoreCase("mirror");
+                if (!online && !useMirror) {
+                    applyOfflineTexture(meta, offlineHeadTexture);
+                } else {
+                    meta.setPlayerProfile(Bukkit.createProfile(uuid));
+                }
                 String color = showOnline ? (online ? onlineColor : offlineColor) : "&f";
                 String statusColor = online ? "&a" : "&c";
                 String status = online ? "Online" : "Offline";
@@ -141,6 +160,27 @@ public class MembersMenuGui extends GuiHolder {
         }
 
         setInventory(inv);
+    }
+
+    /**
+     * Applies a base64-encoded skin texture (same format used by the
+     * offline-head-texture config, i.e. a base64 blob decoding to
+     * {"textures":{"SKIN":{"url":"..."}}}) to a player head's SkullMeta.
+     */
+    private void applyOfflineTexture(SkullMeta meta, String base64Texture) {
+        com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID());
+        org.bukkit.profile.PlayerTextures textures = profile.getTextures();
+        try {
+            byte[] decodedBytes = Base64.getDecoder().decode(base64Texture);
+            String decodedString = new String(decodedBytes);
+            JsonObject json = JsonParser.parseString(decodedString).getAsJsonObject();
+            String textureUrl = json.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
+            textures.setSkin(new java.net.URL(textureUrl));
+        } catch (Exception e) {
+            System.err.println("Error decoding or parsing offline head texture: " + e.getMessage());
+        }
+        profile.setTextures(textures);
+        meta.setPlayerProfile(profile);
     }
 
     @Override

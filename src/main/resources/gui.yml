@@ -76,6 +76,18 @@ gui:
         lore:
           - "&7Browse all teams on"
           - "&7the server."
+      players-list:
+        slot: 42
+        material: "PLAYER_HEAD"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMmUyY2M0MjAxNWU2Njc4ZjhmZDQ5Y2NjMDFmYmY3ODdmMWJhMmMzMmJjZjU1OWEwMTUzMzJmYzVkYjUwIn19fQ=="
+        name: "&b&lPlayers List"
+        # This item always shows in the main menu, even when
+        # general.enable-players-list is false in config.yml. Clicking it
+        # while disabled just shows the "players-list-disabled" message
+        # instead of opening the menu.
+        lore:
+          - "&7View all players on"
+          - "&7the server."
       requests:
         slot: 31
         material: "PAPER"
@@ -95,6 +107,9 @@ gui:
     show-online-status: true
     online-name-color: "&a"
     offline-name-color: "&7"
+    # Base64 head texture shown for offline members. Set to "mirror" (or leave empty)
+    # to instead show the player's own real skin even while offline.
+    offline-head-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDhjNTNiY2U4YWU1OGRjNjkyNDkzNDgxOTA5YjcwZTExYWI3ZTk0MjJkOWQ4NzYzNTEyM2QwNzZjNzEzM2UifX19"
     item-name-format: "{color}{name}"
     item-lore:
       - "&7Role: &f{role}"
@@ -282,6 +297,32 @@ gui:
       - ""
       - "&7Description:"
       - "&f{description}"
+    items:
+      back:
+        slot: 45
+  players-list-menu:
+    title: "&8&lPlayers List"
+    size: 54
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    filler-slots: [45, 46, 47, 48, 49, 50, 51, 52, 53]
+    sort-by: "ONLINE_STATUS" # Options: NAME, ONLINE_STATUS
+    online-item-name-format: "&a{player_name} &7(Online)"
+    offline-item-name-format: "&c{player_name} &7(Offline)"
+    # Base64 head texture shown for offline players. Set to "mirror" (or leave empty)
+    # to instead show the player's own real skin even while offline.
+    offline-head-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDhjNTNiY2U4YWU1OGRjNjkyNDkzNDgxOTA5YjcwZTExYWI3ZTk0MjJkOWQ4NzYzNTEyM2QwNzZjNzEzM2UifX19"
+    online-item-lore:
+      - ""
+      - "&7Status: &aOnline"
+      - "&aClick to Team invite"
+    offline-item-lore:
+      - ""
+      - "&7Status: &cOffline"
+      - "&aClick to Team invite"
+    # Clicking a player's head here opens confirm-menu to send them a team
+    # invite (same checks/messages as /team invite: needs can-invite
+    # permission, team not full, target not already in a team).
     items:
       back:
         slot: 45

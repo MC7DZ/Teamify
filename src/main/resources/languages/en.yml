@@ -78,6 +78,7 @@ messages:
 
   # Disabled commands
   command-disabled: "&cThis command is disabled by the server config."
+  players-list-disabled: "&cThe players list is disabled in the config."
 
   # Home
   no-home-set: "&cYour team has no home set."

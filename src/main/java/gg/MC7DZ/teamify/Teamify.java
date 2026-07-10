@@ -10,6 +10,7 @@ import gg.MC7DZ.teamify.listeners.GuiListener;
 import gg.MC7DZ.teamify.listeners.PlayerListener;
 import gg.MC7DZ.teamify.listeners.TeamPvpListener;
 import gg.MC7DZ.teamify.placeholder.TeamifyExpansion;
+import gg.MC7DZ.teamify.player.PlayerManager; // Import PlayerManager
 import gg.MC7DZ.teamify.team.TeamManager;
 import gg.MC7DZ.teamify.visibility.VisibilityManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,6 +29,7 @@ public final class Teamify extends JavaPlugin {
 
     private ConfigManager configManager;
     private TeamManager teamManager;
+    private PlayerManager playerManager; // Declare PlayerManager
     private PlayerListener playerListener;
     private VisibilityManager visibilityManager;
     private EconomyManager economyManager;
@@ -43,6 +45,7 @@ public final class Teamify extends JavaPlugin {
         this.configManager = new ConfigManager(this);
         this.teamManager = new TeamManager(this);
         this.teamManager.loadAll();
+        this.playerManager = new PlayerManager(this); // Initialize PlayerManager
         this.visibilityManager = new VisibilityManager(this);
         this.economyManager = new EconomyManager(this);
         if (economyManager.isEnabled()) {
@@ -67,7 +70,10 @@ public final class Teamify extends JavaPlugin {
         long interval = configManager.getConfig().getLong("general.autosave-interval-minutes", 5) * 60 * 20L;
         if (interval > 0) {
             getServer().getScheduler().runTaskTimerAsynchronously(this,
-                    () -> teamManager.saveAll(), interval, interval);
+                    () -> {
+                        teamManager.saveAll();
+                        playerManager.savePlayers(); // Save player data during autosave
+                    }, interval, interval);
         }
 
         // Periodically rebuild every online player's "see invisible
@@ -84,6 +90,9 @@ public final class Teamify extends JavaPlugin {
     public void onDisable() {
         if (teamManager != null) {
             teamManager.saveAll();
+        }
+        if (playerManager != null) { // Save player data on disable
+            playerManager.savePlayers();
         }
         if (visibilityManager != null) {
             for (var player : getServer().getOnlinePlayers()) {
@@ -160,6 +169,10 @@ public final class Teamify extends JavaPlugin {
 
     public TeamManager getTeamManager() {
         return teamManager;
+    }
+
+    public PlayerManager getPlayerManager() { // Add getter for PlayerManager
+        return playerManager;
     }
 
     public PlayerListener getPlayerListener() {
