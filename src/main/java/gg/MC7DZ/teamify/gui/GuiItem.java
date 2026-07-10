@@ -1,27 +1,30 @@
 package gg.MC7DZ.teamify.gui;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import gg.MC7DZ.teamify.Teamify;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Player; // Import Player
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.profile.PlayerTextures;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * Builds ItemStacks from config sections, e.g.:
@@ -72,6 +75,7 @@ public final class GuiItem {
         try {
             mat = Material.valueOf(section.getString("material", "STONE").toUpperCase());
         } catch (IllegalArgumentException ex) {
+            Teamify.getInstance().getLogger().warning("Invalid material '" + section.getString("material") + "' in GUI config. Defaulting to STONE.");
             mat = Material.STONE;
         }
         ItemStack item = new ItemStack(mat);
@@ -173,19 +177,44 @@ public final class GuiItem {
      * {"textures":{"SKIN":{"url":"..."}}}) to a player head's SkullMeta.
      */
     private static void applyTexture(SkullMeta meta, String base64Texture) {
+        if (base64Texture == null || base64Texture.trim().isEmpty()) {
+            Teamify.getInstance().getLogger().warning("Attempted to apply empty or null texture to player head.");
+            return;
+        }
+
         com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID()); // Random UUID
         PlayerTextures textures = profile.getTextures();
+        String decodedString = null;
 
         try {
-            byte[] decodedBytes = Base64.getDecoder().decode(base64Texture);
-            String decodedString = new String(decodedBytes);
+            byte[] decodedBytes = Base64.getDecoder().decode(base64Texture.trim());
+            decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
+
+            if (Teamify.getInstance().getConfigManager().isDebug()) {
+                Teamify.getInstance().getLogger().fine("Decoded texture string: " + decodedString);
+            }
+
             JsonObject json = JsonParser.parseString(decodedString).getAsJsonObject();
+
+            if (!json.has("textures") || !json.getAsJsonObject("textures").has("SKIN") || !json.getAsJsonObject("textures").getAsJsonObject("SKIN").has("url")) {
+                Teamify.getInstance().getLogger().warning("Texture JSON is missing 'textures.SKIN.url' field. Raw JSON: " + decodedString);
+                return;
+            }
+
             String textureUrl = json.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
             textures.setSkin(new URL(textureUrl));
+        } catch (IllegalArgumentException e) {
+            Teamify.getInstance().getLogger().warning("Invalid Base64 string for player head texture: " + base64Texture + " - " + e.getMessage());
+            return;
+        } catch (JsonSyntaxException e) {
+            Teamify.getInstance().getLogger().warning("Invalid JSON syntax for player head texture. Raw string: " + decodedString + " - " + e.getMessage());
+            return;
         } catch (MalformedURLException e) {
-            System.err.println("Malformed URL for player head texture: " + e.getMessage());
+            Teamify.getInstance().getLogger().warning("Malformed URL for player head texture. URL: " + (decodedString != null ? decodedString : "N/A") + " - " + e.getMessage());
+            return;
         } catch (Exception e) {
-            System.err.println("Error decoding or parsing player head texture: " + e.getMessage());
+            Teamify.getInstance().getLogger().log(Level.WARNING, "Error decoding or parsing player head texture. Raw string: " + decodedString + " - " + e.getMessage(), e);
+            return;
         }
 
         profile.setTextures(textures);

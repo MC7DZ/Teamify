@@ -5,7 +5,7 @@
 
 general:
   # Prefix used in all plugin chat messages
-  prefix: " &b&lTeamify &8▶ &r"
+  prefix: "&b&lTEAMIFY &8» &r"
   # Language file to use from /lang folder (en.yml, fr.yml, etc)
   language: "en"
   # Enable debug logging to console

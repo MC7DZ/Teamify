@@ -27,7 +27,7 @@ gui:
       members:
         slot: 13
         material: "PLAYER_HEAD"
-        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5miW5lY3JhZnQubmV0L3RleHR1cmUvYmIxODhjMTI1NTcyMjdkNGViNTQ3ZjJiYmY0ZDVkZjNjMzZjYjQ2ZDQzNTYxMzhkZDYzZTdjMTEzOGY2OWE0YyJ9fX0="
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDE0ODgwZDNjMjM5YzNhOWE4NmE4MTQ1OWVkMWNjM2NhMTE2YmE1MzI2M2VmMTU0NTU1YWEwYTRhOTc4MWViZCJ9fX0="
         name: "&a&lMembers"
         lore:
           - "&7Manage your team members."
@@ -321,7 +321,7 @@ gui:
     offline-item-name-format: "&c{player_name} &7(Offline)"
     # Base64 head texture shown for offline players. Set to "mirror" (or leave empty)
     # to instead show the player's own real skin even while offline.
-    offline-head-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5miW5lY3JhZnQubmV0L3RleHR1cmUvZDhjNTNiY2U4YWU1OGRjNjkyNDkzNDgxOTA5YjcwZTExYWI3ZTk0MjJkOWQ4NzYzNTEyM2QwNzZjNzEzM2UifX19"
+    offline-head-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGQxOWM2ODQ2MTY2NmFhY2Q3NjI4ZTM0YTFlMmFkMzlmZTRmMmJkZTMyZTIzMTk2M2VmM2IzNTUzMyJ9fX0="
     online-item-lore:
       - ""
       - "&7Status: &aOnline"
@@ -446,12 +446,12 @@ gui:
     size: 54
     fill-empty-slots: true
     filler-item: "GRAY_STAINED_GLASS_PANE"
-    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 52, 53]
+    filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 51, 52, 53]
     items:
       players-list:
         slot: 50
         material: "PLAYER_HEAD"
-        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5miW5lY3JhZnQubmV0L3RleHR1cmUvMmUyY2M0MjAxNWU2Njc4ZjhmZDQ5Y2NjMDFmYmY3ODdmMWJhMmMzMmJjZjU1OWEwMTUzMzJmYzVkYjUwIn19fQ=="
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMmUyY2M0MjAxNWU2Njc4ZjhmZDQ5Y2NjMDFmYmY3ODdmMWJhMmMzMmJjZjU1OWEwMTUzMzJmYzVkYjUwIn19fQ=="
         name: "&b&lPlayers List"
         lore:
           - "&7View all players on"

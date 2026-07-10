@@ -1,6 +1,7 @@
 package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.player.PlayerData;
+import gg.MC7DZ.teamify.team.Team; // Import Team
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -137,7 +138,14 @@ public class PlayersListMenuGui extends GuiHolder {
         Player p = getViewer();
 
         if (slot == backButtonSlot) {
-            new MainMenuGui(p, plugin.getTeamManager().getTeamOf(p.getUniqueId())).open();
+            // Check if the player is in a team before opening MainMenuGui
+            Team team = plugin.getTeamManager().getTeamOf(p.getUniqueId()); // Get team here
+            if (team != null) { // Null check added here
+                new MainMenuGui(p, team).open();
+            } else {
+                // If not in a team, go back to PlayerSettingsMenuGui
+                new PlayerSettingsMenuGui(p).open();
+            }
             return;
         }
 

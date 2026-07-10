@@ -1,6 +1,7 @@
 package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.Teamify;
+import gg.MC7DZ.teamify.team.Team; // Import Team
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -82,8 +83,9 @@ public class PlayerSettingsMenuGui extends GuiHolder {
         if (slot == backButtonSlot) {
             p.closeInventory();
             // If the player was in a team, open the MainMenuGui, otherwise just close.
-            if (plugin.getTeamManager().isInTeam(p.getUniqueId())) {
-                new MainMenuGui(p, plugin.getTeamManager().getTeamOf(p.getUniqueId())).open();
+            Team team = plugin.getTeamManager().getTeamOf(p.getUniqueId());
+            if (team != null) { // Null check added here
+                new MainMenuGui(p, team).open();
             }
             return;
         }

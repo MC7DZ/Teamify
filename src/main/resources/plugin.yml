@@ -3,7 +3,7 @@ version: '1.0.0'
 main: gg.MC7DZ.teamify.Teamify
 api-version: '1.21'
 load: POSTWORLD
-author: Claude
+author: MC7DZ
 description: A fully configurable Teams plugin with GUIs.
 softdepend: [Vault, PlaceholderAPI]
 
