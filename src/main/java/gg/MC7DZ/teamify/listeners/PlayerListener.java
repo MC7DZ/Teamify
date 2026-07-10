@@ -149,12 +149,23 @@ public class PlayerListener implements Listener {
         }
     }
 
+    /** Whether general.color-shows contains CHAT (and colored-names is on at all). */
+    private boolean isChatColorEnabled() {
+        return plugin.getConfigManager().isColoredNamesEnabled()
+                && plugin.getConfigManager().isColorShown(gg.MC7DZ.teamify.config.ConfigManager.ColorShow.CHAT);
+    }
+
     private void sendTeamChat(Player player, Team team, String message) {
         String format = plugin.getConfigManager().color(plugin.getConfigManager().getTeamChatFormat());
         String role = team.getRole(player.getUniqueId()).name();
+        // Everyone receiving team chat is a teammate of the sender, so the
+        // sender's name is colored the same way for every recipient.
+        String playerName = isChatColorEnabled()
+                ? plugin.getConfigManager().getTeammateColor() + player.getName() + org.bukkit.ChatColor.RESET
+                : player.getName();
         String out = format
                 .replace("{role}", role)
-                .replace("{player}", player.getName())
+                .replace("{player}", playerName)
                 .replace("{message}", message);
 
         for (UUID memberId : team.getMembers().keySet()) {
@@ -168,16 +179,32 @@ public class PlayerListener implements Listener {
     private void sendAllyChat(Player player, Team team, String message) {
         String format = plugin.getConfigManager().color(plugin.getConfigManager().getAllyChatFormat());
         String role = team.getRole(player.getUniqueId()).name();
-        String out = format
+        boolean chatColor = isChatColorEnabled();
+
+        // The sender is a teammate to their own team but an ally to the
+        // allied teams receiving this - build both versions of the message.
+        String teammateName = chatColor
+                ? plugin.getConfigManager().getTeammateColor() + player.getName() + org.bukkit.ChatColor.RESET
+                : player.getName();
+        String allyName = chatColor
+                ? plugin.getConfigManager().getAlliesColor() + player.getName() + org.bukkit.ChatColor.RESET
+                : player.getName();
+
+        String outForTeam = format
                 .replace("{role}", role)
-                .replace("{player}", player.getName())
+                .replace("{player}", teammateName)
+                .replace("{team}", team.getName())
+                .replace("{message}", message);
+        String outForAllies = format
+                .replace("{role}", role)
+                .replace("{player}", allyName)
                 .replace("{team}", team.getName())
                 .replace("{message}", message);
 
         // Send to own team members...
         for (UUID memberId : team.getMembers().keySet()) {
             Player member = plugin.getServer().getPlayer(memberId);
-            if (member != null) member.sendMessage(out);
+            if (member != null) member.sendMessage(outForTeam);
         }
         // ...and to every allied team's members.
         for (var entry : team.getRelations().entrySet()) {
@@ -186,7 +213,7 @@ public class PlayerListener implements Listener {
             if (allyTeam == null) continue;
             for (UUID memberId : allyTeam.getMembers().keySet()) {
                 Player member = plugin.getServer().getPlayer(memberId);
-                if (member != null) member.sendMessage(out);
+                if (member != null) member.sendMessage(outForAllies);
             }
         }
     }

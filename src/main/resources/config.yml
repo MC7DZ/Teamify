@@ -23,6 +23,26 @@ general:
   enable-players-list: true
   # Enable the player settings menu (/team mysettings or /team when not in a team)
   enable-player-settings: true
+  # Colors player names for teammates, allies, and enemies. Whether this
+  # actually shows anywhere is controlled by "color-shows" below - this is
+  # just the master on/off switch.
+  colored-names: true
+  # The color used for each relation. Accepts any Bukkit ChatColor name
+  # (WHITE, BLACK, RED, GOLD, YELLOW, GREEN, AQUA, BLUE, LIGHT_PURPLE,
+  # DARK_PURPLE, GRAY, DARK_GRAY, DARK_RED, DARK_GREEN, DARK_AQUA,
+  # DARK_BLUE, and so on).
+  teammate-color: "GREEN"
+  allies-color: "BLUE"
+  enemys-color: "white"
+  # Where the colors above are shown. Any combination of:
+  #   CHAT    - colors the player's name in team chat / ally chat
+  #   TAB     - colors the player's name in the tab list
+  #   NAMETAG - colors the name shown above the player's head
+  # Note: TAB and NAMETAG are both driven by the same scoreboard team color
+  # under the hood, so enabling either one will currently show the color in
+  # both places. Default is NAMETAG only.
+  color-shows:
+    - "NAMETAG"
 
 team-creation:
   # Minimum / maximum characters for  a team name

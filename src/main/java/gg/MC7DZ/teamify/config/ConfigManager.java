@@ -147,6 +147,38 @@ public class ConfigManager {
     public boolean isPlayersListEnabled() { return getConfig().getBoolean("general.enable-players-list", false); }
     public boolean isPlayerSettingsEnabled() { return getConfig().getBoolean("general.enable-player-settings", true); }
     public boolean isDebug() { return getConfig().getBoolean("general.debug", false); }
+    public boolean isColoredNamesEnabled() { return getConfig().getBoolean("general.colored-names", true); }
+    public ChatColor getTeammateColor() { return parseChatColor(getConfig().getString("general.teammate-color", "GREEN"), ChatColor.GREEN); }
+    public ChatColor getAlliesColor() { return parseChatColor(getConfig().getString("general.allies-color", "BLUE"), ChatColor.BLUE); }
+    public ChatColor getEnemysColor() { return parseChatColor(getConfig().getString("general.enemys-color", "RED"), ChatColor.RED); }
+
+    /** Which of CHAT / TAB / NAMETAG the relation colors above should be applied to. */
+    public enum ColorShow { CHAT, TAB, NAMETAG }
+
+    public java.util.EnumSet<ColorShow> getColorShows() {
+        java.util.List<String> raw = getConfig().getStringList("general.color-shows");
+        if (raw.isEmpty()) raw = java.util.List.of("NAMETAG");
+        java.util.EnumSet<ColorShow> shows = java.util.EnumSet.noneOf(ColorShow.class);
+        for (String entry : raw) {
+            try {
+                shows.add(ColorShow.valueOf(entry.trim().toUpperCase()));
+            } catch (IllegalArgumentException ignored) {
+                // Unknown value in color-shows - skip it rather than error out.
+            }
+        }
+        return shows;
+    }
+
+    public boolean isColorShown(ColorShow show) { return getColorShows().contains(show); }
+
+    private ChatColor parseChatColor(String name, ChatColor fallback) {
+        if (name == null) return fallback;
+        try {
+            return ChatColor.valueOf(name.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return fallback;
+        }
+    }
 
     // ---- Team creation ----
     public int getMinNameLength() { return getConfig().getInt("team-creation.min-name-length", 3); }
