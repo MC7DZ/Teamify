@@ -37,6 +37,8 @@ public class PlayerListener implements Listener {
         // teammates/allies" scoreboard built right away rather than waiting
         // for the periodic refresh task.
         plugin.getVisibilityManager().refresh(event.getPlayer());
+        plugin.getPlayerManager().updatePlayerData(event.getPlayer()); // Update player data on join
+        plugin.getPlayerManager().savePlayers(); // Persist to data/players_list.yml right away
     }
 
     @EventHandler
@@ -44,6 +46,8 @@ public class PlayerListener implements Listener {
         teamChatToggled.remove(event.getPlayer().getUniqueId());
         allyChatToggled.remove(event.getPlayer().getUniqueId());
         pendingInput.remove(event.getPlayer().getUniqueId());
+        plugin.getPlayerManager().updatePlayerData(event.getPlayer()); // Update player data on quit
+        plugin.getPlayerManager().savePlayers(); // Persist to data/players_list.yml right away
     }
 
     /** Marks the player's very next chat message as input for a GUI flow (e.g. bank amount). */

@@ -5,7 +5,7 @@
 
 general:
   # Prefix used in all plugin chat messages
-  prefix: "&8✦ &b&lTeamify &8✦ &r"
+  prefix: " &b&lTeamify &8▶ &r"
   # Language file to use from /lang folder (en.yml, fr.yml, etc)
   language: "en"
   # Enable debug logging to console
@@ -14,9 +14,16 @@ general:
   autosave-interval-minutes: 5
   # Enable the /team list command
   enable-list-command: true
+  # Enable the players list GUI
+  # Player entries (name + hidden flag) are stored in data/players_list.yml.
+  # Set "hidden: true" on any player's entry there to exclude them from the
+  # /team players-list menu without affecting anything else. Deleting a
+  # player's entry there removes them from the list too. Run /team reload
+  # (or restart) after manually editing the file for changes to take effect.
+  enable-players-list: true
 
 team-creation:
-  # Minimum / maximum characters for a team name
+  # Minimum / maximum characters for  a team name
   min-name-length: 3
   max-name-length: 16
   # Minimum / maximum characters for a team tag (shown in chat/tab)

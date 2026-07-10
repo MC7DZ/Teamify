@@ -66,7 +66,8 @@ public class MainMenuGui extends GuiHolder {
                                 plugin.getConfigManager().color(backButtonCfg.getString("name", "&cBack")),
                                 backButtonCfg.getStringList("lore"));
                     }
-                } else {
+                }
+                else {
                     ItemStack item = GuiItem.fromConfig(itemSec,
                             "team", team.getName(),
                             "level", String.valueOf(team.getLevel()),
@@ -141,6 +142,14 @@ public class MainMenuGui extends GuiHolder {
                 }
             }
             case "teams-list" -> new TeamListMenuGui(p).open();
+            case "players-list" -> {
+                if (!plugin.getConfigManager().isPlayersListEnabled()) {
+                    p.closeInventory();
+                    p.sendMessage(plugin.getConfigManager().getMessage("players-list-disabled")); // Assuming a message for disabled feature
+                } else {
+                    new PlayersListMenuGui(p).open();
+                }
+            }
             case "requests" -> new RequestsMenuGui(p, team).open();
         }
     }
