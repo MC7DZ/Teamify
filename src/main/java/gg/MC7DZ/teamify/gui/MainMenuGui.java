@@ -78,6 +78,17 @@ public class MainMenuGui extends GuiHolder {
             }
         }
 
+        // Add the "My Settings" head
+        if (plugin.getConfigManager().isPlayerSettingsEnabled()) {
+            ConfigurationSection playerSettingsCfg = plugin.getGuiConfig().getConfigurationSection("gui.main-menu.items.mysettings");
+            if (playerSettingsCfg != null) {
+                ItemStack playerSettingsItem = GuiItem.fromConfig(playerSettingsCfg);
+                int playerSettingsSlot = playerSettingsCfg.getInt("slot", 53); // Default to 53 if not specified
+                inv.setItem(playerSettingsSlot, playerSettingsItem);
+                slotActions.put(playerSettingsSlot, "mysettings");
+            }
+        }
+
         setInventory(inv);
     }
 
@@ -151,6 +162,14 @@ public class MainMenuGui extends GuiHolder {
                 }
             }
             case "requests" -> new RequestsMenuGui(p, team).open();
+            case "mysettings" -> {
+                if (plugin.getConfigManager().isPlayerSettingsEnabled()) {
+                    new PlayerSettingsMenuGui(p).open();
+                } else {
+                    p.closeInventory();
+                    p.sendMessage(plugin.getConfigManager().getMessage("player-settings-disabled"));
+                }
+            }
         }
     }
 }

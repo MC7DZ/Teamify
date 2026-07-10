@@ -96,8 +96,17 @@ gui:
         lore:
           - "&7View pending join requests"
           - "&7and alliance requests."
+      mysettings:
+        slot: 53
+        material: "PLAYER_HEAD"
+        texture: "mirror"
+        name: "&b&lMy Settings"
+        lore:
+          - "&7Configure your personal"
+          - "&7preferences and options."
       back:
         slot: 45
+
   members-menu:
     title: "&8&lTeam Members"
     size: 54
@@ -431,3 +440,11 @@ gui:
           - "&7Remove funds from your team bank."
       back:
         slot: 45
+  player-settings-menu:
+    title: "&8&lMy Settings"
+    size: 27
+    fill-empty-slots: true
+    filler-item: "GRAY_STAINED_GLASS_PANE"
+    items:
+      back:
+        slot: 18

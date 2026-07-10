@@ -21,6 +21,8 @@ general:
   # player's entry there removes them from the list too. Run /team reload
   # (or restart) after manually editing the file for changes to take effect.
   enable-players-list: true
+  # Enable the player settings menu (/team mysettings or /team when not in a team)
+  enable-player-settings: true
 
 team-creation:
   # Minimum / maximum characters for  a team name

@@ -57,7 +57,11 @@ public class TeamCommand implements CommandExecutor {
         if (args.length == 0) {
             Team team = tm.getTeamOf(player.getUniqueId());
             if (team == null) {
-                player.sendMessage(cm.getMessage("no-team"));
+                if (cm.isPlayerSettingsEnabled()) {
+                    new PlayerSettingsMenuGui(player).open();
+                } else {
+                    player.sendMessage(cm.getMessage("no-team"));
+                }
                 return true;
             }
             if (!cm.isGuiEnabled()) {
@@ -69,6 +73,12 @@ public class TeamCommand implements CommandExecutor {
         }
 
         String sub = args[0].toLowerCase();
+
+        // Allow /team mysettings even if not in a team
+        if (sub.equals("mysettings")) {
+            handleMySettings(player);
+            return true;
+        }
 
         if (!player.hasPermission("teams.command." + sub)) {
             player.sendMessage(cm.getMessage("no-permission"));
@@ -125,6 +135,15 @@ public class TeamCommand implements CommandExecutor {
             default -> player.sendMessage(cm.getPrefix() + cm.color("&cUnknown subcommand."));
         }
         return true;
+    }
+
+    private void handleMySettings(Player player) {
+        ConfigManager cm = plugin.getConfigManager();
+        if (!cm.isPlayerSettingsEnabled()) {
+            player.sendMessage(cm.getMessage("player-settings-disabled"));
+            return;
+        }
+        new PlayerSettingsMenuGui(player).open();
     }
 
     private void handleSettings(Player player) {

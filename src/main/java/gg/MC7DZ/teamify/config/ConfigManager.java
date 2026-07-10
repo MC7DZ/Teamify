@@ -145,6 +145,7 @@ public class ConfigManager {
     // ---- General ----
     public boolean isListCommandEnabled() { return getConfig().getBoolean("general.enable-list-command", true); }
     public boolean isPlayersListEnabled() { return getConfig().getBoolean("general.enable-players-list", false); }
+    public boolean isPlayerSettingsEnabled() { return getConfig().getBoolean("general.enable-player-settings", true); }
 
     // ---- Team creation ----
     public int getMinNameLength() { return getConfig().getInt("team-creation.min-name-length", 3); }
