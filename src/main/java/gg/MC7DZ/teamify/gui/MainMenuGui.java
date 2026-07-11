@@ -2,6 +2,7 @@ package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.team.TeamRole;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -28,10 +29,10 @@ public class MainMenuGui extends GuiHolder {
 
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.main-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Team Menu"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Team Menu"));
         int size = cfg.getInt("size", 54);
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         if (cfg.getBoolean("fill-empty-slots", true)) {
@@ -47,7 +48,7 @@ public class MainMenuGui extends GuiHolder {
             } else {
                 // Fallback to filling all empty slots if no specific filler-slots are defined
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
@@ -60,12 +61,7 @@ public class MainMenuGui extends GuiHolder {
 
                 if (key.equals("back")) {
                     backButtonSlot = slot;
-                    ConfigurationSection backButtonCfg = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-                    if (backButtonCfg != null) {
-                        setBackButton(inv, backButtonSlot,
-                                plugin.getConfigManager().color(backButtonCfg.getString("name", "&cBack")),
-                                backButtonCfg.getStringList("lore"));
-                    }
+                    setBackButton(inv, backButtonSlot);
                 }
                 else {
                     ItemStack item = GuiItem.fromConfig(getViewer(), itemSec,
@@ -107,10 +103,10 @@ public class MainMenuGui extends GuiHolder {
         switch (action) {
             case "info" -> {
                 p.closeInventory();
-                p.sendMessage(plugin.getConfigManager().getPrefix() +
-                        plugin.getConfigManager().color("&bTeam: &f" + team.getName() +
-                                " &7| &bLevel: &f" + team.getLevel() +
-                                " &7| &bMembers: &f" + team.getSize()));
+                p.sendMessage(plugin.getConfigManager().getPrefix().append(
+                        plugin.getConfigManager().color("<aqua>Team: <white>" + team.getName() +
+                                " <gray>| <aqua>Level: <white>" + team.getLevel() +
+                                " <gray>| <aqua>Members: <white>" + team.getSize())));
             }
             case "members" -> new MembersMenuGui(p, team).open();
             case "home" -> {
@@ -144,7 +140,7 @@ public class MainMenuGui extends GuiHolder {
                         org.bukkit.entity.Player activeViewer = org.bukkit.Bukkit.getPlayer(activeViewerId);
                         String viewerName = activeViewer != null
                                 ? activeViewer.getName()
-                                : plugin.getConfigManager().color("&7Unknown");
+                                : "Unknown"; // Pass as String for replacement
                         p.closeInventory();
                         p.sendMessage(plugin.getConfigManager().getMessage("echest-in-use", "player", viewerName));
                         return;

@@ -2,6 +2,7 @@ package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.team.TeamRole;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -35,7 +36,7 @@ public class InviteMenuGui extends GuiHolder {
 
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.invite-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Pending Invites"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Pending Invites"));
         int size = cfg.getInt("size", 54);
         
         // Load slots from gui.yml items section
@@ -51,7 +52,7 @@ public class InviteMenuGui extends GuiHolder {
             backButtonSlot = 45;
         }
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         if (cfg.getBoolean("fill-empty-slots", true)) {
@@ -67,39 +68,34 @@ public class InviteMenuGui extends GuiHolder {
             } else {
                 // Fallback to filling all empty slots if no specific filler-slots are defined
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
 
         // Handle back button
         if (itemsCfg != null && itemsCfg.contains("back")) {
-            ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-            if (backButtonData != null) {
-                setBackButton(inv, backButtonSlot,
-                        plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                        backButtonData.getStringList("lore"));
-            }
+            setBackButton(inv, backButtonSlot);
         }
 
         // Central item for invite details
         if (itemsCfg != null && itemsCfg.contains("invite-info")) {
             inv.setItem(itemsCfg.getInt("invite-info.slot", 22), GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("invite-info"), "team", team.getName()));
         } else {
-            inv.setItem(22, GuiItem.simple(Material.PAPER, "&bInvite from &f" + team.getName(),
-                    "&7Click accept or deny below."));
+            inv.setItem(22, GuiItem.simple(Material.PAPER, plugin.getConfigManager().color("<aqua>Invite from <white>" + team.getName()),
+                    plugin.getConfigManager().color("<gray>Click accept or deny below.")));
         }
 
         // Accept and Deny buttons
         if (itemsCfg != null && itemsCfg.contains("accept")) {
             inv.setItem(acceptSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("accept")));
         } else {
-            inv.setItem(acceptSlot, GuiItem.simple(Material.LIME_DYE, "&aAccept"));
+            inv.setItem(acceptSlot, GuiItem.simple(Material.LIME_DYE, plugin.getConfigManager().color("<green>Accept")));
         }
         if (itemsCfg != null && itemsCfg.contains("deny")) {
             inv.setItem(denySlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("deny")));
         } else {
-            inv.setItem(denySlot, GuiItem.simple(Material.RED_DYE, "&cDeny"));
+            inv.setItem(denySlot, GuiItem.simple(Material.RED_DYE, plugin.getConfigManager().color("<red>Deny")));
         }
 
         setInventory(inv);
@@ -134,8 +130,8 @@ public class InviteMenuGui extends GuiHolder {
             plugin.getTeamManager().addMember(team, uuid, TeamRole.MEMBER);
             plugin.getTeamManager().saveTeam(team);
             plugin.getVisibilityManager().refreshTeamAndAllies(team);
-            p.sendMessage(plugin.getConfigManager().getPrefix() +
-                    plugin.getConfigManager().color("&aYou joined &b" + team.getName() + "&a!"));
+            p.sendMessage(plugin.getConfigManager().getPrefix().append(
+                    plugin.getConfigManager().color("<green>You joined <aqua>" + team.getName() + "<green>!")));
             for (UUID memberId : team.getMembers().keySet()) {
                 if (memberId.equals(uuid)) continue;
                 Player member = org.bukkit.Bukkit.getPlayer(memberId);
@@ -146,8 +142,8 @@ public class InviteMenuGui extends GuiHolder {
         } else if (slot == denySlot) {
             p.closeInventory();
             team.removeInvite(uuid);
-            p.sendMessage(plugin.getConfigManager().getPrefix() +
-                    plugin.getConfigManager().color("&7You declined the invite from &f" + team.getName() + "&7."));
+            p.sendMessage(plugin.getConfigManager().getPrefix().append(
+                    plugin.getConfigManager().color("<gray>You declined the invite from <white>" + team.getName() + "<gray>.")));
         }
     }
 }

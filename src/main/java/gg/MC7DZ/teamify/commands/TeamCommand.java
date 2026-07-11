@@ -6,6 +6,8 @@ import gg.MC7DZ.teamify.gui.*;
 import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.team.TeamManager;
 import gg.MC7DZ.teamify.team.TeamRole;
+import gg.MC7DZ.teamify.util.MessageUtil;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -46,12 +48,13 @@ public class TeamCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        ConfigManager cm = plugin.getConfigManager();
+
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use this command.");
+            sender.sendMessage(cm.color("Only players can use this command."));
             return true;
         }
 
-        ConfigManager cm = plugin.getConfigManager();
         TeamManager tm = plugin.getTeamManager();
 
         if (args.length == 0) {
@@ -65,7 +68,7 @@ public class TeamCommand implements CommandExecutor {
                 return true;
             }
             if (!cm.isGuiEnabled()) {
-                player.sendMessage(cm.getPrefix() + cm.color("&7Use /team info, /team members, etc."));
+                player.sendMessage(cm.getPrefix().append(cm.color("<gray>Use /team info, /team members, etc.")));
                 return true;
             }
             new MainMenuGui(player, team).open();
@@ -132,7 +135,7 @@ public class TeamCommand implements CommandExecutor {
             case "description" -> handleDescription(player, args);
             case "echest" -> handleEchest(player);
             case "reload" -> handleReload(player);
-            default -> player.sendMessage(cm.getPrefix() + cm.color("&cUnknown subcommand."));
+            default -> player.sendMessage(cm.getPrefix().append(cm.color("<red>Unknown subcommand.")));
         }
         return true;
     }
@@ -155,7 +158,7 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (!cm.isGuiEnabled()) {
-            player.sendMessage(cm.getPrefix() + cm.color("&7Use /team pvp to toggle team PVP."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<gray>Use /team pvp to toggle team PVP.")));
             return;
         }
         new SettingsMenuGui(player, team).open();
@@ -206,7 +209,7 @@ public class TeamCommand implements CommandExecutor {
         java.util.UUID activeViewerId = EchestMenuGui.getActiveViewer(team.getId());
         if (activeViewerId != null && !activeViewerId.equals(player.getUniqueId())) {
             org.bukkit.entity.Player activeViewer = org.bukkit.Bukkit.getPlayer(activeViewerId);
-            String viewerName = activeViewer != null ? activeViewer.getName() : cm.color("&7Unknown");
+            String viewerName = activeViewer != null ? activeViewer.getName() : "Unknown"; // Get plain string name
             player.sendMessage(cm.getMessage("echest-in-use", "player", viewerName));
             return;
         }
@@ -296,7 +299,7 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team create <name> [tag]"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team create <name> [tag]")));
             return;
         }
 
@@ -368,13 +371,13 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team invite <player>"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team invite <player>")));
             return;
         }
 
         OfflinePlayer target = resolveOfflinePlayer(args[1]);
         if (target == null) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cThat player has never played on this server."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>That player has never played on this server.")));
             return;
         }
 
@@ -405,7 +408,7 @@ public class TeamCommand implements CommandExecutor {
         }
 
         if (tm.isInTeam(target.getUniqueId())) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cThat player is already in a team."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>That player is already in a team.")));
             return;
         }
 
@@ -416,12 +419,12 @@ public class TeamCommand implements CommandExecutor {
 
         Player onlineTarget = target.getPlayer();
         if (onlineTarget != null) {
-            gg.MC7DZ.teamify.util.MessageUtil.sendClickableInvite(
+            MessageUtil.sendClickableInvite(
                     onlineTarget,
                     cm.getMessage("invite-received", "team", team.getName()),
-                    "&a&l[Click to Accept]",
+                    cm.color("<green><bold>[Click to Accept]"),
                     "/team join " + team.getName(),
-                    "&7Click to join &b" + team.getName());
+                    cm.color("<gray>Click to join <aqua>" + team.getName()));
         }
     }
 
@@ -434,12 +437,12 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team join <name>"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team join <name>")));
             return;
         }
         Team team = tm.getTeamByName(args[1]);
         if (team == null || !team.hasInvite(player.getUniqueId())) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cNo pending invite from that team."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>No pending invite from that team.")));
             return;
         }
         if (cm.isGuiEnabled()) {
@@ -449,7 +452,7 @@ public class TeamCommand implements CommandExecutor {
             tm.addMember(team, player.getUniqueId(), TeamRole.MEMBER);
             tm.saveTeam(team);
             plugin.getVisibilityManager().refreshTeamAndAllies(team);
-            player.sendMessage(cm.getPrefix() + cm.color("&aYou joined &b" + team.getName() + "&a!"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<green>You joined <aqua>" + team.getName() + "<green>!")));
             for (UUID memberId : team.getMembers().keySet()) {
                 if (memberId.equals(player.getUniqueId())) continue;
                 Player member = Bukkit.getPlayer(memberId);
@@ -471,7 +474,7 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team joinrequest <name>"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team joinrequest <name>")));
             return;
         }
 
@@ -502,12 +505,12 @@ public class TeamCommand implements CommandExecutor {
             }
             Player online = Bukkit.getPlayer(memberId);
             if (online != null) {
-                gg.MC7DZ.teamify.util.MessageUtil.sendClickableInvite(
+                MessageUtil.sendClickableInvite(
                         online,
                         cm.getMessage("join-request-received", "player", player.getName()),
-                        "&a&l[View Requests]",
+                        cm.color("<green><bold>[View Requests]"),
                         "/team requests",
-                        "&7Click to open the Requests menu");
+                        cm.color("<gray>Click to open the Requests menu"));
             }
         }
     }
@@ -526,12 +529,12 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team kick <player>"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team kick <player>")));
             return;
         }
         OfflinePlayer target = resolveOfflinePlayer(args[1]);
         if (target == null) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cThat player has never played on this server."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>That player has never played on this server.")));
             return;
         }
         if (!team.isMember(target.getUniqueId())) {
@@ -579,7 +582,7 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (team.getOwner().equals(player.getUniqueId())) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cTransfer ownership or disband instead of leaving."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Transfer ownership or disband instead of leaving.")));
             return;
         }
         tm.removeMember(team, player.getUniqueId());
@@ -623,7 +626,7 @@ public class TeamCommand implements CommandExecutor {
 
         if (cm.isDisbandConfirmationRequired() && cm.isGuiEnabled()) {
             new ConfirmMenuGui(player, doDisband, () ->
-                    player.sendMessage(cm.getPrefix() + cm.color("&7Disband cancelled."))).open();
+                    player.sendMessage(cm.getPrefix().append(cm.color("<gray>Disband cancelled."))));
         } else {
             doDisband.run();
         }
@@ -651,12 +654,12 @@ public class TeamCommand implements CommandExecutor {
             player.teleport(home);
             return;
         }
-        player.sendMessage(cm.getPrefix() + cm.color("&7Teleporting in " + delay + " seconds..."));
+        player.sendMessage(cm.getPrefix().append(cm.color("<gray>Teleporting in " + delay + " seconds...")));
         Location startLoc = player.getLocation();
         boolean cancelOnMove = cm.isCancelOnMove();
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (cancelOnMove && player.getLocation().distanceSquared(startLoc) > 1.0) {
-                player.sendMessage(cm.getPrefix() + cm.color("&cTeleport cancelled - you moved."));
+                player.sendMessage(cm.getPrefix().append(cm.color("<red>Teleport cancelled - you moved.")));
                 return;
             }
             player.teleport(home);
@@ -682,18 +685,18 @@ public class TeamCommand implements CommandExecutor {
         }
         team.setHome(0, player.getLocation());
         tm.saveTeam(team);
-        player.sendMessage(cm.getPrefix() + cm.color("&aTeam home set!"));
+        player.sendMessage(cm.getPrefix().append(cm.color("<green>Team home set!")));
     }
 
     private void handleChatToggle(Player player) {
         ConfigManager cm = plugin.getConfigManager();
         if (!cm.isTeamChatEnabled()) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cTeam chat is disabled."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Team chat is disabled.")));
             return;
         }
         plugin.getPlayerListener().toggleTeamChat(player.getUniqueId());
         boolean nowOn = plugin.getPlayerListener().isTeamChatToggled(player.getUniqueId());
-        player.sendMessage(cm.getPrefix() + cm.color(nowOn ? "&aTeam chat enabled." : "&7Team chat disabled."));
+        player.sendMessage(cm.getPrefix().append(cm.color(nowOn ? "<green>Team chat enabled." : "<gray>Team chat disabled.")));
     }
 
     private void handleInfo(Player player) {
@@ -704,13 +707,13 @@ public class TeamCommand implements CommandExecutor {
             player.sendMessage(cm.getMessage("no-team"));
             return;
         }
-        player.sendMessage(cm.getPrefix() + cm.color("&bTeam: &f" + team.getName() +
-                " &7| &bTag: &f" + team.getTag() +
-                " &7| &bLevel: &f" + team.getLevel() +
-                " &7| &bMembers: &f" + team.getSize()));
+        player.sendMessage(cm.getPrefix().append(cm.color("<aqua>Team: <white>" + team.getName() +
+                " <gray>| <aqua>Tag: <white>" + team.getTag() +
+                " <gray>| <aqua>Level: <white>" + team.getLevel() +
+                " <gray>| <aqua>Members: <white>" + team.getSize())));
 
         if (cm.isTeamDescriptionEnabled() && team.getDescription() != null && !team.getDescription().isEmpty()) {
-            player.sendMessage(cm.color("&7" + team.getDescription()));
+            player.sendMessage(cm.color("<gray>" + team.getDescription()));
         }
     }
 
@@ -728,12 +731,12 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team promote <player>"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team promote <player>")));
             return;
         }
         OfflinePlayer target = resolveOfflinePlayer(args[1]);
         if (target == null) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cThat player has never played on this server."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>That player has never played on this server.")));
             return;
         }
 
@@ -789,12 +792,12 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team demote <player>"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team demote <player>")));
             return;
         }
         OfflinePlayer target = resolveOfflinePlayer(args[1]);
         if (target == null) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cThat player has never played on this server."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>That player has never played on this server.")));
             return;
         }
 
@@ -846,16 +849,16 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team transfer <player>"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team transfer <player>")));
             return;
         }
         OfflinePlayer target = resolveOfflinePlayer(args[1]);
         if (target == null) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cThat player has never played on this server."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>That player has never played on this server.")));
             return;
         }
         if (target.getUniqueId().equals(player.getUniqueId())) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cYou already own this team."));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>You already own this team.")));
             return;
         }
         if (!team.isMember(target.getUniqueId())) {
@@ -887,7 +890,7 @@ public class TeamCommand implements CommandExecutor {
 
         if (cm.isTransferConfirmationRequired() && cm.isGuiEnabled()) {
             new ConfirmMenuGui(player, doTransfer, () ->
-                    player.sendMessage(cm.getPrefix() + cm.color("&7Ownership transfer cancelled."))).open();
+                    player.sendMessage(cm.getPrefix().append(cm.color("<gray>Ownership transfer cancelled."))));
         } else {
             doTransfer.run();
         }
@@ -926,19 +929,19 @@ public class TeamCommand implements CommandExecutor {
             case "balance" -> player.sendMessage(cm.getMessage("bank-balance", "amount", plugin.getEconomyManager().format(team.getBankBalance())));
             case "deposit" -> {
                 if (args.length < 3) {
-                    player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team bank deposit <amount>"));
+                    player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team bank deposit <amount>")));
                     return;
                 }
                 bankDeposit(player, team, args[2]);
             }
             case "withdraw" -> {
                 if (args.length < 3) {
-                    player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team bank withdraw <amount>"));
+                    player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team bank withdraw <amount>")));
                     return;
                 }
                 bankWithdraw(player, team, args[2]);
             }
-            default -> player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team bank <deposit|withdraw|balance> [amount]"));
+            default -> player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team bank <deposit|withdraw|balance> [amount]")));
         }
     }
 
@@ -1108,7 +1111,7 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team allyinvite <team>"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team allyinvite <team>")));
             return;
         }
 
@@ -1152,12 +1155,12 @@ public class TeamCommand implements CommandExecutor {
             for (UUID memberId : target.getMembers().keySet()) {
                 Player p = Bukkit.getPlayer(memberId);
                 if (p != null) {
-                    gg.MC7DZ.teamify.util.MessageUtil.sendClickableInvite(
+                    MessageUtil.sendClickableInvite(
                             p,
                             cm.getMessage("ally-invite-received", "team", team.getName()),
-                            "&a&l[Click to Accept]",
+                            cm.color("<green><bold>[Click to Accept]"),
                             "/team allyinvite " + team.getName(),
-                            "&7Click to accept the alliance with &b" + team.getName());
+                            cm.color("<gray>Click to accept the alliance with <aqua>" + team.getName()));
                 }
             }
         }
@@ -1182,7 +1185,7 @@ public class TeamCommand implements CommandExecutor {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(cm.getPrefix() + cm.color("&cUsage: /team allyleave <team>"));
+            player.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /team allyleave <team>")));
             return;
         }
         Team target = tm.getTeamByName(args[1]);

@@ -4,6 +4,7 @@ import gg.MC7DZ.teamify.config.ConfigManager;
 import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.team.TeamManager;
 import gg.MC7DZ.teamify.team.TeamRole;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -48,10 +49,10 @@ public class MemberActionsMenuGui extends GuiHolder {
         String targetName = target.getName() != null ? target.getName() : "Unknown";
         TeamRole targetRole = team.getRole(targetId);
 
-        String title = plugin.getConfigManager().color(
-                cfg.getString("title", "&8&lManage {player}").replace("{player}", targetName));
+        Component title = plugin.getConfigManager().color(
+                cfg.getString("title", "<dark_gray><bold>Manage {player}").replace("{player}", targetName));
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         java.util.Set<Integer> reservedSlots = new java.util.HashSet<>();
@@ -68,7 +69,7 @@ public class MemberActionsMenuGui extends GuiHolder {
                 reservedSlots.addAll(fillerSlots);
             } else {
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
@@ -78,12 +79,7 @@ public class MemberActionsMenuGui extends GuiHolder {
             if (itemsCfg.contains("back")) {
                 backButtonSlot = itemsCfg.getInt("back.slot", -1);
                 if (backButtonSlot != -1) {
-                    ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-                    if (backButtonData != null) {
-                        setBackButton(inv, backButtonSlot,
-                                plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                                backButtonData.getStringList("lore"));
-                    }
+                    setBackButton(inv, backButtonSlot);
                 }
             }
             if (itemsCfg.contains("kick")) {
@@ -301,7 +297,7 @@ public class MemberActionsMenuGui extends GuiHolder {
             return;
         }
         if (targetId.equals(p.getUniqueId())) {
-            p.sendMessage(cm.getPrefix() + cm.color("&cYou already own this team."));
+            p.sendMessage(cm.getPrefix().append(cm.color("<red>You already own this team.")));
             return;
         }
         if (!team.isMember(targetId)) {

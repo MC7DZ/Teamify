@@ -1,6 +1,7 @@
 package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.team.Team;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class TeamListMenuGui extends GuiHolder {
 
@@ -31,10 +33,10 @@ public class TeamListMenuGui extends GuiHolder {
 
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.team-list-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8All Teams"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>All Teams"));
         int size = cfg.getInt("size", 54);
         String sortBy = cfg.getString("sort-by", "LEVEL");
-        String itemNameFormat = cfg.getString("item-name-format", "{color}{name} &7[{tag}]"); // NEW: Get item name format
+        String itemNameFormat = cfg.getString("item-name-format", "{color}{name} <gray>[{tag}]"); // NEW: Get item name format
         List<String> itemLoreConfig = cfg.getStringList("item-lore");
 
         List<Team> teams = new ArrayList<>(plugin.getTeamManager().getTeams());
@@ -45,7 +47,7 @@ public class TeamListMenuGui extends GuiHolder {
         };
         teams.sort(comparator);
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         java.util.Set<Integer> reservedSlots = new java.util.HashSet<>();
@@ -66,7 +68,7 @@ public class TeamListMenuGui extends GuiHolder {
             } else {
                 // Fallback to filling all empty slots if no specific filler-slots are defined
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
@@ -76,12 +78,7 @@ public class TeamListMenuGui extends GuiHolder {
         if (itemsCfg != null && itemsCfg.contains("back")) {
             backButtonSlot = itemsCfg.getInt("back.slot", -1);
             if (backButtonSlot != -1) {
-                ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-                if (backButtonData != null) {
-                    setBackButton(inv, backButtonSlot,
-                            plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                            backButtonData.getStringList("lore"));
-                }
+                setBackButton(inv, backButtonSlot);
             }
         }
         if (backButtonSlot != -1) {
@@ -97,25 +94,15 @@ public class TeamListMenuGui extends GuiHolder {
             if (slot >= size) break;
 
             // Process item name
-            String displayName = processPlaceholders(itemNameFormat, team);
+            Component displayName = processPlaceholders(itemNameFormat, team);
 
-            List<String> lore = new ArrayList<>();
-            for (String line : itemLoreConfig) {
-                String processedLine = processPlaceholders(line, team);
-
-                // Handle description line conditionally
-                if (processedLine.contains("{description}")) {
-                    if (plugin.getConfigManager().isShowDescriptionInList() && team.getDescription() != null && !team.getDescription().isEmpty()) {
-                        lore.add(plugin.getConfigManager().color(processedLine.replace("{description}", team.getDescription())));
-                    }
-                } else {
-                    lore.add(plugin.getConfigManager().color(processedLine));
-                }
-            }
+            List<Component> lore = itemLoreConfig.stream()
+                    .map(line -> processPlaceholders(line, team))
+                    .collect(Collectors.toList());
 
             ItemStack item = team.hasCustomItem()
                     ? GuiItem.withOverrides(team.getCustomItem(), displayName, lore)
-                    : GuiItem.simple(Material.WHITE_BANNER, displayName, lore.toArray(new String[0]));
+                    : GuiItem.simple(Material.WHITE_BANNER, displayName, lore.toArray(new Component[0]));
             inv.setItem(slot, item);
             slotToTeam.put(slot, team.getId());
             slot++;
@@ -123,7 +110,7 @@ public class TeamListMenuGui extends GuiHolder {
         setInventory(inv);
     }
 
-    private String processPlaceholders(String text, Team team) {
+    private Component processPlaceholders(String text, Team team) {
         OfflinePlayer owner = Bukkit.getOfflinePlayer(team.getOwner());
         String ownerName = owner.hasPlayedBefore() ? owner.getName() : "Unknown";
         String createdDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date(team.getCreatedAt()));
@@ -162,8 +149,8 @@ public class TeamListMenuGui extends GuiHolder {
         Team team = plugin.getTeamManager().getTeam(teamId);
         if (team == null) return;
 
-        getViewer().sendMessage(plugin.getConfigManager().getPrefix() +
-                plugin.getConfigManager().color("&bViewing &f" + team.getName() +
-                        " &7| Level " + team.getLevel() + " | " + team.getSize() + " members"));
+        p.sendMessage(plugin.getConfigManager().getPrefix().append(
+                plugin.getConfigManager().color("<aqua>Viewing <white>" + team.getName() +
+                        " <gray>| Level " + team.getLevel() + " | " + team.getSize() + " members")));
     }
 }

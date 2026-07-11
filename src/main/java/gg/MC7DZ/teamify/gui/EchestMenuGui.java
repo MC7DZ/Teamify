@@ -2,6 +2,7 @@ package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.util.SoundUtil;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -62,8 +63,8 @@ public class EchestMenuGui extends GuiHolder {
     @Override
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.echest-menu");
-        String title = plugin.getConfigManager().color(
-                cfg != null ? cfg.getString("title", "&8&lTeam Enderchest") : "&8&lTeam Enderchest");
+        Component title = plugin.getConfigManager().color(
+                cfg != null ? cfg.getString("title", "<dark_gray><bold>Team Enderchest") : "<dark_gray><bold>Team Enderchest");
 
         Material lockedFiller;
         try {
@@ -73,7 +74,7 @@ public class EchestMenuGui extends GuiHolder {
             lockedFiller = Material.GRAY_STAINED_GLASS_PANE;
         }
 
-        Inventory inv = Bukkit.createInventory(this, SIZE, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, SIZE, title);
         ItemStack[] contents = team.getEchestContents();
 
         for (int i = 0; i < SIZE; i++) {
@@ -82,7 +83,7 @@ public class EchestMenuGui extends GuiHolder {
                 inv.setItem(i, contents[i]);
             } else {
                 setEditableSlot(i, false);
-                inv.setItem(i, GuiItem.simple(lockedFiller, " "));
+                inv.setItem(i, GuiItem.simple(lockedFiller, Component.text(" ")));
             }
         }
 

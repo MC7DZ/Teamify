@@ -1,7 +1,8 @@
 package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.player.PlayerData;
-import gg.MC7DZ.teamify.team.Team; // Import Team
+import gg.MC7DZ.teamify.team.Team;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -32,15 +33,15 @@ public class PlayersListMenuGui extends GuiHolder {
     @Override
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.players-list-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Players List"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Players List"));
         int size = cfg.getInt("size", 54);
-        String onlineItemNameFormat = cfg.getString("online-item-name-format", "&a{player_name} &7(Online)");
-        String offlineItemNameFormat = cfg.getString("offline-item-name-format", "&c{player_name} &7(Offline)");
+        String onlineItemNameFormat = cfg.getString("online-item-name-format", "<green>{player_name} <gray>(Online)");
+        String offlineItemNameFormat = cfg.getString("offline-item-name-format", "<red>{player_name} <gray>(Offline)");
         List<String> onlineItemLoreConfig = cfg.getStringList("online-item-lore");
         List<String> offlineItemLoreConfig = cfg.getStringList("offline-item-lore");
         String offlineHeadTexture = cfg.getString("offline-head-texture"); // Get offline head texture
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Get all player data, excluding those marked hidden in players_list.yml
         List<PlayerData> allPlayers = plugin.getPlayerManager().getAllPlayers().values().stream()
@@ -67,7 +68,7 @@ public class PlayersListMenuGui extends GuiHolder {
                 reservedSlots.addAll(fillerSlots);
             } else {
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
@@ -77,12 +78,7 @@ public class PlayersListMenuGui extends GuiHolder {
         if (itemsCfg != null && itemsCfg.contains("back")) {
             backButtonSlot = itemsCfg.getInt("back.slot", -1);
             if (backButtonSlot != -1) {
-                ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-                if (backButtonData != null) {
-                    setBackButton(inv, backButtonSlot,
-                            plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                            backButtonData.getStringList("lore"));
-                }
+                setBackButton(inv, backButtonSlot);
             }
         }
         if (backButtonSlot != -1) {
@@ -99,11 +95,11 @@ public class PlayersListMenuGui extends GuiHolder {
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerData.getUuid());
             boolean isOnline = offlinePlayer.isOnline();
 
-            String displayName = isOnline
+            Component displayName = isOnline
                     ? plugin.getConfigManager().color(onlineItemNameFormat.replace("{player_name}", playerData.getName()))
                     : plugin.getConfigManager().color(offlineItemNameFormat.replace("{player_name}", playerData.getName()));
 
-            List<String> lore = isOnline
+            List<Component> lore = isOnline
                     ? onlineItemLoreConfig.stream().map(line -> processPlaceholders(line, playerData, isOnline)).collect(Collectors.toList())
                     : offlineItemLoreConfig.stream().map(line -> processPlaceholders(line, playerData, isOnline)).collect(Collectors.toList());
 
@@ -111,7 +107,7 @@ public class PlayersListMenuGui extends GuiHolder {
             boolean useMirror = offlineHeadTexture == null || offlineHeadTexture.isEmpty()
                     || offlineHeadTexture.equalsIgnoreCase("mirror");
             if (!isOnline && !useMirror) {
-                item = GuiItem.playerHead(offlineHeadTexture, displayName, lore.toArray(new String[0]));
+                item = GuiItem.playerHead(offlineHeadTexture, displayName, false, lore.toArray(new Component[0])); // Added false for glow
             } else {
                 ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD);
                 SkullMeta meta = (SkullMeta) playerHead.getItemMeta();
@@ -126,11 +122,11 @@ public class PlayersListMenuGui extends GuiHolder {
         setInventory(inv);
     }
 
-    private String processPlaceholders(String text, PlayerData playerData, boolean isOnline) {
+    private Component processPlaceholders(String text, PlayerData playerData, boolean isOnline) {
         return plugin.getConfigManager().color(text
                 .replace("{player_name}", playerData.getName())
                 .replace("{player_uuid}", playerData.getUuid().toString())
-                .replace("{online_status}", isOnline ? "&aOnline" : "&cOffline"));
+                .replace("{online_status}", isOnline ? "<green>Online" : "<red>Offline"));
     }
 
     @Override
@@ -153,8 +149,8 @@ public class PlayersListMenuGui extends GuiHolder {
         if (targetPlayerId == null) return;
 
         if (targetPlayerId.equals(p.getUniqueId())) {
-            p.sendMessage(plugin.getConfigManager().getPrefix() +
-                    plugin.getConfigManager().color("&cYou can't invite yourself."));
+            p.sendMessage(plugin.getConfigManager().getPrefix().append(
+                    plugin.getConfigManager().color("<red>You can't invite yourself.")));
             return;
         }
 
@@ -172,8 +168,8 @@ public class PlayersListMenuGui extends GuiHolder {
             new PlayersListMenuGui(p).open();
         };
 
-        p.sendMessage(plugin.getConfigManager().getPrefix() +
-                plugin.getConfigManager().color("&bInvite &f" + targetName + " &bto your team?"));
+        p.sendMessage(plugin.getConfigManager().getPrefix().append(
+                plugin.getConfigManager().color("<aqua>Invite <white>" + targetName + " <aqua>to your team?")));
         new ConfirmMenuGui(p, doInvite, () -> new PlayersListMenuGui(p).open()).open();
     }
 }

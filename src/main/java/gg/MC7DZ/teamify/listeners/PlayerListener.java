@@ -4,6 +4,7 @@ import gg.MC7DZ.teamify.Teamify;
 import gg.MC7DZ.teamify.team.RelationType;
 import gg.MC7DZ.teamify.team.Team;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -91,7 +92,7 @@ public class PlayerListener implements Listener {
             String message = plainMessage.trim();
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 if (message.equalsIgnoreCase("cancel")) {
-                    player.sendMessage(plugin.getConfigManager().getPrefix() + plugin.getConfigManager().color("&7Cancelled."));
+                    player.sendMessage(plugin.getConfigManager().getPrefix().append(plugin.getConfigManager().color("<gray>Cancelled.")));
                     return;
                 }
                 if (team == null) {
@@ -156,17 +157,20 @@ public class PlayerListener implements Listener {
     }
 
     private void sendTeamChat(Player player, Team team, String message) {
-        String format = plugin.getConfigManager().color(plugin.getConfigManager().getTeamChatFormat());
+        String formatString = plugin.getConfigManager().getTeamChatFormat();
         String role = team.getRole(player.getUniqueId()).name();
-        // Everyone receiving team chat is a teammate of the sender, so the
-        // sender's name is colored the same way for every recipient.
-        String playerName = isChatColorEnabled()
-                ? plugin.getConfigManager().getTeammateColor() + player.getName() + org.bukkit.ChatColor.RESET
-                : player.getName();
-        String out = format
+        
+        Component playerNameComponent;
+        if (isChatColorEnabled()) {
+            playerNameComponent = plugin.getConfigManager().color(plugin.getConfigManager().getTeammateColor().toString() + player.getName());
+        } else {
+            playerNameComponent = Component.text(player.getName());
+        }
+
+        Component out = plugin.getConfigManager().color(formatString
                 .replace("{role}", role)
-                .replace("{player}", playerName)
-                .replace("{message}", message);
+                .replace("{player}", playerNameComponent.insertion()) // Use insertion to represent the component in string replacement
+                .replace("{message}", message));
 
         for (UUID memberId : team.getMembers().keySet()) {
             Player member = plugin.getServer().getPlayer(memberId);
@@ -177,29 +181,35 @@ public class PlayerListener implements Listener {
     }
 
     private void sendAllyChat(Player player, Team team, String message) {
-        String format = plugin.getConfigManager().color(plugin.getConfigManager().getAllyChatFormat());
+        String formatString = plugin.getConfigManager().getAllyChatFormat();
         String role = team.getRole(player.getUniqueId()).name();
         boolean chatColor = isChatColorEnabled();
 
-        // The sender is a teammate to their own team but an ally to the
-        // allied teams receiving this - build both versions of the message.
-        String teammateName = chatColor
-                ? plugin.getConfigManager().getTeammateColor() + player.getName() + org.bukkit.ChatColor.RESET
-                : player.getName();
-        String allyName = chatColor
-                ? plugin.getConfigManager().getAlliesColor() + player.getName() + org.bukkit.ChatColor.RESET
-                : player.getName();
+        Component teammateNameComponent;
+        if (chatColor) {
+            teammateNameComponent = plugin.getConfigManager().color(plugin.getConfigManager().getTeammateColor().toString() + player.getName());
+        } else {
+            teammateNameComponent = Component.text(player.getName());
+        }
+        
+        Component allyNameComponent;
+        if (chatColor) {
+            allyNameComponent = plugin.getConfigManager().color(plugin.getConfigManager().getAlliesColor().toString() + player.getName());
+        } else {
+            allyNameComponent = Component.text(player.getName());
+        }
 
-        String outForTeam = format
+        Component outForTeam = plugin.getConfigManager().color(formatString
                 .replace("{role}", role)
-                .replace("{player}", teammateName)
+                .replace("{player}", teammateNameComponent.insertion())
                 .replace("{team}", team.getName())
-                .replace("{message}", message);
-        String outForAllies = format
+                .replace("{message}", message));
+        
+        Component outForAllies = plugin.getConfigManager().color(formatString
                 .replace("{role}", role)
-                .replace("{player}", allyName)
+                .replace("{player}", allyNameComponent.insertion())
                 .replace("{team}", team.getName())
-                .replace("{message}", message);
+                .replace("{message}", message));
 
         // Send to own team members...
         for (UUID memberId : team.getMembers().keySet()) {

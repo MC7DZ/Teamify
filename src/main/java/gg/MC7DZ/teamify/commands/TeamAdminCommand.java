@@ -4,6 +4,7 @@ import gg.MC7DZ.teamify.Teamify;
 import gg.MC7DZ.teamify.config.ConfigManager;
 import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.team.TeamManager;
+import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -26,7 +27,7 @@ public class TeamAdminCommand implements CommandExecutor {
             return true;
         }
         if (args.length == 0) {
-            sender.sendMessage(cm.getPrefix() + cm.color("&7Usage: /teamadmin <delete|reload|forcedisband> [team]"));
+            sender.sendMessage(cm.getPrefix().append(cm.color("<gray>Usage: /teamadmin <delete|reload|forcedisband> [team]")));
             return true;
         }
 
@@ -35,23 +36,23 @@ public class TeamAdminCommand implements CommandExecutor {
             case "reload" -> {
                 cm.reload();
                 boolean economyHooked = plugin.getEconomyManager().setup();
-                sender.sendMessage(cm.getPrefix() + cm.color("&aConfig reloaded."
-                        + (economyHooked ? " &7(Vault economy hooked)" : " &7(Vault economy not available)")));
+                sender.sendMessage(cm.getPrefix().append(cm.color("<green>Config reloaded."
+                        + (economyHooked ? " <gray>(Vault economy hooked)" : " <gray>(Vault economy not available)"))));
             }
             case "delete", "forcedisband" -> {
                 if (args.length < 2) {
-                    sender.sendMessage(cm.getPrefix() + cm.color("&cUsage: /teamadmin " + sub + " <team>"));
+                    sender.sendMessage(cm.getPrefix().append(cm.color("<red>Usage: /teamadmin " + sub + " <team>")));
                     return true;
                 }
                 Team team = tm.getTeamByName(args[1]);
                 if (team == null) {
-                    sender.sendMessage(cm.getPrefix() + cm.color("&cTeam not found."));
+                    sender.sendMessage(cm.getPrefix().append(cm.color("<red>Team not found.")));
                     return true;
                 }
                 tm.disbandTeam(team);
-                sender.sendMessage(cm.getPrefix() + cm.color("&aTeam &f" + args[1] + " &awas force-disbanded."));
+                sender.sendMessage(cm.getPrefix().append(cm.color("<green>Team <white>" + args[1] + " <green>was force-disbanded.")));
             }
-            default -> sender.sendMessage(cm.getPrefix() + cm.color("&cUnknown subcommand."));
+            default -> sender.sendMessage(cm.getPrefix().append(cm.color("<red>Unknown subcommand.")));
         }
         return true;
     }

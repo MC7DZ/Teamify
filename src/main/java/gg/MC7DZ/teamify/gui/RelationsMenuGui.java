@@ -2,6 +2,7 @@ package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.team.RelationType;
 import gg.MC7DZ.teamify.team.Team;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -12,6 +13,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RelationsMenuGui extends GuiHolder {
 
@@ -27,14 +29,14 @@ public class RelationsMenuGui extends GuiHolder {
 
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.relations-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Allies"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Allies"));
         int size = cfg.getInt("size", 54);
         
         Material allyMat = parse(cfg.getString("ally-material", "LIME_WOOL"), Material.LIME_WOOL);
         String itemNameFormat = cfg.getString("item-name-format", "{name}");
         List<String> itemLoreConfig = cfg.getStringList("item-lore");
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         java.util.Set<Integer> reservedSlots = new java.util.HashSet<>();
@@ -55,7 +57,7 @@ public class RelationsMenuGui extends GuiHolder {
             } else {
                 // Fallback to filling all empty slots if no specific filler-slots are defined
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
@@ -65,12 +67,7 @@ public class RelationsMenuGui extends GuiHolder {
         if (itemsCfg != null && itemsCfg.contains("back")) {
             backButtonSlot = itemsCfg.getInt("back.slot", -1);
             if (backButtonSlot != -1) {
-                ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-                if (backButtonData != null) {
-                    setBackButton(inv, backButtonSlot,
-                            plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                            backButtonData.getStringList("lore"));
-                }
+                setBackButton(inv, backButtonSlot);
             }
         }
         if (backButtonSlot != -1) {
@@ -94,7 +91,7 @@ public class RelationsMenuGui extends GuiHolder {
             Team other = plugin.getTeamManager().getTeam(otherId);
             if (other == null) continue;
 
-            String displayName = plugin.getConfigManager().color(itemNameFormat
+            Component displayName = plugin.getConfigManager().color(itemNameFormat
                     .replace("{name}", other.getColoredName())
                     .replace("{tag}", other.getTag())
                     .replace("{level}", String.valueOf(other.getLevel()))
@@ -102,21 +99,19 @@ public class RelationsMenuGui extends GuiHolder {
                     .replace("{online}", String.valueOf(countVisibleOnline(other)))
                     .replace("{relation}", type.name()));
 
-            List<String> lore = new ArrayList<>();
-            for (String line : itemLoreConfig) {
-                String processedLine = line
-                        .replace("{name}", other.getColoredName())
-                        .replace("{tag}", other.getTag())
-                        .replace("{level}", String.valueOf(other.getLevel()))
-                        .replace("{members}", String.valueOf(other.getSize()))
-                        .replace("{online}", String.valueOf(countVisibleOnline(other)))
-                        .replace("{relation}", type.name());
-                lore.add(plugin.getConfigManager().color(processedLine));
-            }
+            List<Component> lore = itemLoreConfig.stream()
+                    .map(line -> plugin.getConfigManager().color(line
+                            .replace("{name}", other.getColoredName())
+                            .replace("{tag}", other.getTag())
+                            .replace("{level}", String.valueOf(other.getLevel()))
+                            .replace("{members}", String.valueOf(other.getSize()))
+                            .replace("{online}", String.valueOf(countVisibleOnline(other)))
+                            .replace("{relation}", type.name())))
+                    .collect(Collectors.toList());
 
             ItemStack item = other.hasCustomItem()
                     ? GuiItem.withOverrides(other.getCustomItem(), displayName, lore)
-                    : GuiItem.simple(allyMat, displayName, lore.toArray(new String[0]));
+                    : GuiItem.simple(allyMat, displayName, lore.toArray(new Component[0]));
             inv.setItem(slot, item);
             slotToTeam.put(slot, otherId);
             slot++;

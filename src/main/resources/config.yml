@@ -5,7 +5,7 @@
 
 general:
   # Prefix used in all plugin chat messages
-  prefix: "&b&lTEAMIFY &8» &r"
+  prefix: "<#55FFFF><bold>TEAMIFY</bold> <dark_gray>»</dark_gray> <reset>"
   # Language file to use from /lang folder (en.yml, fr.yml, etc)
   language: "en"
   # Enable debug logging to console
@@ -27,13 +27,10 @@ general:
   # actually shows anywhere is controlled by "color-shows" below - this is
   # just the master on/off switch.
   colored-names: true
-  # The color used for each relation. Accepts any Bukkit ChatColor name
-  # (WHITE, BLACK, RED, GOLD, YELLOW, GREEN, AQUA, BLUE, LIGHT_PURPLE,
-  # DARK_PURPLE, GRAY, DARK_GRAY, DARK_RED, DARK_GREEN, DARK_AQUA,
-  # DARK_BLUE, and so on).
-  teammate-color: "GREEN"
-  allies-color: "BLUE"
-  enemys-color: "white"
+  # The color used for each relation. Accepts MiniMessage format (e.g., "<green>", "<#FF00FF>").
+  teammate-color: "<green>"
+  allies-color: "<blue>"
+  enemys-color: "<white>"
   # Where the colors above are shown. Any combination of:
   #   CHAT    - colors the player's name in team chat / ally chat
   #   TAB     - colors the player's name in the tab list
@@ -167,12 +164,12 @@ chat:
   # Enable team-only chat channel toggle (/team chat)
   enable-team-chat: false
   # Format for team chat messages
-  team-chat-format: "&8[&bTeam&8] &7{role} &f{player}&8: &f{message}"
+  team-chat-format: "<dark_gray>[<#55FFFF>Team<dark_gray>] <gray>{role} <white>{player}<dark_gray>: <white>{message}"
   # Format for team announcements (leader broadcasts)
-  announcement-format: "&8[&6Announce&8] &e{team}&8: &f{message}"
+  announcement-format: "<dark_gray>[<gold>Announce<dark_gray>] <yellow>{team}<dark_gray>: <white>{message}"
   # Show a tag prefix like [TAG] before player names in global chat
   show-tag-in-global-chat: true
-  global-chat-tag-format: "&7[&b{tag}&7] &f{player}&8: &f{message}"
+  global-chat-tag-format: "<gray>[<#55FFFF>{tag}<gray>] <white>{player}<dark_gray>: <white>{message}"
 
 relations:
   # Enable alliance system (enables/disables /team allyinvite, /team allyleave, /team allychat)
@@ -186,7 +183,7 @@ relations:
   # How long an ally invite stays valid before expiring (seconds)
   ally-invite-expire-seconds: 60
   # Format for ally chat messages
-  ally-chat-format: "&8[&aAlly&8] &7{team} &7{role} &f{player}&8: &f{message}"
+  ally-chat-format: "<dark_gray>[<green>Ally<dark_gray>] <gray>{team} <gray>{role} <white>{player}<dark_gray>: <white>{message}"
   # Friendly fire settings (PVP)
   friendly-fire:
     within-team: true
@@ -210,8 +207,6 @@ kills:
 # server-enforced setting - there is no per-team toggle.
 visibility:
   see-members-when-invis:
-    default: false
-  see-allies-when-invis:
     default: false
 
 bank:

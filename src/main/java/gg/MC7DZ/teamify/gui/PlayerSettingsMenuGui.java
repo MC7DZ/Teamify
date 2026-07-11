@@ -2,6 +2,7 @@ package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.Teamify;
 import gg.MC7DZ.teamify.team.Team; // Import Team
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -27,10 +28,10 @@ public class PlayerSettingsMenuGui extends GuiHolder {
     @Override
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.player-settings-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Player Settings"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Player Settings"));
         int size = cfg.getInt("size", 54); // Updated default size to 54
         
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         if (cfg.getBoolean("fill-empty-slots", true)) {
@@ -46,7 +47,7 @@ public class PlayerSettingsMenuGui extends GuiHolder {
             } else {
                 // Fallback to filling all empty slots if no specific filler-slots are defined
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
@@ -59,12 +60,7 @@ public class PlayerSettingsMenuGui extends GuiHolder {
 
                 if (key.equals("back")) {
                     backButtonSlot = slot;
-                    ConfigurationSection backButtonCfg = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-                    if (backButtonCfg != null) {
-                        setBackButton(inv, backButtonSlot,
-                                plugin.getConfigManager().color(backButtonCfg.getString("name", "&cBack")),
-                                backButtonCfg.getStringList("lore"));
-                    }
+                    setBackButton(inv, backButtonSlot);
                 } else {
                     ItemStack item = GuiItem.fromConfig(getViewer(), itemSec);
                     inv.setItem(slot, item);

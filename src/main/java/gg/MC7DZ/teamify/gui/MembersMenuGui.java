@@ -2,6 +2,7 @@ package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.team.TeamRole;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -29,19 +30,19 @@ public class MembersMenuGui extends GuiHolder {
         build();
     }
 
-    @Override // Added @Override annotation
-    protected void build() { // Changed to protected
+    @Override
+    protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.members-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Team Members"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Team Members"));
         int size = cfg.getInt("size", 54);
         boolean showOnline = cfg.getBoolean("show-online-status", true);
-        String onlineColor = plugin.getConfigManager().color(cfg.getString("online-name-color", "&a"));
-        String offlineColor = plugin.getConfigManager().color(cfg.getString("offline-name-color", "&7"));
+        Component onlineColor = plugin.getConfigManager().color(cfg.getString("online-name-color", "<green>"));
+        Component offlineColor = plugin.getConfigManager().color(cfg.getString("offline-name-color", "<gray>"));
         String itemNameFormat = cfg.getString("item-name-format", "{color}{name}");
         List<String> itemLoreConfig = cfg.getStringList("item-lore");
         String offlineHeadTexture = cfg.getString("offline-head-texture");
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         java.util.Set<Integer> reservedSlots = new java.util.HashSet<>();
@@ -62,7 +63,7 @@ public class MembersMenuGui extends GuiHolder {
             } else {
                 // Fallback to filling all empty slots if no specific filler-slots are defined
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
@@ -72,12 +73,7 @@ public class MembersMenuGui extends GuiHolder {
         if (itemsCfg != null && itemsCfg.contains("back")) {
             backButtonSlot = itemsCfg.getInt("back.slot", -1);
             if (backButtonSlot != -1) {
-                ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-                if (backButtonData != null) {
-                    setBackButton(inv, backButtonSlot,
-                            plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                            backButtonData.getStringList("lore"));
-                }
+                setBackButton(inv, backButtonSlot);
             }
         }
         if (backButtonSlot != -1) {
@@ -116,40 +112,32 @@ public class MembersMenuGui extends GuiHolder {
                 } else {
                     meta.setPlayerProfile(Bukkit.createProfile(uuid));
                 }
-                String color = showOnline ? (online ? onlineColor : offlineColor) : "&f";
-                String statusColor = online ? "&a" : "&c";
+                Component color = showOnline ? (online ? onlineColor : offlineColor) : plugin.getConfigManager().color("<white>");
+                Component statusColor = online ? plugin.getConfigManager().color("<green>") : plugin.getConfigManager().color("<red>");
                 String status = online ? "Online" : "Offline";
                 String playerName = op.getName() != null ? op.getName() : "Unknown";
 
-                String displayName = plugin.getConfigManager().color(itemNameFormat
-                        .replace("{color}", color)
+                Component displayName = plugin.getConfigManager().color(itemNameFormat
+                        .replace("{color}", color.toString()) // Convert component to string for replacement
                         .replace("{name}", playerName)
                         .replace("{role}", role.name())
                         .replace("{kills}", String.valueOf(team.getKills(uuid)))
-                        .replace("{status_color}", statusColor)
+                        .replace("{status_color}", statusColor.toString()) // Convert component to string for replacement
                         .replace("{status}", status));
 
-                List<String> lore = new ArrayList<>();
+                List<Component> loreComponents = new ArrayList<>();
                 for (String line : itemLoreConfig) {
                     String processedLine = line
-                            .replace("{color}", color)
+                            .replace("{color}", color.toString()) // Convert component to string for replacement
                             .replace("{name}", playerName)
                             .replace("{role}", role.name())
                             .replace("{kills}", String.valueOf(team.getKills(uuid)))
-                            .replace("{status_color}", statusColor)
+                            .replace("{status_color}", statusColor.toString()) // Convert component to string for replacement
                             .replace("{status}", status);
-                    lore.add(plugin.getConfigManager().color(processedLine));
+                    loreComponents.add(plugin.getConfigManager().color(processedLine));
                 }
 
-                meta.displayName(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
-                        .deserialize(displayName)
-                        .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
-                List<net.kyori.adventure.text.Component> loreComponents = new ArrayList<>();
-                for (String line : lore) {
-                    loreComponents.add(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
-                            .deserialize(line)
-                            .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
-                }
+                meta.displayName(displayName);
                 meta.lore(loreComponents);
                 head.setItemMeta(meta);
             }

@@ -5,18 +5,14 @@ import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.team.TeamManager;
 import gg.MC7DZ.teamify.team.TeamRole;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.inventory.ClickType;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
@@ -26,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Shows every pending request aimed at the viewer's team in one place:
@@ -39,8 +36,6 @@ import java.util.UUID;
  * gui.requests-menu section.
  */
 public class RequestsMenuGui extends GuiHolder {
-
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
     private final Team team;
     private final Map<Integer, UUID> slotToJoinRequest = new HashMap<>();
@@ -59,10 +54,10 @@ public class RequestsMenuGui extends GuiHolder {
         slotToAllyRequest.clear();
 
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.requests-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Requests"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Requests"));
         int size = cfg.getInt("size", 54);
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         Set<Integer> reservedSlots = new HashSet<>();
         if (cfg.getBoolean("fill-empty-slots", true)) {
@@ -78,7 +73,7 @@ public class RequestsMenuGui extends GuiHolder {
                 reservedSlots.addAll(fillerSlots);
             } else {
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
@@ -87,12 +82,7 @@ public class RequestsMenuGui extends GuiHolder {
         if (itemsCfg != null && itemsCfg.contains("back")) {
             backButtonSlot = itemsCfg.getInt("back.slot", -1);
             if (backButtonSlot != -1) {
-                ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-                if (backButtonData != null) {
-                    setBackButton(inv, backButtonSlot,
-                            plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                            backButtonData.getStringList("lore"));
-                }
+                setBackButton(inv, backButtonSlot);
             }
         }
         if (backButtonSlot != -1) reservedSlots.add(backButtonSlot);
@@ -136,26 +126,22 @@ public class RequestsMenuGui extends GuiHolder {
             } catch (IllegalArgumentException ignored) {
             }
         }
-        String name = cfg != null ? cfg.getString("name", "&a&l{player}") : "&a&l{player}";
-        List<String> lore = cfg != null ? cfg.getStringList("lore") : new ArrayList<>();
+        String nameFormat = cfg != null ? cfg.getString("name", "<green><bold>{player}") : "<green><bold>{player}";
+        List<String> loreFormat = cfg != null ? cfg.getStringList("lore") : new ArrayList<>();
         boolean glow = cfg != null && cfg.getBoolean("glow", false);
 
-        name = plugin.getConfigManager().color(name.replace("{player}", playerName));
-        List<String> processedLore = new ArrayList<>();
-        for (String line : lore) {
-            processedLore.add(plugin.getConfigManager().color(line.replace("{player}", playerName)));
-        }
+        Component name = plugin.getConfigManager().color(nameFormat.replace("{player}", playerName));
+        List<Component> lore = loreFormat.stream()
+                .map(line -> plugin.getConfigManager().color(line.replace("{player}", playerName)))
+                .collect(Collectors.toList());
 
-        ItemStack item = new ItemStack(mat);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            if (mat == Material.PLAYER_HEAD && meta instanceof SkullMeta skullMeta) {
-                skullMeta.setPlayerProfile(Bukkit.createProfile(requester));
-            }
-            applyNameAndLore(meta, name, processedLore);
-            item.setItemMeta(meta);
-            if (glow) applyGlow(item);
+        ItemStack item;
+        if (mat == Material.PLAYER_HEAD) {
+            item = GuiItem.playerHead(requester.toString(), name, glow, lore.toArray(new Component[0]));
+        } else {
+            item = GuiItem.simple(mat, name, glow, null, lore.toArray(new Component[0]));
         }
+        
         return item;
     }
 
@@ -167,49 +153,20 @@ public class RequestsMenuGui extends GuiHolder {
             } catch (IllegalArgumentException ignored) {
             }
         }
-        String nameFormat = cfg != null ? cfg.getString("name", "&b&l{team}") : "&b&l{team}";
+        String nameFormat = cfg != null ? cfg.getString("name", "<aqua><bold>{team}") : "<aqua><bold>{team}";
         List<String> loreFormat = cfg != null ? cfg.getStringList("lore") : new ArrayList<>();
         boolean glow = cfg != null && cfg.getBoolean("glow", false);
 
-        String name = applyTeamPlaceholders(nameFormat, other);
-        List<String> lore = new ArrayList<>();
-        for (String line : loreFormat) {
-            lore.add(applyTeamPlaceholders(line, other));
-        }
+        Component name = applyTeamPlaceholders(nameFormat, other);
+        List<Component> lore = loreFormat.stream()
+                .map(line -> applyTeamPlaceholders(line, other))
+                .collect(Collectors.toList());
 
-        ItemStack item = new ItemStack(mat);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            applyNameAndLore(meta, name, lore);
-            item.setItemMeta(meta);
-            if (glow) applyGlow(item);
-        }
+        ItemStack item = GuiItem.simple(mat, name, glow, null, lore.toArray(new Component[0]));
         return item;
     }
 
-    private void applyNameAndLore(ItemMeta meta, String name, List<String> lore) {
-        meta.displayName(toComponent(name));
-        List<Component> loreComponents = new ArrayList<>();
-        for (String line : lore) {
-            loreComponents.add(toComponent(line));
-        }
-        meta.lore(loreComponents);
-    }
-
-    private Component toComponent(String legacyText) {
-        return LEGACY.deserialize(legacyText == null ? "" : legacyText)
-                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false);
-    }
-
-    private void applyGlow(ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) return;
-        meta.addEnchant(Enchantment.LURE, 1, true);
-        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        item.setItemMeta(meta);
-    }
-
-    private String applyTeamPlaceholders(String text, Team other) {
+    private Component applyTeamPlaceholders(String text, Team other) {
         return plugin.getConfigManager().color(text
                 .replace("{team}", other.getColoredName())
                 .replace("{tag}", other.getTag())
@@ -254,7 +211,7 @@ public class RequestsMenuGui extends GuiHolder {
         if (clickType.isRightClick()) {
             team.removeJoinRequest(requester);
             tm.saveTeam(team);
-            p.sendMessage(cm.getPrefix() + cm.color("&7You denied the join request from &f" + playerName + "&7."));
+            p.sendMessage(cm.getPrefix().append(cm.color("<gray>You denied the join request from <white>" + playerName + "<gray>.")));
             Player online = op.getPlayer();
             if (online != null) online.sendMessage(cm.getMessage("join-request-denied", "team", team.getName()));
             new RequestsMenuGui(p, team).open();
@@ -265,7 +222,7 @@ public class RequestsMenuGui extends GuiHolder {
         team.removeJoinRequest(requester);
         if (tm.isInTeam(requester)) {
             tm.saveTeam(team);
-            p.sendMessage(cm.getPrefix() + cm.color("&cThat player already joined another team."));
+            p.sendMessage(cm.getPrefix().append(cm.color("<red>That player already joined another team.")));
             new RequestsMenuGui(p, team).open();
             return;
         }
@@ -315,7 +272,7 @@ public class RequestsMenuGui extends GuiHolder {
         if (clickType.isRightClick()) {
             team.removeAllyInvite(otherId);
             tm.saveTeam(team);
-            p.sendMessage(cm.getPrefix() + cm.color("&7You denied the alliance request from &f" + other.getName() + "&7."));
+            p.sendMessage(cm.getPrefix().append(cm.color("<gray>You denied the alliance request from <white>" + other.getName() + "<gray>.")));
             new RequestsMenuGui(p, team).open();
             return;
         }

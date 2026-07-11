@@ -31,7 +31,7 @@ import java.util.logging.Level;
  * item:
  *   slot: 10
  *   material: BOOK
- *   name: "&bHello"
+ *   name: "<aqua>Hello"
  *   lore: ["line1", "line2"]
  *   # Optional - lets a resource pack swap the texture per-item. Not read
  *   # by every GUI item builder (only where the calling code passes it
@@ -41,7 +41,7 @@ import java.util.logging.Level;
  *   glow: false
  * <p>
  * Uses Paper/Adventure's Component-based ItemMeta#displayName(Component) and
- * ItemMeta#lore(List&lt;Component&gt;) instead of the deprecated legacy
+ * ItemMeta#lore(List<bold>t;Component&gt;) instead of the deprecated legacy
  * String-based setDisplayName/setLore. '&' color codes from config.yml are
  * translated into Components via LegacyComponentSerializer, and italics is
  * explicitly disabled to match legacy default rendering (Adventure defaults
@@ -51,11 +51,9 @@ public final class GuiItem {
 
     private GuiItem() {}
 
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
-
-    /** Converts a legacy '&'-coded string into a non-italic Component. */
-    private static Component toComponent(String legacyText) {
-        return LEGACY.deserialize(legacyText == null ? "" : legacyText)
+    /** Converts a MiniMessage string into a non-italic Component. */
+    private static Component toComponent(String miniMessageText) {
+        return Teamify.getInstance().getConfigManager().color(miniMessageText)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false);
     }
 
@@ -81,7 +79,7 @@ public final class GuiItem {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            String name = section.getString("name", "&fItem");
+            String name = section.getString("name", "<white>Item");
             name = applyPlaceholders(name, placeholders);
             meta.displayName(toComponent(name));
 
@@ -118,23 +116,23 @@ public final class GuiItem {
         return item;
     }
 
-    public static ItemStack simple(Material material, String name, String... lore) {
+    public static ItemStack simple(Material material, Component name, Component... lore) {
         return simple(material, name, false, null, lore);
     }
 
     /**
-     * Same as {@link #simple(Material, String, String...)} but with optional
+     * Same as {@link #simple(Material, Component, Component...)} but with optional
      * glow (enchant glint, no visible enchantment) and custom model data
      * (for resource-pack texture overrides).
      */
-    public static ItemStack simple(Material material, String name, boolean glow, Integer customModelData, String... lore) {
+    public static ItemStack simple(Material material, Component name, boolean glow, Integer customModelData, Component... lore) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(toComponent(name));
+            meta.displayName(name);
             if (lore.length > 0) {
-                List<String> lines = new ArrayList<>(List.of(lore));
-                meta.lore(toComponentLore(lines));
+                List<Component> lines = new ArrayList<>(List.of(lore));
+                meta.lore(lines);
             }
             if (customModelData != null) {
                 meta.setCustomModelData(customModelData);
@@ -154,7 +152,7 @@ public final class GuiItem {
      * @param lore The lore lines of the item.
      * @return An ItemStack representing the custom player head.
      */
-    public static ItemStack playerHead(String base64Texture, String name, String... lore) {
+    public static ItemStack playerHead(String base64Texture, Component name, boolean glow, Component... lore) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) head.getItemMeta();
         if (meta == null) return head;
@@ -162,12 +160,15 @@ public final class GuiItem {
         applyTexture(meta, base64Texture);
 
         // Apply name and lore
-        meta.displayName(toComponent(name));
+        meta.displayName(name);
         if (lore.length > 0) {
-            List<String> lines = new ArrayList<>(List.of(lore));
-            meta.lore(toComponentLore(lines));
+            List<Component> lines = new ArrayList<>(List.of(lore));
+            meta.lore(lines);
         }
         head.setItemMeta(meta);
+        if (glow) {
+            applyGlow(head);
+        }
         return head;
     }
 
@@ -226,13 +227,13 @@ public final class GuiItem {
      * display name/lore, keeping the material/custom-model-data intact.
      * Used to show a team's custom item in menus with contextual lore.
      */
-    public static ItemStack withOverrides(ItemStack base, String name, List<String> lore) {
+    public static ItemStack withOverrides(ItemStack base, Component name, List<Component> lore) {
         ItemStack item = base.clone();
         item.setAmount(1);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(toComponent(name));
-            meta.lore(toComponentLore(lore));
+            meta.displayName(name);
+            meta.lore(lore);
             item.setItemMeta(meta);
         }
         return item;

@@ -2,6 +2,7 @@ package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.Teamify;
 import gg.MC7DZ.teamify.util.SoundUtil;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -105,29 +106,12 @@ public abstract class GuiHolder implements InventoryHolder {
      * Adds a standard back button to the specified slot in the inventory.
      * @param inv The inventory to add the button to.
      * @param slot The slot where the button should be placed.
-     * @param name The display name of the back button.
-     * @param lore The lore of the back button.
      */
-    protected void setBackButton(Inventory inv, int slot, String name, List<String> lore) {
+    protected void setBackButton(Inventory inv, int slot) {
         ConfigurationSection backButtonCfg = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
         if (backButtonCfg == null) return;
 
-        // Use GuiItem.fromConfig with the viewer and the backButtonCfg
         inv.setItem(slot, GuiItem.fromConfig(getViewer(), backButtonCfg));
-    }
-
-    /**
-     * Converts a legacy '&'-colored, already-translated (i.e. containing '§'
-     * codes from ConfigManager#color) title string into an Adventure
-     * Component, for use with the Component-based Bukkit#createInventory
-     * overload. Bukkit#createInventory(InventoryHolder, int, String) is
-     * deprecated in favor of the Component overload, so every GUI builds its
-     * inventory title through this helper instead of passing a raw String.
-     */
-    protected static net.kyori.adventure.text.Component titleComponent(String legacyColoredTitle) {
-        return net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
-                .deserialize(legacyColoredTitle == null ? "" : legacyColoredTitle)
-                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false);
     }
 
     /**
@@ -137,7 +121,7 @@ public abstract class GuiHolder implements InventoryHolder {
      * @param slots The list of slots to fill.
      */
     protected void fillSlots(Inventory inv, Material fillerMaterial, List<Integer> slots) {
-        ItemStack fillItem = GuiItem.simple(fillerMaterial, " ");
+        ItemStack fillItem = GuiItem.simple(fillerMaterial, Component.text(" "));
         for (int slot : slots) {
             inv.setItem(slot, fillItem);
         }

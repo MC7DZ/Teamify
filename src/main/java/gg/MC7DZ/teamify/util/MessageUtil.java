@@ -3,7 +3,6 @@ package gg.MC7DZ.teamify.util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Player;
 
 /**
@@ -20,28 +19,26 @@ public final class MessageUtil {
      * runs the given command when clicked.
      *
      * @param player      who receives the message
-     * @param legacyLine  the main message, in legacy '&' color-code format
-     * @param buttonLabel text shown on the clickable button (e.g. "&a[Click to accept]")
+     * @param messageComponent  the main message as a Component
+     * @param buttonLabelComponent text shown on the clickable button (as a Component)
      * @param command     the command run when the button is clicked (e.g. "/team join Foo")
-     * @param hoverLegacy text shown on hover, in legacy '&' color-code format
+     * @param hoverComponent text shown on hover (as a Component)
      */
-    public static void sendClickableInvite(Player player, String legacyLine, String buttonLabel,
-                                            String command, String hoverLegacy) {
-        LegacyComponentSerializer legacy = LegacyComponentSerializer.legacyAmpersand();
-
-        Component button = legacy.deserialize(buttonLabel)
+    public static void sendClickableInvite(Player player, Component messageComponent, Component buttonLabelComponent,
+                                            String command, Component hoverComponent) {
+        Component button = buttonLabelComponent
                 .clickEvent(ClickEvent.runCommand(command))
-                .hoverEvent(HoverEvent.showText(legacy.deserialize(hoverLegacy)));
+                .hoverEvent(HoverEvent.showText(hoverComponent));
 
-        Component message = legacy.deserialize(legacyLine)
+        Component message = messageComponent
                 .append(Component.space())
                 .append(button);
 
         player.sendMessage(message);
     }
 
-    /** Fallback plain-text send for when a caller only has legacy text handy. */
-    public static void send(Player player, String legacyLine) {
-        player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(legacyLine));
+    /** Sends a Component message to the player. */
+    public static void send(Player player, Component message) {
+        player.sendMessage(message);
     }
 }

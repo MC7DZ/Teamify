@@ -4,6 +4,7 @@ import gg.MC7DZ.teamify.listeners.PlayerListener;
 import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.team.TeamRole;
 import gg.MC7DZ.teamify.util.SoundUtil;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -15,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SettingsMenuGui extends GuiHolder {
 
@@ -37,7 +39,7 @@ public class SettingsMenuGui extends GuiHolder {
 
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.settings-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Team Settings"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Team Settings"));
         int size = cfg.getInt("size", 54);
         
         // Load slots from gui.yml items section
@@ -64,7 +66,7 @@ public class SettingsMenuGui extends GuiHolder {
         }
 
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         if (cfg.getBoolean("fill-empty-slots", true)) {
@@ -80,19 +82,14 @@ public class SettingsMenuGui extends GuiHolder {
             } else {
                 // Fallback to filling all empty slots if no specific filler-slots are defined
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
 
         // Handle back button
         if (itemsCfg != null && itemsCfg.contains("back")) {
-            ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-            if (backButtonData != null) {
-                setBackButton(inv, backButtonSlot,
-                        plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                        backButtonData.getStringList("lore"));
-            }
+            setBackButton(inv, backButtonSlot);
         }
 
         inv.setItem(pvpSlot, buildPvpItem(cfg));
@@ -148,16 +145,16 @@ public class SettingsMenuGui extends GuiHolder {
     private ItemStack buildDescriptionItem(ConfigurationSection cfg) {
         Material mat = parse(cfg.getString("description-material", "WRITABLE_BOOK"), Material.WRITABLE_BOOK);
         boolean hasDescription = team.getDescription() != null && !team.getDescription().isEmpty();
-        String current = hasDescription ? team.getDescription() : "&7(none set)";
+        String current = hasDescription ? team.getDescription() : "<gray>(none set)";
         if (canEditDescription()) {
-            return GuiItem.simple(mat, "&bTeam Description",
-                    "&7Current: &f" + current,
-                    "&7Click to type a new description",
-                    "&7in chat.");
+            return GuiItem.simple(mat, plugin.getConfigManager().color("<aqua>Team Description"),
+                    plugin.getConfigManager().color("<gray>Current: <white>" + current),
+                    plugin.getConfigManager().color("<gray>Click to type a new description"),
+                    plugin.getConfigManager().color("<gray>in chat."));
         }
-        return GuiItem.simple(mat, "&bTeam Description",
-                "&7Current: &f" + current,
-                "&7Your role can't change this.");
+        return GuiItem.simple(mat, plugin.getConfigManager().color("<aqua>Team Description"),
+                plugin.getConfigManager().color("<gray>Current: <white>" + current),
+                plugin.getConfigManager().color("<gray>Your role can't change this."));
     }
 
     private ItemStack buildPvpItem(ConfigurationSection cfg) {
@@ -165,38 +162,38 @@ public class SettingsMenuGui extends GuiHolder {
 
         if (locked) {
             Material mat = parse(cfg.getString("pvp-locked-material", "BARRIER"), Material.BARRIER);
-            return GuiItem.simple(mat, "&cPVP Toggle Locked",
-                    "&7Friendly fire within teams is forced",
-                    "&7ON by the server config.",
-                    "&7An admin must set",
-                    "&7relations.friendly-fire.within-team",
-                    "&7to false to allow this toggle.");
+            return GuiItem.simple(mat, plugin.getConfigManager().color("<red>PVP Toggle Locked"),
+                    plugin.getConfigManager().color("<gray>Friendly fire within teams is forced"),
+                    plugin.getConfigManager().color("<gray>ON by the server config."),
+                    plugin.getConfigManager().color("<gray>An admin must set"),
+                    plugin.getConfigManager().color("<gray>relations.friendly-fire.within-team"),
+                    plugin.getConfigManager().color("<gray>to false to allow this toggle."));
         }
 
         boolean pvpOn = team.isPvpEnabled();
         Material mat = parse(cfg.getString(pvpOn ? "pvp-on-material" : "pvp-off-material",
                 pvpOn ? "LIME_DYE" : "GRAY_DYE"), pvpOn ? Material.LIME_DYE : Material.GRAY_DYE);
 
-        return GuiItem.simple(mat, (pvpOn ? "&aTeam PVP: ON" : "&7Team PVP: OFF"), pvpOn, null,
-                "&7Click to toggle whether members",
-                "&7of your team can hurt each other.");
+        return GuiItem.simple(mat, plugin.getConfigManager().color(pvpOn ? "<green>Team PVP: ON" : "<gray>Team PVP: OFF"), pvpOn, null,
+                plugin.getConfigManager().color("<gray>Click to toggle whether members"),
+                plugin.getConfigManager().color("<gray>of your team can hurt each other."));
     }
 
     private ItemStack buildColorItem(ConfigurationSection cfg, boolean canCustomize) {
         Material mat = parse(cfg.getString("color-material", "WHITE_DYE"), Material.WHITE_DYE);
-        List<String> lore = canCustomize
-                ? List.of("&7Current: " + team.getColor() + team.getColor().name(),
-                "&7Left-click: next color",
-                "&7Right-click: previous color")
-                : List.of("&7Current: " + team.getColor() + team.getColor().name(),
-                "&7Your role can't change this.");
-        return GuiItem.simple(mat, "&bTeam Color", lore.toArray(new String[0]));
+        List<Component> lore = canCustomize
+                ? List.of(plugin.getConfigManager().color("<gray>Current: " + team.getColor() + team.getColor().name()),
+                plugin.getConfigManager().color("<gray>Left-click: next color"),
+                plugin.getConfigManager().color("<gray>Right-click: previous color"))
+                : List.of(plugin.getConfigManager().color("<gray>Current: " + team.getColor() + team.getColor().name()),
+                plugin.getConfigManager().color("<gray>Your role can't change this."));
+        return GuiItem.simple(mat, plugin.getConfigManager().color("<aqua>Team Color"), lore.toArray(new Component[0]));
     }
 
     private ItemStack buildTagChangeItem(ConfigurationSection itemCfg, boolean canCustomize) {
         Material mat = parse(itemCfg.getString("material", "NAME_TAG"), Material.NAME_TAG);
-        String name = plugin.getConfigManager().color(itemCfg.getString("name", "&bChange Team Tag"));
-        List<String> lore = new java.util.ArrayList<>();
+        Component name = plugin.getConfigManager().color(itemCfg.getString("name", "<aqua>Change Team Tag"));
+        List<Component> lore = new java.util.ArrayList<>();
 
         for (String line : itemCfg.getStringList("lore")) {
             lore.add(plugin.getConfigManager().color(line
@@ -207,10 +204,10 @@ public class SettingsMenuGui extends GuiHolder {
         }
 
         if (!canChangeTag()) {
-            lore.add(plugin.getConfigManager().color("&cYour role can't change this."));
+            lore.add(plugin.getConfigManager().color("<red>Your role can't change this."));
         }
 
-        return GuiItem.simple(mat, name, lore.toArray(new String[0]));
+        return GuiItem.simple(mat, name, lore.toArray(new Component[0]));
     }
 
     @Override

@@ -1,6 +1,7 @@
 package gg.MC7DZ.teamify.gui;
 
 import gg.MC7DZ.teamify.team.Team;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class PersonalRequestsMenuGui extends GuiHolder {
 
@@ -28,10 +30,10 @@ public class PersonalRequestsMenuGui extends GuiHolder {
     @Override
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.personal-requests-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Personal Requests"));
-        int size = cfg.getInt("size", 54); // Increased default size to accommodate more items
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Personal Requests"));
+        int size = cfg.getInt("size", 54); // Increased default size to 54
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         java.util.Set<Integer> reservedSlots = new java.util.HashSet<>();
@@ -48,7 +50,7 @@ public class PersonalRequestsMenuGui extends GuiHolder {
                 reservedSlots.addAll(fillerSlots);
             } else {
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
@@ -59,12 +61,7 @@ public class PersonalRequestsMenuGui extends GuiHolder {
             if (itemsCfg.contains("back")) {
                 backButtonSlot = itemsCfg.getInt("back.slot", -1);
                 if (backButtonSlot != -1) {
-                    ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-                    if (backButtonData != null) {
-                        setBackButton(inv, backButtonSlot,
-                                plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                                backButtonData.getStringList("lore"));
-                    }
+                    setBackButton(inv, backButtonSlot);
                     reservedSlots.add(backButtonSlot);
                 }
             }
@@ -80,14 +77,14 @@ public class PersonalRequestsMenuGui extends GuiHolder {
             if (currentSlot >= size) break; // No more space in inventory
 
             ItemStack inviteItem;
-            String itemName = plugin.getConfigManager().color("&bInvite from &f" + team.getName());
-            List<String> itemLore = new ArrayList<>();
-            itemLore.add(plugin.getConfigManager().color("&7Click to accept or deny."));
+            Component itemName = plugin.getConfigManager().color("<aqua>Invite from <white>" + team.getName());
+            List<Component> itemLore = new ArrayList<>();
+            itemLore.add(plugin.getConfigManager().color("<gray>Click to accept or deny."));
 
             if (team.hasCustomItem()) {
                 inviteItem = GuiItem.withOverrides(team.getCustomItem(), itemName, itemLore);
             } else {
-                inviteItem = GuiItem.simple(Material.PAPER, itemName, itemLore.toArray(new String[0]));
+                inviteItem = GuiItem.simple(Material.PAPER, itemName, itemLore.toArray(new Component[0]));
             }
             inv.setItem(currentSlot, inviteItem);
             slotToTeamId.put(currentSlot, team.getId());

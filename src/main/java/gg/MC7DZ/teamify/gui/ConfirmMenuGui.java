@@ -1,5 +1,6 @@
 package gg.MC7DZ.teamify.gui;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -30,7 +31,7 @@ public class ConfirmMenuGui extends GuiHolder {
 
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.confirm-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8Are you sure?"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Are you sure?"));
         int size = cfg.getInt("size", 54);
         
         // Load slots from gui.yml items section
@@ -46,7 +47,7 @@ public class ConfirmMenuGui extends GuiHolder {
             backButtonSlot = 45;
         }
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         if (cfg.getBoolean("fill-empty-slots", true)) {
@@ -62,31 +63,26 @@ public class ConfirmMenuGui extends GuiHolder {
             } else {
                 // Fallback to filling all empty slots if no specific filler-slots are defined
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
 
         // Handle back button
         if (itemsCfg != null && itemsCfg.contains("back")) {
-            ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-            if (backButtonData != null) {
-                setBackButton(inv, backButtonSlot,
-                        plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                        backButtonData.getStringList("lore"));
-            }
+            setBackButton(inv, backButtonSlot);
         }
 
         // Confirm and Deny buttons
         if (itemsCfg != null && itemsCfg.contains("confirm")) {
             inv.setItem(confirmSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("confirm")));
         } else {
-            inv.setItem(confirmSlot, GuiItem.simple(Material.LIME_CONCRETE, "&aConfirm"));
+            inv.setItem(confirmSlot, GuiItem.simple(Material.LIME_CONCRETE, plugin.getConfigManager().color("<green>Confirm")));
         }
         if (itemsCfg != null && itemsCfg.contains("deny")) {
             inv.setItem(denySlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("deny")));
         } else {
-            inv.setItem(denySlot, GuiItem.simple(Material.RED_CONCRETE, "&cCancel"));
+            inv.setItem(denySlot, GuiItem.simple(Material.RED_CONCRETE, plugin.getConfigManager().color("<red>Cancel")));
         }
 
         setInventory(inv);

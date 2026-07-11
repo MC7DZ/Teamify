@@ -4,6 +4,7 @@ import gg.MC7DZ.teamify.listeners.PlayerListener;
 import gg.MC7DZ.teamify.team.Team;
 import gg.MC7DZ.teamify.team.TeamRole;
 import gg.MC7DZ.teamify.util.SoundUtil;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -13,7 +14,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
-import java.util.List; // Added import for List
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,7 +26,7 @@ public class BankMenuGui extends GuiHolder {
     private int withdrawSlot;
     private int backButtonSlot = -1; // Initialize with an invalid slot
 
-    public BankMenuGui(Player viewer, Team team) { // Removed Teamify plugin parameter
+    public BankMenuGui(Player viewer, Team team) {
         super(viewer);
         this.team = team;
         build();
@@ -33,7 +34,7 @@ public class BankMenuGui extends GuiHolder {
 
     protected void build() {
         ConfigurationSection cfg = plugin.getGuiConfig().getConfigurationSection("gui.bank-menu");
-        String title = plugin.getConfigManager().color(cfg.getString("title", "&8&lTeam Bank"));
+        Component title = plugin.getConfigManager().color(cfg.getString("title", "<dark_gray><bold>Team Bank"));
         int size = cfg.getInt("size", 54);
         
         // Load slots from gui.yml items section
@@ -51,7 +52,7 @@ public class BankMenuGui extends GuiHolder {
             backButtonSlot = 45;
         }
 
-        Inventory inv = Bukkit.createInventory(this, size, titleComponent(title));
+        Inventory inv = Bukkit.createInventory(this, size, title);
 
         // Fill empty slots if configured
         if (cfg.getBoolean("fill-empty-slots", true)) {
@@ -67,19 +68,14 @@ public class BankMenuGui extends GuiHolder {
             } else {
                 // Fallback to filling all empty slots if no specific filler-slots are defined
                 for (int i = 0; i < size; i++) {
-                    inv.setItem(i, GuiItem.simple(filler, " "));
+                    inv.setItem(i, GuiItem.simple(filler, Component.text(" ")));
                 }
             }
         }
 
         // Handle back button
         if (itemsCfg != null && itemsCfg.contains("back")) {
-            ConfigurationSection backButtonData = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
-            if (backButtonData != null) {
-                setBackButton(inv, backButtonSlot,
-                        plugin.getConfigManager().color(backButtonData.getString("name", "&cBack")),
-                        backButtonData.getStringList("lore"));
-            }
+            setBackButton(inv, backButtonSlot);
         }
 
         String balanceStr = plugin.getEconomyManager().format(team.getBankBalance());
@@ -88,8 +84,8 @@ public class BankMenuGui extends GuiHolder {
             inv.setItem(balanceSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("balance"), "amount", balanceStr));
         } else {
             inv.setItem(balanceSlot, GuiItem.simple(Material.GOLD_INGOT,
-                    "&6&lTeam Bank",
-                    "&7Balance: &f" + balanceStr));
+                    plugin.getConfigManager().color("<gold><bold>Team Bank"),
+                    plugin.getConfigManager().color("<gray>Balance: <white>" + balanceStr)));
         }
 
         // Deposit item
@@ -97,10 +93,10 @@ public class BankMenuGui extends GuiHolder {
             inv.setItem(depositSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("deposit")));
         } else {
             inv.setItem(depositSlot, GuiItem.simple(Material.LIME_DYE,
-                    "&aDeposit",
-                    "&7Click and type an amount in chat",
-                    "&7to move money from your balance",
-                    "&7into the team bank."));
+                    plugin.getConfigManager().color("<green>Deposit"),
+                    plugin.getConfigManager().color("<gray>Click and type an amount in chat"),
+                    plugin.getConfigManager().color("<gray>to move money from your balance"),
+                    plugin.getConfigManager().color("<gray>into the team bank.")));
         }
 
         TeamRole role = team.getRole(getViewer().getUniqueId());
@@ -114,16 +110,16 @@ public class BankMenuGui extends GuiHolder {
                 inv.setItem(withdrawSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("withdraw")));
             } else {
                 inv.setItem(withdrawSlot, GuiItem.simple(Material.RED_DYE,
-                        "&cWithdraw",
-                        "&7Click and type an amount in chat",
-                        "&7to move money from the team bank",
-                        "&7into your balance."));
+                        plugin.getConfigManager().color("<red>Withdraw"),
+                        plugin.getConfigManager().color("<gray>Click and type an amount in chat"),
+                        plugin.getConfigManager().color("<gray>to move money from the team bank"),
+                        plugin.getConfigManager().color("<gray>into your balance.")));
             }
         } else {
             inv.setItem(withdrawSlot, GuiItem.simple(Material.BARRIER,
-                    "&cWithdraw Locked",
-                    "&7Your role doesn't allow",
-                    "&7withdrawing from the team bank."));
+                    plugin.getConfigManager().color("<red>Withdraw Locked"),
+                    plugin.getConfigManager().color("<gray>Your role doesn't allow"),
+                    plugin.getConfigManager().color("<gray>withdrawing from the team bank.")));
         }
 
         setInventory(inv);
@@ -147,8 +143,8 @@ public class BankMenuGui extends GuiHolder {
         if (slot == depositSlot) {
             p.closeInventory();
             plugin.getPlayerListener().awaitInput(p.getUniqueId(), PlayerListener.PendingInputType.BANK_DEPOSIT);
-            p.sendMessage(plugin.getConfigManager().getPrefix() +
-                    plugin.getConfigManager().color("&aType the amount to deposit in chat (or \"cancel\")."));
+            p.sendMessage(plugin.getConfigManager().getPrefix().append(
+                    plugin.getConfigManager().color("<green>Type the amount to deposit in chat (or \"cancel\").")));
             SoundUtil.play(p, plugin.getConfigManager().getGuiOpenSound());
         } else if (slot == withdrawSlot) {
             TeamRole role = team.getRole(p.getUniqueId());
@@ -162,8 +158,8 @@ public class BankMenuGui extends GuiHolder {
             }
             p.closeInventory();
             plugin.getPlayerListener().awaitInput(p.getUniqueId(), PlayerListener.PendingInputType.BANK_WITHDRAW);
-            p.sendMessage(plugin.getConfigManager().getPrefix() +
-                    plugin.getConfigManager().color("&aType the amount to withdraw in chat (or \"cancel\")."));
+            p.sendMessage(plugin.getConfigManager().getPrefix().append(
+                    plugin.getConfigManager().color("<green>Type the amount to withdraw in chat (or \"cancel\").")));
             SoundUtil.play(p, plugin.getConfigManager().getGuiOpenSound());
         }
     }

@@ -1,6 +1,7 @@
 package gg.MC7DZ.teamify.visibility;
 
 import gg.MC7DZ.teamify.Teamify;
+import gg.MC7DZ.teamify.config.ConfigManager;
 import gg.MC7DZ.teamify.team.RelationType;
 import gg.MC7DZ.teamify.team.Team;
 import org.bukkit.Bukkit;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 /**
  * Reproduces vanilla's per-scoreboard-team "seeFriendlyInvisibles" option
- * (the same thing /minecraft:team modify &lt;team&gt; seeFriendlyInvisibles
+ * (the same thing /minecraft:team modify <bold>t;team&gt; seeFriendlyInvisibles
  * true does) but scoped to Teamify's own teams, using a private
  * scoreboard for each player. This same private scoreboard is also used to
  * color teammates' and allies' names (general.colored-names in config.yml).
@@ -58,16 +59,21 @@ public class VisibilityManager {
             return;
         }
 
-        boolean seeMembers = plugin.getConfigManager().isSeeMembersWhenInvis();
+        boolean seeMembers = plugin.getConfigManager().isSeeMembersWhenInvis(); // Re-added this line
         boolean coloredNames = plugin.getConfigManager().isColoredNamesEnabled();
-        // TAB and NAMETAG are both rendered off the same scoreboard team color
-        // client-side, so either one being enabled applies the color here.
         var colorShows = plugin.getConfigManager().getColorShows();
         boolean applyColor = coloredNames && (
-                colorShows.contains(gg.MC7DZ.teamify.config.ConfigManager.ColorShow.NAMETAG)
-                        || colorShows.contains(gg.MC7DZ.teamify.config.ConfigManager.ColorShow.TAB));
+                colorShows.contains(ConfigManager.ColorShow.NAMETAG)
+                        || colorShows.contains(ConfigManager.ColorShow.TAB));
         boolean enemiesEnabled = plugin.getConfigManager().isEnemiesEnabled();
 
+        // Determine name tag visibility based on color-shows
+        org.bukkit.scoreboard.Team.OptionStatus nameTagVisibility = org.bukkit.scoreboard.Team.OptionStatus.NEVER;
+        if (colorShows.contains(ConfigManager.ColorShow.NAMETAG)) {
+            nameTagVisibility = org.bukkit.scoreboard.Team.OptionStatus.ALWAYS;
+        }
+
+        // Only reset to main scoreboard if neither visibility nor color is applied
         if (!seeMembers && !applyColor) {
             player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
             return;
@@ -80,9 +86,8 @@ public class VisibilityManager {
 
         // Teammates (including the viewer themself).
         org.bukkit.scoreboard.Team matesTeam = board.registerNewTeam(MATES_TEAM_NAME);
-        matesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY,
-                org.bukkit.scoreboard.Team.OptionStatus.ALWAYS);
-        matesTeam.setCanSeeFriendlyInvisibles(seeMembers);
+        matesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, nameTagVisibility);
+        matesTeam.setCanSeeFriendlyInvisibles(seeMembers); // Use the config setting
         if (applyColor) matesTeam.setColor(plugin.getConfigManager().getTeammateColor());
 
         addEntrySafe(matesTeam, player.getName());
@@ -93,10 +98,8 @@ public class VisibilityManager {
 
         // Allies' members – invisibility sight is NOT granted.
         org.bukkit.scoreboard.Team alliesTeam = board.registerNewTeam(ALLIES_TEAM_NAME);
-        alliesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY,
-                org.bukkit.scoreboard.Team.OptionStatus.ALWAYS);
-        // Friendly invisibles are disabled for allies (default is false).
-        // alliesTeam.setCanSeeFriendlyInvisibles(false); // uncomment if you want to be explicit
+        alliesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, nameTagVisibility);
+        alliesTeam.setCanSeeFriendlyInvisibles(false); // Explicitly set to false for allies
         if (applyColor) alliesTeam.setColor(plugin.getConfigManager().getAlliesColor());
 
         for (var entry : team.getRelations().entrySet()) {
@@ -112,8 +115,8 @@ public class VisibilityManager {
         // Enemies' members (color only - there's no "see through invisibility" concept for enemies).
         if (applyColor && enemiesEnabled) {
             org.bukkit.scoreboard.Team enemiesTeam = board.registerNewTeam(ENEMIES_TEAM_NAME);
-            enemiesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY,
-                    org.bukkit.scoreboard.Team.OptionStatus.ALWAYS);
+            enemiesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, nameTagVisibility);
+            enemiesTeam.setCanSeeFriendlyInvisibles(false); // Explicitly set to false
             enemiesTeam.setColor(plugin.getConfigManager().getEnemysColor());
 
             for (var entry : team.getRelations().entrySet()) {
