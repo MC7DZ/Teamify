@@ -5,7 +5,7 @@
 
 general:
   # Prefix used in all plugin chat messages
-  prefix: "&8✦ &b&lTeamify &8✦ &r"
+  prefix: "<#55FFFF><bold>TEAMIFY</bold> <dark_gray>»</dark_gray> <reset>"
   # Language file to use from /lang folder (en.yml, fr.yml, etc)
   language: "en"
   # Enable debug logging to console
@@ -14,9 +14,36 @@ general:
   autosave-interval-minutes: 5
   # Enable the /team list command
   enable-list-command: true
+  # Enable the players list GUI
+  # Player entries (name + hidden flag) are stored in data/players_list.yml.
+  # Set "hidden: true" on any player's entry there to exclude them from the
+  # /team players-list menu without affecting anything else. Deleting a
+  # player's entry there removes them from the list too. Run /team reload
+  # (or restart) after manually editing the file for changes to take effect.
+  enable-players-list: true
+  # Enable the player settings menu (/team mysettings or /team when not in a team)
+  enable-player-settings: true
+  # Colors player names for teammates, allies, and enemies. Whether this
+  # actually shows anywhere is controlled by "color-shows" below - this is
+  # just the master on/off switch.
+  colored-names: true
+  # The color used for each relation. Accepts MiniMessage format (e.g., "<green>", "<#FF00FF>").
+  # Currently NOT WORKING !!
+  teammate-color: "<green>"
+  allies-color: "<blue>"
+  enemys-color: "<white>"
+  # Where the colors above are shown. Any combination of:
+  #   CHAT    - colors the player's name in team chat / ally chat
+  #   TAB     - colors the player's name in the tab list
+  #   NAMETAG - colors the name shown above the player's head
+  # Note: TAB and NAMETAG are both driven by the same scoreboard team color
+  # under the hood, so enabling either one will currently show the color in
+  # both places. Default is NAMETAG only.
+  color-shows:
+    - "NAMETAG"
 
 team-creation:
-  # Minimum / maximum characters for a team name
+  # Minimum / maximum characters for  a team name
   min-name-length: 3
   max-name-length: 16
   # Minimum / maximum characters for a team tag (shown in chat/tab)
@@ -138,12 +165,12 @@ chat:
   # Enable team-only chat channel toggle (/team chat)
   enable-team-chat: false
   # Format for team chat messages
-  team-chat-format: "&8[&bTeam&8] &7{role} &f{player}&8: &f{message}"
+  team-chat-format: "<dark_gray>[<#55FFFF>Team<dark_gray>] <gray>{role} <white>{player}<dark_gray>: <white>{message}"
   # Format for team announcements (leader broadcasts)
-  announcement-format: "&8[&6Announce&8] &e{team}&8: &f{message}"
+  announcement-format: "<dark_gray>[<gold>Announce<dark_gray>] <yellow>{team}<dark_gray>: <white>{message}"
   # Show a tag prefix like [TAG] before player names in global chat
   show-tag-in-global-chat: true
-  global-chat-tag-format: "&7[&b{tag}&7] &f{player}&8: &f{message}"
+  global-chat-tag-format: "<gray>[<#55FFFF>{tag}<gray>] <white>{player}<dark_gray>: <white>{message}"
 
 relations:
   # Enable alliance system (enables/disables /team allyinvite, /team allyleave, /team allychat)
@@ -157,7 +184,7 @@ relations:
   # How long an ally invite stays valid before expiring (seconds)
   ally-invite-expire-seconds: 60
   # Format for ally chat messages
-  ally-chat-format: "&8[&aAlly&8] &7{team} &7{role} &f{player}&8: &f{message}"
+  ally-chat-format: "<dark_gray>[<green>Ally<dark_gray>] <gray>{team} <gray>{role} <white>{player}<dark_gray>: <white>{message}"
   # Friendly fire settings (PVP)
   friendly-fire:
     within-team: true
@@ -182,8 +209,8 @@ kills:
 visibility:
   see-members-when-invis:
     default: false
-  see-allies-when-invis:
-    default: false
+  # Hide the names of invisible teammates when they have an invisibility potion effect.
+  hide-names-when-invisible: false
 
 bank:
   # Enable a shared team bank (requires Vault)
