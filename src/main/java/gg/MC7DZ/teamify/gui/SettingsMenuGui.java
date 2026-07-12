@@ -31,6 +31,11 @@ public class SettingsMenuGui extends GuiHolder {
     private int tagChangeSlot; // New slot for tag change
     private int backButtonSlot = -1; // Initialize with an invalid slot
 
+    // Kept around so the click handlers can rebuild items with the same
+    // config-driven name/lore/material the player originally saw, instead of
+    // each handler reaching back up through the settings-menu section itself.
+    private ConfigurationSection itemsCfg;
+
     public SettingsMenuGui(Player viewer, Team team) {
         super(viewer);
         this.team = team;
@@ -43,7 +48,7 @@ public class SettingsMenuGui extends GuiHolder {
         int size = cfg.getInt("size", 54);
         
         // Load slots from gui.yml items section
-        ConfigurationSection itemsCfg = cfg.getConfigurationSection("items");
+        itemsCfg = cfg.getConfigurationSection("items");
         if (itemsCfg != null) {
             pvpSlot = itemsCfg.getInt("pvp-toggle.slot", 20);
             colorSlot = itemsCfg.getInt("color.slot", 22);
@@ -92,21 +97,22 @@ public class SettingsMenuGui extends GuiHolder {
             setBackButton(inv, backButtonSlot);
         }
 
-        inv.setItem(pvpSlot, buildPvpItem(cfg));
+        setSlotItem(inv, pvpSlot, itemsCfg != null ? itemsCfg.getConfigurationSection("pvp-toggle") : null, buildPvpItem());
 
         boolean canCustomize = canCustomize();
 
         if (plugin.getConfigManager().isTeamColorEnabled()) {
-            inv.setItem(colorSlot, buildColorItem(cfg, canCustomize));
+            setSlotItem(inv, colorSlot, itemsCfg != null ? itemsCfg.getConfigurationSection("color") : null, buildColorItem(canCustomize));
         }
 
         if (plugin.getConfigManager().isTeamDescriptionEnabled()) {
-            inv.setItem(descriptionSlot, buildDescriptionItem(cfg));
+            setSlotItem(inv, descriptionSlot, itemsCfg != null ? itemsCfg.getConfigurationSection("description") : null, buildDescriptionItem());
         }
 
         // Build Tag Change Item
         if (itemsCfg != null && itemsCfg.contains("tag-change")) {
-            inv.setItem(tagChangeSlot, buildTagChangeItem(itemsCfg.getConfigurationSection("tag-change"), canCustomize));
+            setSlotItem(inv, tagChangeSlot, itemsCfg.getConfigurationSection("tag-change"),
+                    buildTagChangeItem(itemsCfg.getConfigurationSection("tag-change"), canCustomize));
         }
 
         if (plugin.getConfigManager().isTeamItemEnabled()) {
@@ -116,8 +122,8 @@ public class SettingsMenuGui extends GuiHolder {
 
             // Use item-apply and item-clear from gui.yml
             if (itemsCfg != null) {
-                inv.setItem(itemApplySlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("item-apply")));
-                inv.setItem(itemClearSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("item-clear")));
+                placeConfigItem(inv, itemApplySlot, itemsCfg.getConfigurationSection("item-apply"));
+                placeConfigItem(inv, itemClearSlot, itemsCfg.getConfigurationSection("item-clear"));
             }
         }
 
@@ -142,52 +148,144 @@ public class SettingsMenuGui extends GuiHolder {
         return role == TeamRole.LEADER; // Or check a specific permission like "can-customize-team"
     }
 
-    private ItemStack buildDescriptionItem(ConfigurationSection cfg) {
-        Material mat = parse(cfg.getString("description-material", "WRITABLE_BOOK"), Material.WRITABLE_BOOK);
+    private ItemStack buildDescriptionItem() {
+        ConfigurationSection itemCfg = itemsCfg != null ? itemsCfg.getConfigurationSection("description") : null;
         boolean hasDescription = team.getDescription() != null && !team.getDescription().isEmpty();
         String current = hasDescription ? team.getDescription() : "<gray>(none set)";
-        if (canEditDescription()) {
-            return GuiItem.simple(mat, plugin.getConfigManager().color("<aqua>Team Description"),
-                    plugin.getConfigManager().color("<gray>Current: <white>" + current),
-                    plugin.getConfigManager().color("<gray>Click to type a new description"),
-                    plugin.getConfigManager().color("<gray>in chat."));
+
+        ItemStack item = GuiItem.fromConfig(getViewer(), itemCfg, "description", current);
+        if (!canEditDescription()) {
+            appendLoreLine(item, plugin.getConfigManager().color("<gray>Your role can't change this."));
         }
-        return GuiItem.simple(mat, plugin.getConfigManager().color("<aqua>Team Description"),
-                plugin.getConfigManager().color("<gray>Current: <white>" + current),
-                plugin.getConfigManager().color("<gray>Your role can't change this."));
+        return item;
     }
 
-    private ItemStack buildPvpItem(ConfigurationSection cfg) {
+    private ItemStack buildPvpItem() {
+        ConfigurationSection itemCfg = itemsCfg != null ? itemsCfg.getConfigurationSection("pvp-toggle") : null;
         boolean locked = plugin.getConfigManager().isFriendlyFireWithinTeam();
 
         if (locked) {
-            Material mat = parse(cfg.getString("pvp-locked-material", "BARRIER"), Material.BARRIER);
-            return GuiItem.simple(mat, plugin.getConfigManager().color("<red>PVP Toggle Locked"),
-                    plugin.getConfigManager().color("<gray>Friendly fire within teams is forced"),
-                    plugin.getConfigManager().color("<gray>ON by the server config."),
-                    plugin.getConfigManager().color("<gray>An admin must set"),
-                    plugin.getConfigManager().color("<gray>relations.friendly-fire.within-team"),
-                    plugin.getConfigManager().color("<gray>to false to allow this toggle."));
+            return buildStateItem(itemCfg, "locked",
+                    "BARRIER", Material.BARRIER,
+                    "<red><bold>PVP Toggle Locked",
+                    List.of(
+                            "<gray>Friendly fire within teams is forced",
+                            "<gray>ON by the server config.",
+                            "<gray>An admin must set",
+                            "<gray>relations.friendly-fire.within-team",
+                            "<gray>to false to allow this toggle."
+                    ), "pvp_status", "<red>LOCKED");
         }
 
         boolean pvpOn = team.isPvpEnabled();
-        Material mat = parse(cfg.getString(pvpOn ? "pvp-on-material" : "pvp-off-material",
-                pvpOn ? "LIME_DYE" : "GRAY_DYE"), pvpOn ? Material.LIME_DYE : Material.GRAY_DYE);
+        String status = pvpOn ? "<green>ON" : "<gray>OFF";
 
-        return GuiItem.simple(mat, plugin.getConfigManager().color(pvpOn ? "<green>Team PVP: ON" : "<gray>Team PVP: OFF"), pvpOn, null,
-                plugin.getConfigManager().color("<gray>Click to toggle whether members"),
-                plugin.getConfigManager().color("<gray>of your team can hurt each other."));
+        if (pvpOn) {
+            return buildStateItem(itemCfg, "on", "LIME_DYE", Material.LIME_DYE,
+                    null, null, "pvp_status", status);
+        } else {
+            return buildStateItem(itemCfg, "off", "GRAY_DYE", Material.GRAY_DYE,
+                    null, null, "pvp_status", status);
+        }
     }
 
-    private ItemStack buildColorItem(ConfigurationSection cfg, boolean canCustomize) {
-        Material mat = parse(cfg.getString("color-material", "WHITE_DYE"), Material.WHITE_DYE);
-        List<Component> lore = canCustomize
-                ? List.of(plugin.getConfigManager().color("<gray>Current: " + team.getColor() + team.getColor().name()),
-                plugin.getConfigManager().color("<gray>Left-click: next color"),
-                plugin.getConfigManager().color("<gray>Right-click: previous color"))
-                : List.of(plugin.getConfigManager().color("<gray>Current: " + team.getColor() + team.getColor().name()),
-                plugin.getConfigManager().color("<gray>Your role can't change this."));
-        return GuiItem.simple(mat, plugin.getConfigManager().color("<aqua>Team Color"), lore.toArray(new Component[0]));
+    /**
+     * Builds a state-specific variant of a toggle item (e.g. "on"/"off"/"locked").
+     * Looks for {statePrefix}-material / {statePrefix}-name / {statePrefix}-lore
+     * in the item's config section, falling back to the base material/name/lore
+     * of that section, and finally to the hardcoded defaults passed in.
+     *
+     * @param itemCfg          the item's config section (e.g. items.pvp-toggle)
+     * @param statePrefix      "on", "off", or "locked"
+     * @param fallbackMaterial fallback material name if nothing is configured
+     * @param fallbackMaterialEnum fallback Material if the configured/base material fails to parse
+     * @param fallbackName     fallback MiniMessage name if nothing is configured (null to use base name)
+     * @param fallbackLore     fallback lore lines if nothing is configured (null to use base lore)
+     * @param placeholders     placeholders applied to name/lore, same pairs as GuiItem#fromConfig
+     */
+    private ItemStack buildStateItem(ConfigurationSection itemCfg, String statePrefix,
+                                      String fallbackMaterial, Material fallbackMaterialEnum,
+                                      String fallbackName, List<String> fallbackLore,
+                                      String... placeholders) {
+        String matStr = itemCfg != null ? itemCfg.getString(statePrefix + "-material", itemCfg.getString("material", fallbackMaterial)) : fallbackMaterial;
+        Material mat = parse(matStr, fallbackMaterialEnum);
+
+        String name = itemCfg != null ? itemCfg.getString(statePrefix + "-name", itemCfg.getString("name", fallbackName)) : fallbackName;
+        if (name == null) name = "<white>Item";
+
+        List<String> lore;
+        if (itemCfg != null && itemCfg.contains(statePrefix + "-lore")) {
+            lore = itemCfg.getStringList(statePrefix + "-lore");
+        } else if (itemCfg != null && itemCfg.contains("lore")) {
+            lore = itemCfg.getStringList("lore");
+        } else {
+            lore = fallbackLore != null ? fallbackLore : List.of();
+        }
+
+        name = applyPlaceholders(name, placeholders);
+        List<Component> loreComponents = new java.util.ArrayList<>();
+        for (String line : lore) {
+            loreComponents.add(plugin.getConfigManager().color(applyPlaceholders(line, placeholders))
+                    .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+        }
+
+        boolean glow = itemCfg != null && itemCfg.getBoolean(statePrefix + "-glow", itemCfg.getBoolean("glow", false));
+
+        ItemStack item = GuiItem.simple(mat, plugin.getConfigManager().color(name)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false), loreComponents.toArray(new Component[0]));
+
+        if (glow) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null) {
+                meta.addEnchant(org.bukkit.enchantments.Enchantment.LURE, 1, true);
+                meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+                item.setItemMeta(meta);
+            }
+        }
+
+        return item;
+    }
+
+    private String applyPlaceholders(String input, String... placeholders) {
+        String result = input;
+        for (int i = 0; i + 1 < placeholders.length; i += 2) {
+            result = result.replace("{" + placeholders[i] + "}", placeholders[i + 1]);
+        }
+        return result;
+    }
+
+    private ItemStack buildColorItem(boolean canCustomize) {
+        ConfigurationSection itemCfg = itemsCfg != null ? itemsCfg.getConfigurationSection("color") : null;
+        String currentColor = miniColorTag(team.getColor());
+
+        ItemStack item = GuiItem.fromConfig(getViewer(), itemCfg, "color", currentColor);
+        if (!canCustomize) {
+            appendLoreLine(item, plugin.getConfigManager().color("<gray>Your role can't change this."));
+        }
+        return item;
+    }
+
+    /**
+     * Wraps a color's name in a MiniMessage color tag matching that same
+     * color (e.g. AQUA -> "<aqua>AQUA</aqua>"), instead of embedding the
+     * legacy §-code ChatColor.toString() directly into a MiniMessage
+     * template - which fails to parse and forces a noisy legacy-fallback
+     * path (see ConfigManager#color). The 16 standard ChatColor names map
+     * 1:1 onto MiniMessage's built-in named colors.
+     */
+    private String miniColorTag(ChatColor c) {
+        String tag = c.name().toLowerCase();
+        return "<" + tag + ">" + c.name() + "</" + tag + ">";
+    }
+
+    /** Appends an extra lore line to an already-built item (e.g. a permission notice). */
+    private void appendLoreLine(ItemStack item, Component line) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+        List<Component> lore = meta.hasLore() ? new java.util.ArrayList<>(meta.lore()) : new java.util.ArrayList<>();
+        lore.add(line);
+        meta.lore(lore);
+        item.setItemMeta(meta);
     }
 
     private ItemStack buildTagChangeItem(ConfigurationSection itemCfg, boolean canCustomize) {
@@ -273,7 +371,7 @@ public class SettingsMenuGui extends GuiHolder {
 
         p.sendMessage(plugin.getConfigManager().getMessage(team.isPvpEnabled() ? "pvp-enabled" : "pvp-disabled"));
         SoundUtil.play(p, plugin.getConfigManager().getGuiSuccessSound());
-        getInventory().setItem(pvpSlot, buildPvpItem(cfg));
+        setSlotItem(getInventory(), pvpSlot, itemsCfg != null ? itemsCfg.getConfigurationSection("pvp-toggle") : null, buildPvpItem());
     }
 
     private void handleColorCycle(Player p, ConfigurationSection cfg, ClickType clickType) {
@@ -303,9 +401,9 @@ public class SettingsMenuGui extends GuiHolder {
             ChatColor newColor = ChatColor.valueOf(colors.get(next).toUpperCase());
             team.setColor(newColor);
             plugin.getTeamManager().saveTeam(team);
-            p.sendMessage(plugin.getConfigManager().getMessage("team-color-changed", "color", newColor + newColor.name()));
+            p.sendMessage(plugin.getConfigManager().getMessage("team-color-changed", "color", miniColorTag(newColor)));
             SoundUtil.play(p, plugin.getConfigManager().getGuiSuccessSound());
-            getInventory().setItem(colorSlot, buildColorItem(cfg, true));
+            setSlotItem(getInventory(), colorSlot, itemsCfg != null ? itemsCfg.getConfigurationSection("color") : null, buildColorItem(true));
         } catch (IllegalArgumentException ex) {
             SoundUtil.play(p, plugin.getConfigManager().getGuiErrorSound());
         }

@@ -12,6 +12,7 @@ import gg.MC7DZ.teamify.listeners.TeamPvpListener;
 import gg.MC7DZ.teamify.placeholder.TeamifyExpansion;
 import gg.MC7DZ.teamify.player.PlayerManager; // Import PlayerManager
 import gg.MC7DZ.teamify.team.TeamManager;
+import gg.MC7DZ.teamify.update.ModrinthUpdateChecker;
 import gg.MC7DZ.teamify.visibility.VisibilityManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -35,6 +36,7 @@ public final class Teamify extends JavaPlugin {
     private EconomyManager economyManager;
     private TeamCommand teamCommand;
     private FileConfiguration guiConfig;
+    private ModrinthUpdateChecker updateChecker;
 
     @Override
     public void onEnable() {
@@ -83,6 +85,9 @@ public final class Teamify extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this,
                 () -> visibilityManager.refreshAll(), 40L, 100L);
 
+        this.updateChecker = new ModrinthUpdateChecker(this);
+        this.updateChecker.check();
+
         getLogger().info("Teamify has been enabled with " + teamManager.getTeams().size() + " teams loaded.");
     }
 
@@ -127,31 +132,73 @@ public final class Teamify extends JavaPlugin {
     }
 
     public void saveDefaultGuiConfig() {
-        // Force overwrite gui.yml to ensure latest version is always used
-        saveResource("gui.yml", true);
         File guiFile = new File(getDataFolder(), "gui.yml");
-        this.guiConfig = YamlConfiguration.loadConfiguration(guiFile);
-        try (InputStream defStream = getResource("gui.yml")) {
-            if (defStream != null) {
-                YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
-                        new InputStreamReader(defStream, StandardCharsets.UTF_8));
-                this.guiConfig.setDefaults(defaults);
-            }
-        } catch (Exception ignored) {
+        if (!guiFile.exists()) {
+            saveResource("gui.yml", false);
         }
+        loadAndMergeGuiConfig(guiFile);
     }
 
     public void reloadGuiConfig() {
         File guiFile = new File(getDataFolder(), "gui.yml");
+        loadAndMergeGuiConfig(guiFile);
+    }
+
+    /**
+     * Loads gui.yml from disk and adds any keys present in the bundled
+     * default (new items/options shipped in a plugin update) that are
+     * missing from the on-disk file - without touching anything the admin
+     * already has, so edited names/lore/materials/slots/hide flags survive
+     * restarts and reloads. This used to force-overwrite gui.yml with
+     * saveResource("gui.yml", true) on every startup, silently discarding
+     * every customization each time the server restarted.
+     * Note: since this saves the file back through Bukkit's YamlConfiguration
+     * writer, any comments in gui.yml won't survive a merge that actually
+     * adds new keys (a YamlConfiguration limitation) - but existing values
+     * are always preserved either way.
+     */
+    private void loadAndMergeGuiConfig(File guiFile) {
         this.guiConfig = YamlConfiguration.loadConfiguration(guiFile);
         try (InputStream defStream = getResource("gui.yml")) {
             if (defStream != null) {
                 YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
                         new InputStreamReader(defStream, StandardCharsets.UTF_8));
+                boolean added = mergeMissingKeys(this.guiConfig, defaults);
                 this.guiConfig.setDefaults(defaults);
+                if (added) {
+                    try {
+                        this.guiConfig.save(guiFile);
+                        getLogger().info("gui.yml was missing some options added in a newer version - filled them in with defaults, existing customizations were kept.");
+                    } catch (IOException e) {
+                        getLogger().warning("Failed to save updated gui.yml: " + e.getMessage());
+                    }
+                }
             }
         } catch (Exception ignored) {
+            getLogger().warning("Failed to load default gui.yml: " + ignored.getMessage());
         }
+    }
+
+    /**
+     * Recursively copies keys that exist in {@code source} but not in
+     * {@code target} into {@code target}. Existing keys/values in target are
+     * never touched or overwritten - only genuinely missing ones are added.
+     * Returns true if anything was added.
+     */
+    private boolean mergeMissingKeys(org.bukkit.configuration.ConfigurationSection target,
+                                      org.bukkit.configuration.ConfigurationSection source) {
+        boolean changed = false;
+        for (String key : source.getKeys(false)) {
+            if (!target.contains(key)) {
+                target.set(key, source.get(key));
+                changed = true;
+            } else if (source.isConfigurationSection(key) && target.isConfigurationSection(key)) {
+                if (mergeMissingKeys(target.getConfigurationSection(key), source.getConfigurationSection(key))) {
+                    changed = true;
+                }
+            }
+        }
+        return changed;
     }
 
     public FileConfiguration getGuiConfig() {
@@ -164,6 +211,10 @@ public final class Teamify extends JavaPlugin {
 
     public ConfigManager getConfigManager() {
         return configManager;
+    }
+
+    public ModrinthUpdateChecker getUpdateChecker() {
+        return updateChecker;
     }
 
     public TeamManager getTeamManager() {

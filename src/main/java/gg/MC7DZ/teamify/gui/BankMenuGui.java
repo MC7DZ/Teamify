@@ -81,7 +81,7 @@ public class BankMenuGui extends GuiHolder {
         String balanceStr = plugin.getEconomyManager().format(team.getBankBalance());
         // Balance item
         if (itemsCfg != null && itemsCfg.contains("balance")) {
-            inv.setItem(balanceSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("balance"), "amount", balanceStr));
+            placeConfigItem(inv, balanceSlot, itemsCfg.getConfigurationSection("balance"), "amount", balanceStr);
         } else {
             inv.setItem(balanceSlot, GuiItem.simple(Material.GOLD_INGOT,
                     plugin.getConfigManager().color("<gold><bold>Team Bank"),
@@ -90,7 +90,7 @@ public class BankMenuGui extends GuiHolder {
 
         // Deposit item
         if (itemsCfg != null && itemsCfg.contains("deposit")) {
-            inv.setItem(depositSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("deposit")));
+            placeConfigItem(inv, depositSlot, itemsCfg.getConfigurationSection("deposit"));
         } else {
             inv.setItem(depositSlot, GuiItem.simple(Material.LIME_DYE,
                     plugin.getConfigManager().color("<green>Deposit"),
@@ -107,7 +107,7 @@ public class BankMenuGui extends GuiHolder {
         // Withdraw item
         if (canWithdraw) {
             if (itemsCfg != null && itemsCfg.contains("withdraw")) {
-                inv.setItem(withdrawSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("withdraw")));
+                placeConfigItem(inv, withdrawSlot, itemsCfg.getConfigurationSection("withdraw"));
             } else {
                 inv.setItem(withdrawSlot, GuiItem.simple(Material.RED_DYE,
                         plugin.getConfigManager().color("<red>Withdraw"),

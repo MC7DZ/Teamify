@@ -75,12 +75,12 @@ public class ConfirmMenuGui extends GuiHolder {
 
         // Confirm and Deny buttons
         if (itemsCfg != null && itemsCfg.contains("confirm")) {
-            inv.setItem(confirmSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("confirm")));
+            placeConfigItem(inv, confirmSlot, itemsCfg.getConfigurationSection("confirm"));
         } else {
             inv.setItem(confirmSlot, GuiItem.simple(Material.LIME_CONCRETE, plugin.getConfigManager().color("<green>Confirm")));
         }
         if (itemsCfg != null && itemsCfg.contains("deny")) {
-            inv.setItem(denySlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("deny")));
+            placeConfigItem(inv, denySlot, itemsCfg.getConfigurationSection("deny"));
         } else {
             inv.setItem(denySlot, GuiItem.simple(Material.RED_CONCRETE, plugin.getConfigManager().color("<red>Cancel")));
         }

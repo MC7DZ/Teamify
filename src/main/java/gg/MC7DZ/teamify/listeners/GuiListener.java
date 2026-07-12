@@ -42,6 +42,11 @@ public class GuiListener implements Listener {
         if (!editable) {
             event.setCancelled(true);
         }
+        if (guiHolder.isHiddenSlot(slot)) {
+            // Item was configured with hide: true - nothing to click, even
+            // though the slot may show a filler pane like any empty slot.
+            return;
+        }
         guiHolder.onClick(slot, event.getClick());
     }
 

@@ -27,7 +27,7 @@ public class Team {
     private int level = 1;
     private long xp = 0;
     private boolean teamChatToggleDefault = false;
-    private boolean pvpEnabled = true;
+    private boolean pvpEnabled = false;
     private long createdAt;
 
     // Customization: a chat/scoreboard color for the team, and a custom

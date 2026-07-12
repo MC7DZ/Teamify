@@ -84,23 +84,23 @@ public class MemberActionsMenuGui extends GuiHolder {
             }
             if (itemsCfg.contains("kick")) {
                 kickSlot = itemsCfg.getInt("kick.slot", -1);
-                inv.setItem(kickSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("kick"),
-                        "player", targetName, "role", targetRole.name()));
+                placeConfigItem(inv, kickSlot, itemsCfg.getConfigurationSection("kick"),
+                        "player", targetName, "role", targetRole.name());
             }
             if (itemsCfg.contains("promote")) {
                 promoteSlot = itemsCfg.getInt("promote.slot", -1);
-                inv.setItem(promoteSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("promote"),
-                        "player", targetName, "role", targetRole.name()));
+                placeConfigItem(inv, promoteSlot, itemsCfg.getConfigurationSection("promote"),
+                        "player", targetName, "role", targetRole.name());
             }
             if (itemsCfg.contains("demote")) {
                 demoteSlot = itemsCfg.getInt("demote.slot", -1);
-                inv.setItem(demoteSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("demote"),
-                        "player", targetName, "role", targetRole.name()));
+                placeConfigItem(inv, demoteSlot, itemsCfg.getConfigurationSection("demote"),
+                        "player", targetName, "role", targetRole.name());
             }
             if (itemsCfg.contains("transfer")) {
                 transferSlot = itemsCfg.getInt("transfer.slot", -1);
-                inv.setItem(transferSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("transfer"),
-                        "player", targetName, "role", targetRole.name()));
+                placeConfigItem(inv, transferSlot, itemsCfg.getConfigurationSection("transfer"),
+                        "player", targetName, "role", targetRole.name());
             }
         }
 

@@ -40,6 +40,30 @@ public class PlayerListener implements Listener {
         plugin.getVisibilityManager().refresh(event.getPlayer());
         plugin.getPlayerManager().updatePlayerData(event.getPlayer()); // Update player data on join
         plugin.getPlayerManager().savePlayers(); // Persist to data/players_list.yml right away
+
+        notifyUpdateIfAvailable(event.getPlayer());
+    }
+
+    /**
+     * Pings ops/admins with the result of the startup update check, gated
+     * by update-checker.notify-ops-on-join in config.yml. Purely
+     * informational - it never triggers a download.
+     */
+    private void notifyUpdateIfAvailable(Player player) {
+        if (!plugin.getConfigManager().isUpdateCheckEnabled() || !plugin.getConfigManager().isUpdateCheckNotifyOps()) {
+            return;
+        }
+        if (plugin.getUpdateChecker() == null || !plugin.getUpdateChecker().isUpdateAvailable()) {
+            return;
+        }
+        if (!player.isOp() && !player.hasPermission("teamify.admin")) {
+            return;
+        }
+
+        player.sendMessage(plugin.getConfigManager().getPrefix().append(
+                plugin.getConfigManager().color("<yellow>A new Teamify update is available: <white>"
+                        + plugin.getUpdateChecker().getLatestVersion()
+                        + " <yellow>(running <white>" + plugin.getDescription().getVersion() + "<yellow>).")));
     }
 
     @EventHandler

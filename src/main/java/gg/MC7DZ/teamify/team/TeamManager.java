@@ -193,7 +193,7 @@ public class TeamManager {
                 team.setLevel(cfg.getInt("level", 1));
                 team.setXp(cfg.getLong("xp", 0));
                 team.setCreatedAt(cfg.getLong("created-at", System.currentTimeMillis()));
-                team.setPvpEnabled(cfg.getBoolean("pvp-enabled", true));
+                team.setPvpEnabled(cfg.getBoolean("pvp-enabled", false));
 
                 String colorName = cfg.getString("color");
                 if (colorName != null) {

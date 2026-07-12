@@ -32,6 +32,11 @@ public abstract class GuiHolder implements InventoryHolder {
     // this GUI stays fully click-locked, same as before.
     private final Set<Integer> editableSlots = new HashSet<>();
 
+    // Slots whose config had "hide: true" set. The item simply isn't placed
+    // (the slot falls back to the filler item, or stays empty), and clicks
+    // on it are ignored entirely - see GuiListener.
+    private final Set<Integer> hiddenSlots = new HashSet<>();
+
     public GuiHolder(Player viewer) {
         this.viewer = viewer;
         activeGuis.add(this); // Add this GUI to the set of active GUIs
@@ -60,6 +65,32 @@ public abstract class GuiHolder implements InventoryHolder {
         return editableSlots.contains(slot);
     }
 
+    public boolean isHiddenSlot(int slot) {
+        return hiddenSlots.contains(slot);
+    }
+
+    /**
+     * Places a pre-built item at a slot, unless the item's config section has
+     * "hide: true" set - in which case the slot is left untouched (falling
+     * back to the filler item, or staying empty) and marked hidden so clicks
+     * on it are ignored even though a slot number is still assigned to it.
+     * Every {@code items.<name>} entry in gui.yml supports "hide", defaulting
+     * to false, so this is safe to call unconditionally for every item.
+     */
+    protected void setSlotItem(Inventory inv, int slot, ConfigurationSection itemCfg, ItemStack item) {
+        if (itemCfg != null && itemCfg.getBoolean("hide", false)) {
+            hiddenSlots.add(slot);
+            return;
+        }
+        hiddenSlots.remove(slot);
+        inv.setItem(slot, item);
+    }
+
+    /** Convenience for the common case: build the item straight from its config section and place it. */
+    protected void placeConfigItem(Inventory inv, int slot, ConfigurationSection itemCfg, String... placeholders) {
+        setSlotItem(inv, slot, itemCfg, GuiItem.fromConfig(getViewer(), itemCfg, placeholders));
+    }
+
     /**
      * Called by GuiListener when a slot in this inventory is clicked.
      */
@@ -83,6 +114,7 @@ public abstract class GuiHolder implements InventoryHolder {
         // Ensure the viewer is still online and viewing this GUI
         if (viewer.isOnline() && viewer.getOpenInventory().getTopInventory().getHolder() == this) {
             viewer.closeInventory(); // Close to prevent inventory glitches during rebuild
+            hiddenSlots.clear(); // Slot layout/hide flags may have changed on reload
             build(); // Rebuild the content
             open(); // Re-open the inventory
         }
@@ -111,7 +143,7 @@ public abstract class GuiHolder implements InventoryHolder {
         ConfigurationSection backButtonCfg = plugin.getGuiConfig().getConfigurationSection("gui.back-button");
         if (backButtonCfg == null) return;
 
-        inv.setItem(slot, GuiItem.fromConfig(getViewer(), backButtonCfg));
+        placeConfigItem(inv, slot, backButtonCfg);
     }
 
     /**

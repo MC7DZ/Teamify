@@ -112,8 +112,10 @@ public class TeamListMenuGui extends GuiHolder {
 
     private Component processPlaceholders(String text, Team team) {
         OfflinePlayer owner = Bukkit.getOfflinePlayer(team.getOwner());
-        String ownerName = owner.hasPlayedBefore() ? owner.getName() : "Unknown";
+        String ownerName = owner.hasPlayedBefore() && owner.getName() != null ? owner.getName() : "Unknown";
         String createdDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date(team.getCreatedAt()));
+        String description = team.getDescription() != null && !team.getDescription().isEmpty()
+                ? team.getDescription() : "<gray>(none set)";
 
 
         return plugin.getConfigManager().color(text
@@ -129,7 +131,7 @@ public class TeamListMenuGui extends GuiHolder {
                 .replace("{homes_count}", String.valueOf(team.getHomes().size()))
                 .replace("{kills}", String.valueOf(team.getTotalKills()))
                 .replace("{created_date}", createdDate)
-                .replace("{description}", team.getDescription()));
+                .replace("{description}", description));
     }
 
     @Override

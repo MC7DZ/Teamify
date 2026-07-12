@@ -3,6 +3,20 @@
 #      Every setting the plugin uses lives in here.
 # =======================================================
 
+# =======================================================
+#                    Update Checker
+# =======================================================
+update-checker:
+  # Checks Modrinth for a newer version of Teamify when the server starts and
+  # logs a console message if one is available. Does not download or
+  # install anything automatically - purely a notification.
+  enabled: true
+  # Also notify players with the "teamify.admin" permission (or OPs) in
+  # chat when they join, if an update was found on startup.
+  notify-ops-on-join: true
+  # DONT CHANGE THAT IF YOU DONT KNOW WHAT ARE YOU DOING
+  modrinth-id: "teamify"
+
 general:
   # Prefix used in all plugin chat messages
   prefix: "<#55FFFF><bold>TEAMIFY</bold> <dark_gray>»</dark_gray> <reset>"

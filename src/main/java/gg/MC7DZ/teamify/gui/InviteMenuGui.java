@@ -80,7 +80,7 @@ public class InviteMenuGui extends GuiHolder {
 
         // Central item for invite details
         if (itemsCfg != null && itemsCfg.contains("invite-info")) {
-            inv.setItem(itemsCfg.getInt("invite-info.slot", 22), GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("invite-info"), "team", team.getName()));
+            placeConfigItem(inv, itemsCfg.getInt("invite-info.slot", 22), itemsCfg.getConfigurationSection("invite-info"), "team", team.getName());
         } else {
             inv.setItem(22, GuiItem.simple(Material.PAPER, plugin.getConfigManager().color("<aqua>Invite from <white>" + team.getName()),
                     plugin.getConfigManager().color("<gray>Click accept or deny below.")));
@@ -88,12 +88,12 @@ public class InviteMenuGui extends GuiHolder {
 
         // Accept and Deny buttons
         if (itemsCfg != null && itemsCfg.contains("accept")) {
-            inv.setItem(acceptSlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("accept")));
+            placeConfigItem(inv, acceptSlot, itemsCfg.getConfigurationSection("accept"));
         } else {
             inv.setItem(acceptSlot, GuiItem.simple(Material.LIME_DYE, plugin.getConfigManager().color("<green>Accept")));
         }
         if (itemsCfg != null && itemsCfg.contains("deny")) {
-            inv.setItem(denySlot, GuiItem.fromConfig(getViewer(), itemsCfg.getConfigurationSection("deny")));
+            placeConfigItem(inv, denySlot, itemsCfg.getConfigurationSection("deny"));
         } else {
             inv.setItem(denySlot, GuiItem.simple(Material.RED_DYE, plugin.getConfigManager().color("<red>Deny")));
         }

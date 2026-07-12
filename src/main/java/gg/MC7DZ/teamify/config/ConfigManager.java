@@ -210,16 +210,45 @@ public class ConfigManager {
 
     public Component color(String s) {
         if (s == null) return Component.empty();
-        String normalized = legacyToMiniMessage(s);
+
+        if (plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("Attempting to color string: '" + s + "'");
+        }
+
+        // First, try to deserialize directly as MiniMessage
         try {
-            return miniMessage.deserialize(normalized);
+            Component result = miniMessage.deserialize(s);
+            if (plugin.getConfigManager().isDebug()) {
+                plugin.getLogger().info("MiniMessage direct deserialize result: '" + LegacyComponentSerializer.legacyAmpersand().serialize(result) + "'");
+            }
+            return result;
+        } catch (Exception ex) {
+            // If direct deserialization fails, log and try with legacy conversion
+            plugin.getLogger().warning("Failed to parse MiniMessage directly for '" + s + "': " + ex.getMessage());
+        }
+
+        // Fallback to legacy conversion and then MiniMessage deserialization
+        String normalized = legacyToMiniMessage(s);
+        if (plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("After legacyToMiniMessage conversion: '" + normalized + "'");
+        }
+        try {
+            Component result = miniMessage.deserialize(normalized);
+            if (plugin.getConfigManager().isDebug()) {
+                plugin.getLogger().info("MiniMessage after legacy conversion result: '" + LegacyComponentSerializer.legacyAmpersand().serialize(result) + "'");
+            }
+            return result;
         } catch (Exception ex) {
             // Last resort: something in the string still isn't valid MiniMessage
             // (e.g. a stray '<'/'>' from a player-chosen name or team tag).
             // Never let a bad string take down a listener - fall back to treating
             // it as plain legacy text instead of crashing the GUI.
-            plugin.getLogger().warning("Failed to parse colored text '" + s + "', falling back to legacy parsing: " + ex.getMessage());
-            return LegacyComponentSerializer.legacyAmpersand().deserialize(normalized.replace('\u00A7', '&'));
+            plugin.getLogger().warning("Failed to parse colored text after legacy conversion '" + s + "', falling back to legacy parsing: " + ex.getMessage());
+            Component result = LegacyComponentSerializer.legacyAmpersand().deserialize(normalized.replace('\u00A7', '&'));
+            if (plugin.getConfigManager().isDebug()) {
+                plugin.getLogger().info("Legacy fallback result: '" + LegacyComponentSerializer.legacyAmpersand().serialize(result) + "'");
+            }
+            return result;
         }
     }
 
@@ -228,6 +257,9 @@ public class ConfigManager {
     public boolean isPlayersListEnabled() { return getConfig().getBoolean("general.enable-players-list", false); }
     public boolean isPlayerSettingsEnabled() { return getConfig().getBoolean("general.enable-player-settings", true); }
     public boolean isDebug() { return getConfig().getBoolean("general.debug", false); }
+    public boolean isUpdateCheckEnabled() { return getConfig().getBoolean("update-checker.enabled", true); }
+    public boolean isUpdateCheckNotifyOps() { return getConfig().getBoolean("update-checker.notify-ops-on-join", true); }
+    public String getUpdateCheckModrinthId() { return getConfig().getString("update-checker.modrinth-id", ""); }
     public boolean isColoredNamesEnabled() { return getConfig().getBoolean("general.colored-names", true); }
     public ChatColor getTeammateColor() { return parseChatColor(getConfig().getString("general.teammate-color", "<green>"), ChatColor.GREEN); }
     public ChatColor getAlliesColor() { return parseChatColor(getConfig().getString("general.allies-color", "<blue>"), ChatColor.BLUE); }

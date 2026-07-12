@@ -5,6 +5,7 @@ gui:
   error-sound: "entity.villager.no"
   back-button:
     material: "PLAYER_HEAD"
+    hide: false
     texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmIxODhjMTI1NTcyMjdkNGViNTQ3ZjJiYmY0ZDVkZjNjMzZjYjQ2ZDQzNTYxMzhkZDYzZTdjMTEzOGY2OWE0YyJ9fX0="
     name: "<red><bold>Back"
     lore:
@@ -18,6 +19,7 @@ gui:
     items:
       info:
         slot: 11
+        hide: false
         material: "ENCHANTED_BOOK"
         glow: true
         name: "<aqua><bold>Team Information"
@@ -26,6 +28,7 @@ gui:
           - "<gray>and statistics."
       members:
         slot: 13
+        hide: false
         material: "PLAYER_HEAD"
         texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDE0ODgwZDNjMjM5YzNhOWE4NmE4MTQ1OWVkMWNjM2NhMTE2YmE1MzI2M2VmMTU0NTU1YWEwYTRhOTc4MWViZCJ9fX0="
         name: "<green><bold>Members"
@@ -34,6 +37,7 @@ gui:
           - "<gray>Online <green>● <gray>Offline <red>●"
       home:
         slot: 15
+        hide: false
         material: "RED_BED"
         glow: true
         name: "<red><bold>Team Home"
@@ -42,6 +46,7 @@ gui:
           - "<gray>designated home location."
       relations:
         slot: 20
+        hide: false
         material: "NETHERITE_SWORD"
         glow: true
         name: "<yellow><bold>Relations"
@@ -49,6 +54,7 @@ gui:
           - "<gray>Manage and see allies "
       bank:
         slot: 22
+        hide: false
         material: "CHEST"
         glow: true
         name: "<gold><bold>Team Bank"
@@ -56,6 +62,7 @@ gui:
           - "<gray>Deposit or withdraw funds."
       settings:
         slot: 24
+        hide: false
         material: "LEVER"
         name: "<gray><bold>Settings"
         lore:
@@ -63,6 +70,7 @@ gui:
           - "<gray>preferences and options."
       echest:
         slot: 29
+        hide: false
         material: "ENDER_CHEST"
         glow: true
         name: "<dark_purple><bold>Team Echest"
@@ -71,6 +79,7 @@ gui:
           - "<gray>enderchest."
       teams-list:
         slot: 33
+        hide: false
         material: "WRITABLE_BOOK"
         glow: true
         name: "<aqua><bold>Teams List"
@@ -79,6 +88,7 @@ gui:
           - "<gray>the server."
       players-list:
         slot: 42
+        hide: false
         material: "PLAYER_HEAD"
         texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMmUyY2M0MjAxNWU2Njc4ZjhmZDQ5Y2NjMDFmYmY3ODdmMWJhMmMzMmJjZjU1OWEwMTUzMzJmYzVkYjUwIn19fQ=="
         name: "<aqua><bold>Players List"
@@ -91,6 +101,7 @@ gui:
           - "<gray>the server."
       requests:
         slot: 31
+        hide: false
         material: "PAPER"
         glow: true
         name: "<yellow><bold>Requests"
@@ -99,6 +110,7 @@ gui:
           - "<gray>and alliance requests."
       mysettings:
         slot: 53
+        hide: false
         material: "PLAYER_HEAD"
         mirror-skin-head: true
         name: "<aqua><bold>My Settings"
@@ -107,6 +119,7 @@ gui:
           - "<gray>preferences and options."
       back:
         slot: 45
+        hide: false
 
   members-menu:
     title: "<dark_gray><bold>Team Members"
@@ -130,6 +143,7 @@ gui:
     items:
       back:
         slot: 45
+        hide: false
 
   # NEW: opened when clicking a member's head in members-menu above. Shown
   # options depend on which of these are defined here - remove any of
@@ -145,6 +159,7 @@ gui:
     items:
       kick:
         slot: 20
+        hide: false
         material: "BARRIER"
         glow: true
         name: "<red><bold>Kick {player}"
@@ -153,6 +168,7 @@ gui:
           - "<gray>Current role: <white>{role}"
       promote:
         slot: 22
+        hide: false
         material: "LIME_DYE"
         glow: true
         name: "<green><bold>Promote {player}"
@@ -161,6 +177,7 @@ gui:
           - "<gray>Current role: <white>{role}"
       demote:
         slot: 24
+        hide: false
         material: "RED_DYE"
         glow: true
         name: "<gold><bold>Demote {player}"
@@ -169,6 +186,7 @@ gui:
           - "<gray>Current role: <white>{role}"
       transfer:
         slot: 31
+        hide: false
         material: "NETHER_STAR"
         glow: true
         name: "<light_purple><bold>Transfer Ownership"
@@ -177,6 +195,7 @@ gui:
           - "<gray>Only usable by the current owner."
       back:
         slot: 45
+        hide: false
 
   invite-menu:
     title: "<dark_gray><bold>Pending Invites"
@@ -189,8 +208,10 @@ gui:
     items:
       back:
         slot: 45
+        hide: false
       invite-info:
         slot: 22
+        hide: false
         material: "PAPER"
         glow: true
         name: "<aqua>Invite from <white>{team}"
@@ -198,6 +219,7 @@ gui:
           - "<gray>Accept or decline below."
       accept:
         slot: 30
+        hide: false
         material: "LIME_CONCRETE"
         glow: true
         name: "<green><bold>Accept"
@@ -205,6 +227,7 @@ gui:
           - "<gray>Join the team."
       deny:
         slot: 32
+        hide: false
         material: "RED_CONCRETE"
         glow: true
         name: "<red><bold>Deny"
@@ -248,6 +271,7 @@ gui:
     items:
       back:
         slot: 45
+        hide: false
 
   # NOTE: allies no longer just show info on click - clicking an ally here
   # now opens confirm-menu asking to leave the alliance (requires
@@ -271,6 +295,7 @@ gui:
     items:
       back:
         slot: 45
+        hide: false
   confirm-menu:
     title: "<dark_gray><bold>Confirm Action"
     size: 54
@@ -284,6 +309,7 @@ gui:
     items:
       back:
         slot: 45
+        hide: false
   team-list-menu:
     title: "<dark_gray><bold>All Teams"
     size: 54
@@ -310,6 +336,7 @@ gui:
     items:
       back:
         slot: 45
+        hide: false
   players-list-menu:
     title: "<dark_gray><bold>Players List"
     size: 54
@@ -336,6 +363,7 @@ gui:
     items:
       back:
         slot: 45
+        hide: false
   settings-menu:
     title: "<dark_gray><bold>Team Settings"
     size: 54
@@ -345,29 +373,67 @@ gui:
     items:
       pvp-toggle:
         slot: 20
-        material: "GOLDEN_SWORD"
+        hide: false
+        # Base material/name/lore below act as the fallback if a
+        # state-specific (on-/off-/locked-) value isn't set for a given
+        # field. PVP is OFF by default for new teams.
+        material: "DIAMOND_SWORD"
         glow: true
         name: "<red><bold>PVP Toggle"
         lore:
           - "<gray>Current: {pvp_status}"
           - "<gray>Click to change."
+        # Shown when the team has PVP/friendly-fire turned ON.
+        on-material: "LIME_DYE"
+        on-glow: true
+        on-name: "<green><bold>PVP: ON"
+        on-lore:
+          - "<gray>Friendly fire is <green>enabled<gray> for your team."
+          - "<gray>Click to turn it off."
+        # Shown when the team has PVP/friendly-fire turned OFF (default).
+        off-material: "GRAY_DYE"
+        off-glow: true
+        off-name: "<gray><bold>PVP: OFF"
+        off-lore:
+          - "<gray>Friendly fire is <red>disabled<gray> for your team."
+          - "<gray>Click to turn it on."
+        # Shown when relations.friendly-fire.within-team is forced true in
+        # config.yml, meaning teams can't manage this toggle themselves.
+        locked-material: "BARRIER"
+        locked-glow: false
+        locked-name: "<red><bold>PVP Toggle Locked"
+        locked-lore:
+          - "<gray>Friendly fire within teams is forced"
+          - "<gray>ON by the server config."
+          - "<gray>An admin must set"
+          - "<gray>relations.friendly-fire.within-team"
+          - "<gray>to false to allow this toggle."
       color:
-        slot: 22
+        slot: 13
+        hide: false
         material: "LEATHER_HELMET"
         glow: true
         name: "<aqua><bold>Team Color"
         lore:
+          - "<gray>Current: {color}"
           - "<gray>Change your team's"
           - "<gray>display color."
+          - "<gray>Left-click: next color"
+          - "<gray>Right-click: previous color"
       description:
         slot: 24
+        hide: false
         material: "WRITABLE_BOOK"
         name: "<aqua><bold>Description"
         lore:
+          - "<gray>Current: <white>{description}"
           - "<gray>Update your team's"
           - "<gray>public description."
+          - "<gray>Click to type a new description"
+          - "<gray>in chat."
       tag-change:
-        slot: 29
+        slot: 31
+        hide: false
         material: "NAME_TAG"
         glow: true
         name: "<aqua><bold>Change Tag"
@@ -377,7 +443,8 @@ gui:
           - "<gray>Min length: {min_tag_length}"
           - "<gray>Max length: {max_tag_length}"
       item-apply:
-        slot: 30
+        slot: 39
+        hide: false
         material: "LIME_CONCRETE"
         glow: true
         name: "<green><bold>Apply Icon"
@@ -386,7 +453,8 @@ gui:
           - "<gray>as your team's custom icon."
           - "<gray>Your item will be returned."
       item-clear:
-        slot: 32
+        slot: 41
+        hide: false
         material: "RED_CONCRETE"
         glow: true
         name: "<red><bold>Clear Icon"
@@ -394,7 +462,8 @@ gui:
           - "<gray>Reset your team icon to"
           - "<gray>the default."
       item-input:
-        slot: 31
+        slot: 40
+        hide: false
         material: "BARRIER"
         name: "<red><bold>Place Item Here"
         lore:
@@ -402,6 +471,7 @@ gui:
           - "<gray>to use as your team icon."
       back:
         slot: 45
+        hide: false
   # NEW: /team echest. The chest is always 54 slots - how many of those are
   # actually usable is controlled by echest.slots in config.yml, not here.
   # Whatever's left over gets filled with locked-filler-item below and can't
@@ -420,6 +490,7 @@ gui:
     items:
       balance:
         slot: 22
+        hide: false
         material: "GOLD_BLOCK"
         glow: true
         name: "<gold><bold>Bank Balance"
@@ -427,6 +498,7 @@ gui:
           - "<gray>Balance: <white>${amount}"
       deposit:
         slot: 20
+        hide: false
         material: "EMERALD"
         glow: true
         name: "<green><bold>Deposit"
@@ -434,6 +506,7 @@ gui:
           - "<gray>Add funds to your team bank."
       withdraw:
         slot: 24
+        hide: false
         material: "REDSTONE_BLOCK"
         glow: true
         name: "<red><bold>Withdraw"
@@ -441,6 +514,7 @@ gui:
           - "<gray>Remove funds from your team bank."
       back:
         slot: 45
+        hide: false
   player-settings-menu:
     title: "<dark_gray><bold>My Settings"
     size: 54
@@ -450,6 +524,7 @@ gui:
     items:
       players-list:
         slot: 50
+        hide: false
         material: "PLAYER_HEAD"
         texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMmUyY2M0MjAxNWU2Njc4ZjhmZDQ5Y2NjMDFmYmY3ODdmMWJhMmMzMmJjZjU1OWEwMTUzMzJmYzVkYjUwIn19fQ=="
         name: "<aqua><bold>Players List"
@@ -458,6 +533,7 @@ gui:
           - "<gray>the server."
       teams-list:
         slot: 48
+        hide: false
         material: "WRITABLE_BOOK"
         glow: true
         name: "<aqua><bold>Teams List"
@@ -466,6 +542,7 @@ gui:
           - "<gray>the server."
       personal-requests:
         slot: 49
+        hide: false
         material: "PAPER"
         glow: true
         name: "<yellow><bold>Personal Requests"
@@ -474,6 +551,7 @@ gui:
           - "<gray>join requests and invites."
       back:
         slot: 45
+        hide: false
   personal-requests-menu:
     title: "<dark_gray><bold>Personal Requests"
     size: 54
@@ -483,3 +561,4 @@ gui:
     items:
       back:
         slot: 45
+        hide: false

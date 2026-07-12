@@ -63,7 +63,7 @@ public class PlayerSettingsMenuGui extends GuiHolder {
                     setBackButton(inv, backButtonSlot);
                 } else {
                     ItemStack item = GuiItem.fromConfig(getViewer(), itemSec);
-                    inv.setItem(slot, item);
+                    setSlotItem(inv, slot, itemSec, item);
                     slotActions.put(slot, key);
                 }
             }

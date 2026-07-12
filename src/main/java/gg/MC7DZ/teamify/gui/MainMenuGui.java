@@ -68,7 +68,7 @@ public class MainMenuGui extends GuiHolder {
                             "team", team.getName(),
                             "level", String.valueOf(team.getLevel()),
                             "members", String.valueOf(team.getSize()));
-                    inv.setItem(slot, item);
+                    setSlotItem(inv, slot, itemSec, item);
                     slotActions.put(slot, key);
                 }
             }
@@ -80,7 +80,7 @@ public class MainMenuGui extends GuiHolder {
             if (playerSettingsCfg != null) {
                 ItemStack playerSettingsItem = GuiItem.fromConfig(getViewer(), playerSettingsCfg);
                 int playerSettingsSlot = playerSettingsCfg.getInt("slot", 53); // Default to 53 if not specified
-                inv.setItem(playerSettingsSlot, playerSettingsItem);
+                setSlotItem(inv, playerSettingsSlot, playerSettingsCfg, playerSettingsItem);
                 slotActions.put(playerSettingsSlot, "mysettings");
             }
         }
