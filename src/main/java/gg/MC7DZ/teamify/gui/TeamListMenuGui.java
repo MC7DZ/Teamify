@@ -128,7 +128,8 @@ public class TeamListMenuGui extends GuiHolder {
                 .replace("{allies}", String.valueOf(team.getAllyCount()))
                 .replace("{homes_count}", String.valueOf(team.getHomes().size()))
                 .replace("{kills}", String.valueOf(team.getTotalKills()))
-                .replace("{created_date}", createdDate));
+                .replace("{created_date}", createdDate)
+                .replace("{description}", team.getDescription()));
     }
 
     @Override

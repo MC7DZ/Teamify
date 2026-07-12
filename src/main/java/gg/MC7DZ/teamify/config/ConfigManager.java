@@ -327,11 +327,12 @@ public class ConfigManager {
     public boolean isFriendlyFireWithinTeam() { return getConfig().getBoolean("relations.friendly-fire.within-team", true); }
     public boolean isAllyChatEnabled() { return getConfig().getBoolean("relations.enable-ally-chat", true); }
     public int getAllyInviteExpireSeconds() { return getConfig().getInt("relations.ally-invite-expire-seconds", 60); }
-    public String getAllyChatFormat() { return getConfig().getString("relations.ally-chat-format", "<dark_gray>[<green>Ally<dark_gray>] <gray>{team} <gray>{role} <white>{player}<dark_gray>: <white>{message>"); }
+    public String getAllyChatFormat() { return getConfig().getString("relations.ally-chat-format", "<dark_gray>[<green>Ally<dark_gray>] <gray>{team} <gray>{role} <white>{player}<dark_gray>: <white>{message}"); }
 
     // ---- Visibility (invisible members/allies) ----
     // These are global, server-enforced settings (per-team toggling is not supported).
     public boolean isSeeMembersWhenInvis() { return getConfig().getBoolean("visibility.see-members-when-invis.default", false); }
+    public boolean isHideNamesWhenInvisible() { return getConfig().getBoolean("visibility.hide-names-when-invisible", false); }
 
     // ---- Bank ----
     public boolean isBankEnabled() { return getConfig().getBoolean("bank.enable-team-bank", true); }

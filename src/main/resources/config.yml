@@ -28,6 +28,7 @@ general:
   # just the master on/off switch.
   colored-names: true
   # The color used for each relation. Accepts MiniMessage format (e.g., "<green>", "<#FF00FF>").
+  # Currently NOT WORKING !!
   teammate-color: "<green>"
   allies-color: "<blue>"
   enemys-color: "<white>"
@@ -208,6 +209,8 @@ kills:
 visibility:
   see-members-when-invis:
     default: false
+  # Hide the names of invisible teammates when they have an invisibility potion effect.
+  hide-names-when-invisible: false
 
 bank:
   # Enable a shared team bank (requires Vault)

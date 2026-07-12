@@ -6,6 +6,7 @@ import gg.MC7DZ.teamify.team.RelationType;
 import gg.MC7DZ.teamify.team.Team;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 /**
  * Reproduces vanilla's per-scoreboard-team "seeFriendlyInvisibles" option
- * (the same thing /minecraft:team modify <bold>t;team&gt; seeFriendlyInvisibles
+ * (the same thing /minecraft:team modify team seeFriendlyInvisibles
  * true does) but scoped to Teamify's own teams, using a private
  * scoreboard for each player. This same private scoreboard is also used to
  * color teammates' and allies' names (general.colored-names in config.yml).
@@ -40,6 +41,8 @@ import java.util.UUID;
 public class VisibilityManager {
 
     private static final String MATES_TEAM_NAME = "teamify_mates";
+    private static final String MATES_VISIBLE_NAMES_SUFFIX = "_visible_names";
+    private static final String MATES_HIDDEN_NAMES_SUFFIX = "_hidden_names";
     private static final String ALLIES_TEAM_NAME = "teamify_allies";
     private static final String ENEMIES_TEAM_NAME = "teamify_enemies";
 
@@ -50,32 +53,33 @@ public class VisibilityManager {
     }
 
     /** Rebuilds the private visibility/name-color scoreboard for a single player. */
-    public void refresh(Player player) {
-        Team team = plugin.getTeamManager().getTeamOf(player.getUniqueId());
+    public void refresh(Player viewer) {
+        Team team = plugin.getTeamManager().getTeamOf(viewer.getUniqueId());
 
         if (team == null) {
             // Not in a team - nothing special to show, use the shared board.
-            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+            viewer.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
             return;
         }
 
-        boolean seeMembers = plugin.getConfigManager().isSeeMembersWhenInvis(); // Re-added this line
+        boolean seeMembers = plugin.getConfigManager().isSeeMembersWhenInvis();
         boolean coloredNames = plugin.getConfigManager().isColoredNamesEnabled();
         var colorShows = plugin.getConfigManager().getColorShows();
         boolean applyColor = coloredNames && (
                 colorShows.contains(ConfigManager.ColorShow.NAMETAG)
                         || colorShows.contains(ConfigManager.ColorShow.TAB));
         boolean enemiesEnabled = plugin.getConfigManager().isEnemiesEnabled();
+        boolean hideNamesWhenInvisible = plugin.getConfigManager().isHideNamesWhenInvisible();
 
-        // Determine name tag visibility based on color-shows
-        org.bukkit.scoreboard.Team.OptionStatus nameTagVisibility = org.bukkit.scoreboard.Team.OptionStatus.NEVER;
+        org.bukkit.scoreboard.Team.OptionStatus visibleNameTagVisibility = org.bukkit.scoreboard.Team.OptionStatus.NEVER;
         if (colorShows.contains(ConfigManager.ColorShow.NAMETAG)) {
-            nameTagVisibility = org.bukkit.scoreboard.Team.OptionStatus.ALWAYS;
+            visibleNameTagVisibility = org.bukkit.scoreboard.Team.OptionStatus.ALWAYS;
         }
 
         // Only reset to main scoreboard if neither visibility nor color is applied
-        if (!seeMembers && !applyColor) {
-            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+        // AND we are not hiding names when invisible (which implies some custom scoreboard logic)
+        if (!seeMembers && !applyColor && !hideNamesWhenInvisible) {
+            viewer.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
             return;
         }
 
@@ -84,21 +88,54 @@ public class VisibilityManager {
 
         Scoreboard board = manager.getNewScoreboard();
 
-        // Teammates (including the viewer themself).
-        org.bukkit.scoreboard.Team matesTeam = board.registerNewTeam(MATES_TEAM_NAME);
-        matesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, nameTagVisibility);
-        matesTeam.setCanSeeFriendlyInvisibles(seeMembers); // Use the config setting
-        if (applyColor) matesTeam.setColor(plugin.getConfigManager().getTeammateColor());
+        if (hideNamesWhenInvisible) {
+            // Create two teams for mates: one for visible names, one for hidden names
+            org.bukkit.scoreboard.Team matesVisibleNamesTeam = board.registerNewTeam(MATES_TEAM_NAME + MATES_VISIBLE_NAMES_SUFFIX);
+            matesVisibleNamesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, visibleNameTagVisibility);
+            matesVisibleNamesTeam.setCanSeeFriendlyInvisibles(seeMembers);
+            if (applyColor) matesVisibleNamesTeam.setColor(plugin.getConfigManager().getTeammateColor());
 
-        addEntrySafe(matesTeam, player.getName());
-        for (UUID memberId : team.getMembers().keySet()) {
-            Player member = Bukkit.getPlayer(memberId);
-            if (member != null) addEntrySafe(matesTeam, member.getName());
+            org.bukkit.scoreboard.Team matesHiddenNamesTeam = board.registerNewTeam(MATES_TEAM_NAME + MATES_HIDDEN_NAMES_SUFFIX);
+            matesHiddenNamesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, org.bukkit.scoreboard.Team.OptionStatus.NEVER);
+            matesHiddenNamesTeam.setCanSeeFriendlyInvisibles(seeMembers); // Still see the player, just hide name
+            if (applyColor) matesHiddenNamesTeam.setColor(plugin.getConfigManager().getTeammateColor());
+
+            // Add viewer to their appropriate team
+            if (viewer.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+                addEntrySafe(matesHiddenNamesTeam, viewer.getName());
+            } else {
+                addEntrySafe(matesVisibleNamesTeam, viewer.getName());
+            }
+
+            for (UUID memberId : team.getMembers().keySet()) {
+                Player member = Bukkit.getPlayer(memberId);
+                if (member != null && !member.equals(viewer)) {
+                    if (member.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+                        addEntrySafe(matesHiddenNamesTeam, member.getName());
+                    } else {
+                        addEntrySafe(matesVisibleNamesTeam, member.getName());
+                    }
+                }
+            }
+        } else {
+            // Use a single team for all mates
+            org.bukkit.scoreboard.Team matesTeam = board.registerNewTeam(MATES_TEAM_NAME);
+            matesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, visibleNameTagVisibility);
+            matesTeam.setCanSeeFriendlyInvisibles(seeMembers);
+            if (applyColor) matesTeam.setColor(plugin.getConfigManager().getTeammateColor());
+
+            addEntrySafe(matesTeam, viewer.getName());
+            for (UUID memberId : team.getMembers().keySet()) {
+                Player member = Bukkit.getPlayer(memberId);
+                if (member != null && !member.equals(viewer)) {
+                    addEntrySafe(matesTeam, member.getName());
+                }
+            }
         }
 
         // Allies' members – invisibility sight is NOT granted.
         org.bukkit.scoreboard.Team alliesTeam = board.registerNewTeam(ALLIES_TEAM_NAME);
-        alliesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, nameTagVisibility);
+        alliesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, visibleNameTagVisibility);
         alliesTeam.setCanSeeFriendlyInvisibles(false); // Explicitly set to false for allies
         if (applyColor) alliesTeam.setColor(plugin.getConfigManager().getAlliesColor());
 
@@ -108,14 +145,16 @@ public class VisibilityManager {
             if (allyTeam == null) continue;
             for (UUID memberId : allyTeam.getMembers().keySet()) {
                 Player member = Bukkit.getPlayer(memberId);
-                if (member != null) addEntrySafe(alliesTeam, member.getName());
+                if (member != null) {
+                    addEntrySafe(alliesTeam, member.getName());
+                }
             }
         }
 
         // Enemies' members (color only - there's no "see through invisibility" concept for enemies).
         if (applyColor && enemiesEnabled) {
             org.bukkit.scoreboard.Team enemiesTeam = board.registerNewTeam(ENEMIES_TEAM_NAME);
-            enemiesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, nameTagVisibility);
+            enemiesTeam.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, visibleNameTagVisibility);
             enemiesTeam.setCanSeeFriendlyInvisibles(false); // Explicitly set to false
             enemiesTeam.setColor(plugin.getConfigManager().getEnemysColor());
 
@@ -125,12 +164,14 @@ public class VisibilityManager {
                 if (enemyTeam == null) continue;
                 for (UUID memberId : enemyTeam.getMembers().keySet()) {
                     Player member = Bukkit.getPlayer(memberId);
-                    if (member != null) addEntrySafe(enemiesTeam, member.getName());
+                    if (member != null) {
+                        addEntrySafe(enemiesTeam, member.getName());
+                    }
                 }
             }
         }
 
-        player.setScoreboard(board);
+        viewer.setScoreboard(board);
     }
 
     private void addEntrySafe(org.bukkit.scoreboard.Team sbTeam, String entry) {
