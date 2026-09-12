@@ -1,0 +1,225 @@
+package gg.MC7DZ.teamify.gui;
+
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import gg.MC7DZ.teamify.Teamify;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.UUID;
+import java.util.logging.Level;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.profile.PlayerTextures;
+
+public final class GuiItem {
+   private GuiItem() {
+   }
+
+   private static Component toComponent(String miniMessageText) {
+      return Teamify.getInstance().getConfigManager().color(miniMessageText).decoration(TextDecoration.ITALIC, false);
+   }
+
+   private static List<Component> toComponentLore(List<String> lines) {
+      List<Component> out = new ArrayList<>(lines.size());
+
+      for (String line : lines) {
+         out.add(toComponent(line));
+      }
+
+      return out;
+   }
+
+   public static ItemStack fromConfig(Player viewer, ConfigurationSection section, String... placeholders) {
+      if (section == null) {
+         return new ItemStack(Material.BARRIER);
+      }
+
+      Material mat;
+      try {
+         mat = Material.valueOf(section.getString("material", "STONE").toUpperCase());
+      } catch (IllegalArgumentException ex) {
+         Teamify.getInstance().getLogger().warning("Invalid material '" + section.getString("material") + "' in GUI config. Defaulting to STONE.");
+         mat = Material.STONE;
+      }
+
+      ItemStack item = new ItemStack(mat);
+      ItemMeta meta = item.getItemMeta();
+      if (meta != null) {
+         String name = section.getString("name", "<white>Item");
+         name = applyPlaceholders(name, placeholders);
+         meta.displayName(toComponent(name));
+         List<String> lore = section.getStringList("lore");
+         List<String> processed = new ArrayList<>();
+
+         for (String line : lore) {
+            processed.add(applyPlaceholders(line, placeholders));
+         }
+
+         meta.lore(toComponentLore(processed));
+         if (section.contains("custom-model-data")) {
+            meta.setCustomModelData(section.getInt("custom-model-data"));
+         }
+
+         if (mat == Material.PLAYER_HEAD && meta instanceof SkullMeta) {
+            if (section.getBoolean("mirror-skin-head", false)) {
+               ((SkullMeta)meta).setOwningPlayer(viewer);
+            } else {
+               String texture = section.getString("texture");
+               if (texture != null && !texture.isEmpty()) {
+                  applyTexture((SkullMeta)meta, texture);
+               }
+            }
+         }
+
+         item.setItemMeta(meta);
+         if (section.getBoolean("glow", false)) {
+            applyGlow(item);
+         }
+      }
+
+      return item;
+   }
+
+   public static ItemStack simple(Material material, Component name, Component... lore) {
+      return simple(material, name, false, null, lore);
+   }
+
+   public static ItemStack simple(Material material, Component name, boolean glow, Integer customModelData, Component... lore) {
+      ItemStack item = new ItemStack(material);
+      ItemMeta meta = item.getItemMeta();
+      if (meta != null) {
+         meta.displayName(name);
+         if (lore.length > 0) {
+            List<Component> lines = new ArrayList<>(List.of(lore));
+            meta.lore(lines);
+         }
+
+         if (customModelData != null) {
+            meta.setCustomModelData(customModelData);
+         }
+
+         item.setItemMeta(meta);
+      }
+
+      if (glow) {
+         applyGlow(item);
+      }
+
+      return item;
+   }
+
+   public static ItemStack playerHead(String base64Texture, Component name, boolean glow, Component... lore) {
+      ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+      SkullMeta meta = (SkullMeta)head.getItemMeta();
+      if (meta == null) {
+         return head;
+      }
+
+      applyTexture(meta, base64Texture);
+      meta.displayName(name);
+      if (lore.length > 0) {
+         List<Component> lines = new ArrayList<>(List.of(lore));
+         meta.lore(lines);
+      }
+
+      head.setItemMeta(meta);
+      if (glow) {
+         applyGlow(head);
+      }
+
+      return head;
+   }
+
+   private static void applyTexture(SkullMeta meta, String base64Texture) {
+      if (base64Texture != null && !base64Texture.trim().isEmpty()) {
+         PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID());
+         PlayerTextures textures = profile.getTextures();
+         String decodedString = null;
+
+         try {
+            byte[] decodedBytes = Base64.getDecoder().decode(base64Texture.trim());
+            decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
+            if (Teamify.getInstance().getConfigManager().isDebug()) {
+               Teamify.getInstance().getLogger().fine("Decoded texture string: " + decodedString);
+            }
+
+            JsonObject json = JsonParser.parseString(decodedString).getAsJsonObject();
+            if (!json.has("textures") || !json.getAsJsonObject("textures").has("SKIN") || !json.getAsJsonObject("textures").getAsJsonObject("SKIN").has("url")) {
+               Teamify.getInstance().getLogger().warning("Texture JSON is missing 'textures.SKIN.url' field. Raw JSON: " + decodedString);
+               return;
+            }
+
+            String textureUrl = json.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
+            textures.setSkin(new URL(textureUrl));
+         } catch (IllegalArgumentException e) {
+            Teamify.getInstance().getLogger().warning("Invalid Base64 string for player head texture: " + base64Texture + " - " + e.getMessage());
+            return;
+         } catch (JsonSyntaxException e) {
+            Teamify.getInstance().getLogger().warning("Invalid JSON syntax for player head texture. Raw string: " + decodedString + " - " + e.getMessage());
+            return;
+         } catch (MalformedURLException e) {
+            Teamify.getInstance()
+               .getLogger()
+               .warning("Malformed URL for player head texture. URL: " + (decodedString != null ? decodedString : "N/A") + " - " + e.getMessage());
+            return;
+         } catch (Exception e) {
+            Teamify.getInstance()
+               .getLogger()
+               .log(Level.WARNING, "Error decoding or parsing player head texture. Raw string: " + decodedString + " - " + e.getMessage(), e);
+            return;
+         }
+
+         profile.setTextures(textures);
+         meta.setPlayerProfile(profile);
+      } else {
+         Teamify.getInstance().getLogger().warning("Attempted to apply empty or null texture to player head.");
+      }
+   }
+
+   public static ItemStack withOverrides(ItemStack base, Component name, List<Component> lore) {
+      ItemStack item = base.clone();
+      item.setAmount(1);
+      ItemMeta meta = item.getItemMeta();
+      if (meta != null) {
+         meta.displayName(name);
+         meta.lore(lore);
+         item.setItemMeta(meta);
+      }
+
+      return item;
+   }
+
+   private static void applyGlow(ItemStack item) {
+      ItemMeta meta = item.getItemMeta();
+      if (meta != null) {
+         meta.addEnchant(Enchantment.LURE, 1, true);
+         meta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_ENCHANTS});
+         item.setItemMeta(meta);
+      }
+   }
+
+   private static String applyPlaceholders(String input, String... placeholders) {
+      String result = input;
+
+      for (int i = 0; i + 1 < placeholders.length; i += 2) {
+         result = result.replace("{" + placeholders[i] + "}", placeholders[i + 1]);
+      }
+
+      return result;
+   }
+}

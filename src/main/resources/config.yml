@@ -1,0 +1,345 @@
+# =======================================================
+#                    TeamsPlugin Config
+#      Every setting the plugin uses lives in here.
+# =======================================================
+
+# =======================================================
+#                    Update Checker
+# =======================================================
+update-checker:
+  # Checks Modrinth for a newer version of Teamify when the server starts and
+  # logs a console message if one is available. Does not download or
+  # install anything automatically - purely a notification.
+  enabled: true
+  # Also notify players with the "teamify.admin" permission (or OPs) in
+  # chat when they join, if an update was found on startup.
+  notify-ops-on-join: true
+  # DONT CHANGE THAT IF YOU DONT KNOW WHAT ARE YOU DOING
+  modrinth-id: "teamify"
+
+general:
+  # Prefix used in all plugin chat messages
+  prefix: "<#55FFFF><bold>TEAMIFY</bold> <dark_gray>»</dark_gray> <reset>"
+  # Language file to use from /lang folder (en.yml, fr.yml, etc)
+  language: "en"
+  # Enable debug logging to console
+  debug: false
+  # Save data every X minutes (auto-save)
+  autosave-interval-minutes: 5
+  # Enable the /team list command
+  enable-list-command: true
+  # Enable the players list GUI
+  # Player entries (name + hidden flag) are stored in data/players_list.yml.
+  # Set "hidden: true" on any player's entry there to exclude them from the
+  # /team players-list menu without affecting anything else. Deleting a
+  # player's entry there removes them from the list too. Run /team reload
+  # (or restart) after manually editing the file for changes to take effect.
+  enable-players-list: true
+  # Enable the player settings menu (/team mysettings or /team when not in a team)
+  enable-player-settings: true
+  # Colors player names for teammates, allies, and enemies. Whether this
+  # actually shows anywhere is controlled by "color-shows" below - this is
+  # just the master on/off switch.
+  colored-names: true
+  # The color used for each relation. Accepts MiniMessage format (e.g., "<green>", "<#FF00FF>").
+  # Currently NOT WORKING !!
+  teammate-color: "<green>"
+  allies-color: "<blue>"
+  enemys-color: "<white>"
+  # Where the colors above are shown. Any combination of:
+  #   CHAT    - colors the player's name in team chat / ally chat
+  #   TAB     - colors the player's name in the tab list
+  #   NAMETAG - colors the name shown above the player's head
+  # Note: TAB and NAMETAG are both driven by the same scoreboard team color
+  # under the hood, so enabling either one will currently show the color in
+  # both places. Default is NAMETAG only.
+  color-shows:
+    - "NAMETAG"
+
+team-creation:
+  # Minimum / maximum characters for  a team name
+  min-name-length: 3
+  max-name-length: 16
+  # Minimum / maximum characters for a team tag (shown in chat/tab)
+  min-tag-length: 2
+  max-tag-length: 5
+  # Allow color codes in team names
+  allow-color-codes: true
+  # Regex whitelist pattern for team names
+  name-regex: "^[a-zA-Z0-9_]+$"
+  # Cost to create a team (requires Vault economy, ignored if 0)
+  creation-cost: 0.0
+  # Cooldown in seconds before a player can create another team after leaving one
+  creation-cooldown-seconds: 300
+  # Block duplicate/case-insensitive team names
+  block-duplicate-names: true
+
+team-limits:
+  # Maximum members per team (0 = unlimited)
+  max-members: 20
+  # Maximum number of team homes that can be set
+  max-homes: 1
+  # Maximum allies a team can have
+  max-allies: 5
+  # Maximum enemies a team can declare
+  max-enemies: 0 # Changed to 0
+  # Maximum length of the team description/MOTD
+  max-description-length: 100
+  # Maximum team level (used with the leveling/perks system below)
+  max-level: 50
+
+roles:
+  # Role hierarchy from lowest to highest. Feel free to rename.
+  hierarchy:
+    - "MEMBER"
+    - "MODERATOR"
+    - "CO_LEADER"
+    - "LEADER"
+  # Permissions per role
+  permissions:
+    MEMBER:
+      can-invite: false
+      can-kick: false
+      can-set-home: false
+      can-edit-description: false
+      can-manage-relations: false
+      can-promote: false
+      can-access-bank: false
+      can-withdraw-bank: false
+      can-toggle-pvp: false
+      can-customize-team: false
+      can-access-echest: false
+    MODERATOR:
+      can-invite: true
+      can-kick: false
+      can-set-home: false
+      can-edit-description: false
+      can-manage-relations: false
+      can-promote: false
+      can-access-bank: true
+      can-withdraw-bank: false
+      can-toggle-pvp: false
+      can-customize-team: false
+      can-access-echest: false
+    CO_LEADER:
+      can-invite: true
+      can-kick: true
+      can-set-home: true
+      can-edit-description: true
+      can-manage-relations: true
+      can-promote: false
+      can-access-bank: true
+      can-withdraw-bank: true
+      can-toggle-pvp: true
+      can-customize-team: true
+      can-access-echest: true
+    LEADER:
+      can-invite: true
+      can-kick: true
+      can-set-home: true
+      can-edit-description: true
+      can-manage-relations: true
+      can-promote: true
+      can-access-bank: true
+      can-withdraw-bank: true
+      can-toggle-pvp: true
+      can-customize-team: true
+      can-access-echest: true
+
+invites:
+  # How long an invite stays valid before expiring (seconds)
+  expire-seconds: 60
+  # Require confirmation click in GUI instead of just chat command
+  require-gui-confirmation: true
+  # Allow players to invite offline players (invite queued until they join)
+  allow-offline-invites: true
+
+join-requests:
+  # Lets players who aren't in a team ask to join one directly via
+  # /team joinrequest <teamName>, without needing an invite first. The
+  # target team's leader/officers (anyone with can-invite) see the request
+  # in the Requests menu (main menu -> Request) and can accept or deny it.
+  send-join-request: true
+
+home:
+  # Master toggle for the /team home command. Default false (disabled).
+  enable-home: false
+  # Master toggle for the /team sethome command. Default false (disabled).
+  enable-sethome: false
+  # Teleport delay in seconds before /team home teleports (0 = instant)
+  teleport-delay-seconds: 3
+  # Cancel teleport if the player moves during the delay
+  cancel-on-move: true
+  # Cooldown between uses of /team home in seconds
+  cooldown-seconds: 30
+  # Cost of teleporting home (Vault economy, 0 = free)
+  teleport-cost: 0.0
+
+chat:
+  # Enable team-only chat channel toggle (/team chat)
+  enable-team-chat: false
+  # Format for team chat messages
+  team-chat-format: "<dark_gray>[<#55FFFF>Team<dark_gray>] <gray>{role} <white>{player}<dark_gray>: <white>{message}"
+  # Format for team announcements (leader broadcasts)
+  announcement-format: "<dark_gray>[<gold>Announce<dark_gray>] <yellow>{team}<dark_gray>: <white>{message}"
+  # Show a tag prefix like [TAG] before player names in global chat
+  show-tag-in-global-chat: true
+  global-chat-tag-format: "<gray>[<#55FFFF>{tag}<gray>] <white>{player}<dark_gray>: <white>{message}"
+
+relations:
+  # Enable alliance system (enables/disables /team allyinvite, /team allyleave, /team allychat)
+  enable-allies: false
+  # Enable enemy/rivalry declarations
+  enable-enemies: false # Changed to false
+  # Require both teams to accept an alliance request
+  mutual-alliance-required: true
+  # Enable the /team allychat command (only checked if enable-allies is also true)
+  enable-ally-chat: false
+  # How long an ally invite stays valid before expiring (seconds)
+  ally-invite-expire-seconds: 60
+  # Format for ally chat messages
+  ally-chat-format: "<dark_gray>[<green>Ally<dark_gray>] <gray>{team} <gray>{role} <white>{player}<dark_gray>: <white>{message}"
+  # Friendly fire settings (PVP)
+  friendly-fire:
+    within-team: true
+    between-allies: true
+    between-enemies: false # Changed to false
+    neutral-default: true
+
+kills:
+  # Whether killing a member of your own team counts toward that team's
+  # kill stats (shown in the team list menu and the members menu, and via
+  # the %teamify_kills% / %teamify_kills_player% placeholders). Only
+  # relevant when relations.friendly-fire.within-team (or a team's own
+  # /team pvp toggle) actually allows team members to hurt each other in
+  # the first place - if friendly fire is off, no kill can happen anyway.
+  count-team-kills: false
+
+# This mirrors vanilla's own team visibility option - the same thing
+# /minecraft:team modify <team> seeFriendlyInvisibles true does - but scoped
+# to Teamify's teams/allies. When enabled, invisible teammates/allies become
+# actually visible in-game to the rest of the team. This is a global,
+# server-enforced setting - there is no per-team toggle.
+visibility:
+  see-members-when-invis:
+    default: false
+  # Hide the names of invisible teammates when they have an invisibility potion effect.
+  hide-names-when-invisible: false
+
+bank:
+  # Enable a shared team bank (requires Vault)
+  enable-team-bank: false
+  # Starting balance for new teams
+  starting-balance: 0.0
+  # Maximum balance a team bank can hold (0 = unlimited)
+  max-balance: 1000000.0
+  # Tax percentage taken on deposits (0 = none)
+  deposit-tax-percent: 0.0
+
+echest:
+  # Enable the shared team ender chest (/team echest)
+  enable-echest: false
+  # How many slots of the chest are usable. The GUI itself is always a
+  # 54-slot (6-row) inventory - anything above this number stays locked
+  # and shows the filler item below instead. Must be between 1 and 54.
+  # Example: set to 50 and the last 4 slots (51-54) are locked.
+  slots: 54
+  # Item shown in the locked slots beyond the "slots" value above.
+  filler-item: "GRAY_STAINED_GLASS_PANE"
+
+team-customization:
+  # Lets teams pick a color (used for their name/tag in menus & messages)
+  # and a custom item (their icon in the team list / relations menus),
+  # both editable from /team settings. Requires the can-customize-team
+  # role permission.
+  enable-color: true
+  enable-custom-item: true
+  # Lets teams set a short description/MOTD via /team description, which
+  # opens a chat prompt for the player to type it in. Requires the
+  # can-edit-description role permission below.
+  enable-description: true
+  # Show team description in the /team list command
+  show-description-in-list: true
+  # The color a new team starts with
+  default-color: "WHITE"
+  # Colors players can cycle through in the settings menu
+  available-colors:
+    - "WHITE"
+    - "RED"
+    - "GOLD"
+    - "YELLOW"
+    - "GREEN"
+    - "AQUA"
+    - "BLUE"
+    - "LIGHT_PURPLE"
+    - "DARK_PURPLE"
+    - "GRAY"
+    - "BLACK"
+  # still in development
+leveling:
+  # Enable team leveling / XP system
+  enable-leveling: false
+  # XP required for level 2 (scales upward using the multiplier below)
+  base-xp-required: 1000
+  # Multiplier applied per level (exponential growth)
+  xp-multiplier: 1.35
+  # XP granted for various actions
+  xp-sources:
+    mob-kill: 5
+    player-kill: 25
+    playtime-per-hour: 15
+  # Perks unlocked at certain levels (purely config-driven, read by plugin)
+  perks:
+    5:
+      extra-homes: 0
+    10:
+      extra-homes: 1
+    25:
+      extra-homes: 1
+    50:
+      extra-homes: 2
+
+pvp:
+  # Enable team-based PvP tracking (kills/deaths between teams)
+  track-team-pvp-stats: true
+  # Grace period after joining a team where a player can't be attacked (seconds)
+  join-invulnerability-seconds: 10
+
+disband:
+  # Require confirmation (GUI or chat) before disbanding
+  require-confirmation: true
+  # Cooldown in seconds before the same player can create a new team after disbanding
+  cooldown-after-disband-seconds: 60
+  # Refund percentage of creation cost when disbanding
+  refund-percent-on-disband: 50
+
+transfer:
+  # Require confirmation (GUI) before transferring team ownership
+  require-confirmation: true
+
+storage:
+  # Storage backend: YAML, SQLITE, or MYSQL
+  type: "YAML"
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "teamsplugin"
+    username: "root"
+    password: "password"
+    use-ssl: false
+    table-prefix: "teams_"
+
+integrations:
+  # Removed: those might not work they are experimantal and didnt touch them much
+  vault:
+    enabled: true
+  placeholderapi:
+    enabled: true
+  # Removed: worldguard:
+  # Removed:   enabled: false
+  # Removed: discord-webhook:
+  # Removed:   enabled: false
+  # Removed:   url: ""
+  # Removed:   notify-on-create: true
+  # Removed:   notify-on-disband: true
+  # Removed:   notify-on-war: true

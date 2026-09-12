@@ -1,0 +1,140 @@
+# =======================================================
+#                Teamify Language File - English
+# =======================================================
+# This file only holds chat messages. All other settings
+# (roles, limits, GUI, etc) stay in config.yml.
+#
+# Placeholders like {player}, {team}, {time} are replaced
+# automatically where supported.
+
+messages:
+  no-permission: "<red>You don't have permission to do that."
+  no-team: "<red>You are not in a team."
+  already-in-team: "<red>You are already in a team."
+  team-created: "<green>Team <aqua>{team} <green>created successfully!"
+  team-disbanded: "<red>Your team has been disbanded."
+  invite-sent: "<green>Invite sent to <aqua>{player}<green>."
+  invite-received: "<aqua>You have been invited to join <yellow>{team}<aqua>. Type /team join {team} to accept."
+  player-kicked: "<red>{player} <gray>has been kicked from the team."
+  not-enough-permission-role: "<red>Your role does not allow this action."
+  team-full: "<red>That team is full."
+  invalid-name: "<red>Invalid team name. Check length and allowed characters."
+  cooldown-active: "<red>You must wait {time} before doing that again."
+  pvp-enabled: "<green>Team PVP is now <bold>ON<green>."
+  pvp-disabled: "<red>Team PVP is now <bold>OFF<red>."
+  pvp-locked: "<red>Team PVP toggle is locked because friendly-fire.within-team is enabled in the config."
+  config-reloaded: "<green>Configuration reloaded."
+
+  # Kick
+  cant-kick-yourself: "<red>You can't kick yourself. Use /team leave or /team disband instead."
+  cant-kick-owner: "<red>You can't kick the team owner."
+  cant-kick-higher-rank: "<red>You can't kick someone who is the same rank or higher than you."
+  player-not-in-team: "<red>That player is not in your team."
+  kicked-from-team: "<red>You have been kicked from <white>{team}<red> by <white>{player}<red>."
+  player-kicked-broadcast: "<gray>{player} was kicked from the team by <white>{kicker}<gray>."
+
+  # Leave
+  left-team: "<gray>You left <white>{team}<gray>."
+  player-left-broadcast: "<gray>{player} has left the team."
+
+  # Join
+  player-joined-broadcast: "<green>{player} has joined the team!"
+
+  # Join requests (player -> team, no invite needed)
+  team-not-found: "<red>That team doesn't exist."
+  join-request-sent: "<green>Join request sent to <aqua>{team}<green>."
+  join-request-already-sent: "<red>You already have a pending join request to <aqua>{team}<red>."
+  join-request-received: "<yellow>{player} <gray>has requested to join your team."
+  join-request-accepted: "<green>Your request to join <aqua>{team} <green>was accepted!"
+  join-request-denied: "<red>Your request to join <aqua>{team} <red>was denied."
+
+  # Promote
+  cant-promote-yourself: "<red>You can't promote yourself."
+  already-highest-rank: "<red>That player already holds the highest rank."
+  cant-promote-own-rank: "<red>You can't promote someone to your rank or higher."
+  promoted-to-leader: "<green>{player} is now the team leader. You are now Co-Leader."
+  player-promoted: "<green>{player} promoted to {role}."
+  promoted-notify: "<green>You were promoted to <aqua>{role}<green> in <white>{team}<green>!"
+  promoted-broadcast: "<green>{player} was promoted to <aqua>{role}<green>."
+
+  # Demote
+  cant-demote-yourself: "<red>You can't demote yourself."
+  cant-demote-owner: "<red>You can't demote the team owner."
+  cant-demote-higher-rank: "<red>You can't demote someone who is the same rank or higher than you."
+  player-demoted: "<green>{player} demoted to {role}."
+  demoted-notify: "<red>You were demoted to <gray>{role}<red> in <white>{team}<red>."
+  demoted-broadcast: "<gray>{player} was demoted to {role}."
+
+  # Owner self rank change
+  owner-role-changed: "<green>Your rank has been set to {role}."
+
+  # Ownership transfer
+  ownership-transferred: "<green>{player} is now the team owner and Leader. You are now {role}."
+  ownership-transferred-notify: "<green>You are now the owner of <white>{team}<green>!"
+  ownership-transferred-broadcast: "<yellow>{player} is now the team owner."
+
+  # Disband
+  team-disbanded-member: "<red>Your team <white>{team} <red>has been disbanded by the owner."
+
+  # Disabled commands
+  command-disabled: "<red>This command is disabled by the server config."
+  players-list-disabled: "<red>The players list is disabled in the config."
+
+  # Home
+  no-home-set: "<red>Your team has no home set."
+
+  # Allies
+  allies-disabled: "<red>The alliance system is disabled."
+  ally-chat-disabled: "<red>Ally chat is disabled."
+  ally-invalid-team: "<red>That team doesn't exist."
+  ally-cant-self: "<red>You can't ally your own team."
+  already-allied: "<red>Your team is already allied with {team}."
+  already-enemies: "<red>You can't ally a team you are at war with."
+  max-allies-reached: "<red>Your team has reached the maximum number of allies."
+  ally-invite-sent: "<green>Alliance request sent to <aqua>{team}<green>."
+  ally-invite-received: "<aqua>{team} <gray>has requested an alliance. Type /team allyinvite {team} to accept."
+  ally-added: "<green>Your team is now allied with <aqua>{team}<green>!"
+  no-ally-invite: "<red>That team hasn't invited you to an alliance. Use /team allyinvite {team} to send one."
+  not-allied: "<red>Your team is not allied with {team}."
+  ally-removed: "<gray>Your team is no longer allied with <white>{team}<gray>."
+  ally-chat-enabled: "<green>Ally chat enabled."
+  ally-chat-disabled-toggle: "<gray>Ally chat disabled."
+
+  # Bank
+  bank-disabled: "<red>The team bank is disabled."
+  bank-no-economy: "<red>No economy plugin (Vault) was found, so the team bank can't move real money right now."
+  bank-balance: "<gold>Team Bank Balance: <white>{amount}"
+  bank-invalid-amount: "<red>Enter a valid positive amount."
+  bank-insufficient-player-funds: "<red>You don't have that much money."
+  bank-insufficient-team-funds: "<red>The team bank doesn't have that much money."
+  bank-max-balance: "<red>The team bank is already at its maximum balance."
+  bank-transaction-failed: "<red>That transaction failed. Please try again."
+  bank-cant-withdraw-role: "<red>Your role isn't allowed to withdraw from the team bank."
+  bank-deposit-success: "<green>Deposited <white>{amount} <green>into the team bank. New balance: <white>{balance}<green>."
+  bank-withdraw-success: "<green>Withdrew <white>{amount} <green>from the team bank. New balance: <white>{balance}<green>."
+  bank-deposit-broadcast: "<gray>{player} deposited <white>{amount} <gray>into the team bank."
+  bank-withdraw-broadcast: "<gray>{player} withdrew <white>{amount} <gray>from the team bank."
+
+  # Team customization (color & custom item)
+  team-color-changed: "<green>Team color set to {color}."
+  team-color-disabled: "<red>Team color customization is disabled."
+  team-item-disabled: "<red>Team item customization is disabled."
+  team-item-apply-empty: "<red>Put an item in the slot first, then click apply."
+  team-item-applied: "<green>Your team's item has been updated! You got your item back."
+  team-item-cleared: "<gray>Team item reset to default."
+  team-description-disabled: "<red>Team descriptions are disabled."
+  echest-disabled: "<red>The team enderchest is disabled."
+  echest-in-use: "<red>{player} <gray>is currently using the team enderchest. Please wait until they close it."
+  team-description-prompt: "<green>Type your team's new description in chat (or \"cancel\")."
+  team-description-changed: "<green>Team description updated!"
+  team-description-too-long: "<red>That description is too long (max {max} characters)."
+  team-description-cleared: "<gray>Team description cleared."
+  team-tag-prompt: "<green>Type your team's new tag in chat (or \"cancel\")."
+  invalid-tag-length: "<red>Invalid team tag length. Must be between {min} and {max} characters."
+  team-tag-changed: "<green>Team tag changed to <white>{tag}<green>."
+
+  # Invisibility visibility toggles
+  # Added: keys referenced in code but missing from original language files
+  creation-cost-charged: "<green>You were charged {cost} to create this team."
+  creation-insufficient-funds: "<red>You need {cost} to create a team."
+  player-settings-disabled: "<red>Player settings are disabled."
