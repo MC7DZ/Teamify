@@ -17,29 +17,12 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
-/**
- * Update notifier: fetches a plain JSON file (URL hardcoded in {@link #JSON_URL}, hosted
- * anywhere over HTTPS - GitHub raw, a Gist, your own site) that looks like:
- *
- * <pre>{@code
- * {
- *   "version": "1.2.0",
- *   "url": "https://yoursite.com/downloads/teamify-1.2.0.jar"
- * }
- * }</pre>
- *
- * and, if "version" is newer than the "current-version" recorded in update.yml, notifies OPs
- * and players with the "teamify.admin" permission with a clickable chat message that opens
- * "url" in their browser.
- *
- * The JSON source URL itself lives in code (see {@link #JSON_URL}), not in update.yml -
- * update.yml only controls on/off behavior (notify-ops, auto-check-updates).
- */
+
 public final class UpdateNotifier {
    // The raw JSON URL this notifier checks for update info. Hardcoded on purpose (not in
    // update.yml) so server owners can't accidentally point it somewhere else - only edit
    // this if you're the one maintaining the plugin's update feed.
-   private static final String JSON_URL = "https://raw.githubusercontent.com/yourname/yourrepo/main/update.json";
+   private static final String JSON_URL = "https://raw.githubusercontent.com/MC7DZ/Teamify/refs/heads/master/Updates.json";
 
    private static final Pattern VERSION_PATTERN = Pattern.compile("\"version\"\\s*:\\s*\"([^\"]+)\"");
    private static final Pattern URL_PATTERN = Pattern.compile("\"url\"\\s*:\\s*\"([^\"]+)\"");
