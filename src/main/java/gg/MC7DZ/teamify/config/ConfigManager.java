@@ -8,11 +8,16 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -173,13 +178,89 @@ public class ConfigManager {
       };
    }
 
-   private String legacyToMiniMessage(String input) {
-      StringBuilder sb = new StringBuilder(input.length() + 16);
+   private static final Pattern HEX_AMP_PATTERN = Pattern.compile("(?i)[&§]#([0-9A-F]{6})");
+   private static final Pattern HEX_LEGACY_PATTERN = Pattern.compile("(?i)§x(§[0-9A-F]){6}");
 
-      for (int i = 0; i < input.length(); i++) {
-         char c = input.charAt(i);
-         if ((c == '&' || c == 167) && i + 1 < input.length()) {
-            String tag = legacyCharToTag(input.charAt(i + 1));
+   private static final Map<NamedTextColor, ChatColor> NAMED_TO_CHAT_COLOR = Map.ofEntries(
+      Map.entry(NamedTextColor.BLACK, ChatColor.BLACK),
+      Map.entry(NamedTextColor.DARK_BLUE, ChatColor.DARK_BLUE),
+      Map.entry(NamedTextColor.DARK_GREEN, ChatColor.DARK_GREEN),
+      Map.entry(NamedTextColor.DARK_AQUA, ChatColor.DARK_AQUA),
+      Map.entry(NamedTextColor.DARK_RED, ChatColor.DARK_RED),
+      Map.entry(NamedTextColor.DARK_PURPLE, ChatColor.DARK_PURPLE),
+      Map.entry(NamedTextColor.GOLD, ChatColor.GOLD),
+      Map.entry(NamedTextColor.GRAY, ChatColor.GRAY),
+      Map.entry(NamedTextColor.DARK_GRAY, ChatColor.DARK_GRAY),
+      Map.entry(NamedTextColor.BLUE, ChatColor.BLUE),
+      Map.entry(NamedTextColor.GREEN, ChatColor.GREEN),
+      Map.entry(NamedTextColor.AQUA, ChatColor.AQUA),
+      Map.entry(NamedTextColor.RED, ChatColor.RED),
+      Map.entry(NamedTextColor.LIGHT_PURPLE, ChatColor.LIGHT_PURPLE),
+      Map.entry(NamedTextColor.YELLOW, ChatColor.YELLOW),
+      Map.entry(NamedTextColor.WHITE, ChatColor.WHITE)
+   );
+
+   /** MiniMessage tag names players are allowed to use for a custom team color (kept to color/gradient/rainbow - no click/hover/insertion tags). */
+   private static final Set<String> ALLOWED_TEAM_COLOR_TAGS = Set.of(
+      "black",
+      "dark_blue",
+      "dark_green",
+      "dark_aqua",
+      "dark_red",
+      "dark_purple",
+      "gold",
+      "gray",
+      "dark_gray",
+      "blue",
+      "green",
+      "aqua",
+      "red",
+      "light_purple",
+      "yellow",
+      "white",
+      "gradient",
+      "rainbow",
+      "color",
+      "colour"
+   );
+
+   private static final Pattern TEAM_COLOR_TAG_PATTERN = Pattern.compile("<(/?)([a-zA-Z_#][a-zA-Z0-9_:#.\\-]*)>");
+
+   /**
+    * Converts legacy formatting codes (both '&' and section-sign '§' variants), including
+    * legacy hex formats ("&#RRGGBB", "§#RRGGBB" and the vanilla "§x§R§R§G§G§B§B" sequence),
+    * into their MiniMessage tag equivalents. Any existing MiniMessage tags in the input are
+    * left untouched, so mixed strings (e.g. from older configs being migrated) work correctly.
+    */
+   private String legacyToMiniMessage(String input) {
+      if (input.indexOf('&') < 0 && input.indexOf(167) < 0) {
+         return input;
+      }
+
+      // Vanilla "§x§R§R§G§G§B§B" hex sequences (used by some plugins/exports).
+      Matcher hexLegacy = HEX_LEGACY_PATTERN.matcher(input);
+      StringBuilder withHexLegacyResolved = new StringBuilder();
+      while (hexLegacy.find()) {
+         String match = hexLegacy.group();
+         StringBuilder hex = new StringBuilder(6);
+         for (int i = 2; i < match.length(); i += 2) {
+            hex.append(match.charAt(i + 1));
+         }
+
+         hexLegacy.appendReplacement(withHexLegacyResolved, "<#" + hex + ">");
+      }
+
+      hexLegacy.appendTail(withHexLegacyResolved);
+      String afterVanillaHex = withHexLegacyResolved.toString();
+
+      // "&#RRGGBB" / "§#RRGGBB" hex shorthand (used by plugins such as EssentialsX).
+      String afterHex = HEX_AMP_PATTERN.matcher(afterVanillaHex).replaceAll(matchResult -> "<#" + matchResult.group(1) + ">");
+
+      StringBuilder sb = new StringBuilder(afterHex.length() + 16);
+      for (int i = 0; i < afterHex.length(); i++) {
+         char c = afterHex.charAt(i);
+         if ((c == '&' || c == 167) && i + 1 < afterHex.length()) {
+            String tag = legacyCharToTag(afterHex.charAt(i + 1));
             if (tag != null) {
                sb.append(tag);
                i++;
@@ -198,44 +279,180 @@ public class ConfigManager {
          return Component.empty();
       }
 
-      if (this.plugin.getConfigManager().isDebug()) {
-         this.plugin.getLogger().info("Attempting to color string: '" + s + "'");
+      String normalized = this.legacyToMiniMessage(s);
+      if (this.plugin.getConfigManager().isDebug() && !normalized.equals(s)) {
+         this.plugin.getLogger().info("Normalized '" + s + "' to MiniMessage: '" + normalized + "'");
       }
 
       try {
-         Component result = this.miniMessage.deserialize(s);
+         Component result = this.miniMessage.deserialize(normalized);
          if (this.plugin.getConfigManager().isDebug()) {
-            this.plugin.getLogger().info("MiniMessage direct deserialize result: '" + LegacyComponentSerializer.legacyAmpersand().serialize(result) + "'");
+            this.plugin.getLogger().info("Color result for '" + s + "': '" + LegacyComponentSerializer.legacyAmpersand().serialize(result) + "'");
          }
 
          return result;
       } catch (Exception ex) {
-         this.plugin.getLogger().warning("Failed to parse MiniMessage directly for '" + s + "': " + ex.getMessage());
-         String normalized = this.legacyToMiniMessage(s);
-         if (this.plugin.getConfigManager().isDebug()) {
-            this.plugin.getLogger().info("After legacyToMiniMessage conversion: '" + normalized + "'");
-         }
+         // Should only happen for genuinely malformed MiniMessage tags in a config value.
+         this.plugin.getLogger().warning("Failed to parse colored text '" + s + "', falling back to legacy parsing: " + ex.getMessage());
+         return LegacyComponentSerializer.legacyAmpersand().deserialize(normalized.replace('§', '&'));
+      }
+   }
 
-         try {
-            Component result = this.miniMessage.deserialize(normalized);
-            if (this.plugin.getConfigManager().isDebug()) {
-               this.plugin
-                  .getLogger()
-                  .info("MiniMessage after legacy conversion result: '" + LegacyComponentSerializer.legacyAmpersand().serialize(result) + "'");
+   /** Matches a single MiniMessage-recognized preset color name (the plain color tags, not gradient/rainbow/color). */
+   private static final Set<String> PRESET_COLOR_NAMES = Set.of(
+      "black",
+      "dark_blue",
+      "dark_green",
+      "dark_aqua",
+      "dark_red",
+      "dark_purple",
+      "gold",
+      "gray",
+      "dark_gray",
+      "blue",
+      "green",
+      "aqua",
+      "red",
+      "light_purple",
+      "yellow",
+      "white"
+   );
+
+   /** True if a single gradient/color-list argument is a valid stop: a preset name, a hex code, or (for gradient only) an interpolation-speed float. */
+   private static boolean isValidColorStop(String stop) {
+      if (stop.isEmpty()) {
+         return false;
+      }
+
+      if (stop.startsWith("#")) {
+         return stop.matches("(?i)#[0-9A-F]{6}");
+      }
+
+      if (PRESET_COLOR_NAMES.contains(stop.toLowerCase())) {
+         return true;
+      }
+
+      // gradient supports a trailing interpolation-phase float, e.g. <gradient:red:blue:0.5>
+      return stop.matches("-?\\d*\\.?\\d+");
+   }
+
+   /**
+    * Checks that a player-supplied custom team color is a safe, well-formed MiniMessage color, e.g.
+    * {@code <red>}, {@code <#ff8800>}, {@code <gradient:red:blue>}, {@code <gradient:#ff0000:#00ff00>}
+    * or {@code <rainbow>}. Only color/gradient/rainbow tags are allowed - no click/hover/insertion
+    * tags can sneak in - and every color/gradient stop (hex or preset, freely mixed) is validated.
+    */
+   public boolean isValidTeamColorFormat(String input) {
+      if (input == null) {
+         return false;
+      }
+
+      String trimmed = input.trim();
+      if (trimmed.isEmpty() || trimmed.length() > 64) {
+         return false;
+      }
+
+      Matcher matcher = TEAM_COLOR_TAG_PATTERN.matcher(trimmed);
+      boolean foundAny = false;
+
+      while (matcher.find()) {
+         foundAny = true;
+         boolean closingTag = !matcher.group(1).isEmpty();
+         String tagBody = matcher.group(2);
+         String[] parts = tagBody.split(":");
+         String tagName = parts[0];
+
+         if (tagName.startsWith("#")) {
+            if (!tagName.matches("(?i)#[0-9A-F]{6}")) {
+               return false;
             }
-
-            return result;
-         } catch (Exception exx) {
-            this.plugin
-               .getLogger()
-               .warning("Failed to parse colored text after legacy conversion '" + s + "', falling back to legacy parsing: " + exx.getMessage());
-            Component result = LegacyComponentSerializer.legacyAmpersand().deserialize(normalized.replace('§', '&'));
-            if (this.plugin.getConfigManager().isDebug()) {
-               this.plugin.getLogger().info("Legacy fallback result: '" + LegacyComponentSerializer.legacyAmpersand().serialize(result) + "'");
+         } else if (!ALLOWED_TEAM_COLOR_TAGS.contains(tagName.toLowerCase())) {
+            return false;
+         } else if (!closingTag && (tagName.equalsIgnoreCase("gradient") || tagName.equalsIgnoreCase("color") || tagName.equalsIgnoreCase("colour"))) {
+            // Validate every color stop after the tag name, e.g. "red", "blue", "0.5" in
+            // <gradient:red:blue:0.5>, or "#ff0000", "#00ff00" in <gradient:#ff0000:#00ff00> - hex
+            // and preset names can be freely mixed within the same gradient.
+            for (int i = 1; i < parts.length; i++) {
+               if (!isValidColorStop(parts[i])) {
+                  return false;
+               }
             }
-
-            return result;
          }
+      }
+
+      if (!foundAny) {
+         return false;
+      }
+
+      try {
+         Component test = this.miniMessage.deserialize(trimmed + "TeamifyColorTest");
+         String plain = PlainTextComponentSerializer.plainText().serialize(test);
+         return plain.equals("TeamifyColorTest");
+      } catch (Exception ex) {
+         return false;
+      }
+   }
+
+   /**
+    * Renders team text (its name or tag) with either the team's custom MiniMessage color format
+    * (hex, preset color, gradient, rainbow, ...) if set, or its legacy scoreboard color otherwise.
+    */
+   public Component colorTeamText(String colorFormat, ChatColor legacyFallback, String plainText) {
+      String prefix = colorFormat != null && !colorFormat.isBlank() ? colorFormat : legacyFallback == null ? "" : legacyFallback.toString();
+      return this.color(prefix + plainText);
+   }
+
+   /**
+    * Same as {@link #colorTeamText}, but serialized down to a legacy '&'/hex-aware string - useful
+    * for PlaceholderAPI output, since consuming plugins generally expect legacy formatting codes
+    * rather than raw MiniMessage tags.
+    */
+   public String colorTeamTextLegacy(String colorFormat, ChatColor legacyFallback, String plainText) {
+      return LegacyComponentSerializer.legacySection().serialize(this.colorTeamText(colorFormat, legacyFallback, plainText));
+   }
+
+   private TextColor firstColor(Component component) {
+      if (component.color() != null) {
+         return component.color();
+      }
+
+      for (Component child : component.children()) {
+         TextColor found = this.firstColor(child);
+         if (found != null) {
+            return found;
+         }
+      }
+
+      return null;
+   }
+
+   /**
+    * Finds the closest matching legacy scoreboard-safe color for an arbitrary (possibly hex) color.
+    * Used to keep the scoreboard nametag color roughly in sync when a team picks a custom hex/gradient
+    * color, since Bukkit scoreboard teams can only use the 16 legacy colors.
+    */
+   public ChatColor nearestChatColor(TextColor color) {
+      if (color == null) {
+         return ChatColor.WHITE;
+      }
+
+      NamedTextColor named = color instanceof NamedTextColor namedTextColor ? namedTextColor : NamedTextColor.nearestTo(color);
+      return NAMED_TO_CHAT_COLOR.getOrDefault(named, ChatColor.WHITE);
+   }
+
+   /** Best-effort nearest legacy {@link ChatColor} for a rendered MiniMessage color/gradient string. */
+   public ChatColor nearestChatColorFor(String colorFormat, ChatColor fallback) {
+      if (colorFormat == null || colorFormat.isBlank()) {
+         return fallback;
+      }
+
+      try {
+         String normalized = this.legacyToMiniMessage(colorFormat);
+         Component sample = this.miniMessage.deserialize(normalized + "A");
+         TextColor found = this.firstColor(sample);
+         return found != null ? this.nearestChatColor(found) : fallback;
+      } catch (Exception ex) {
+         return fallback;
       }
    }
 
@@ -255,32 +472,46 @@ public class ConfigManager {
       return this.getConfig().getBoolean("general.debug", false);
    }
 
-   public boolean isUpdateCheckEnabled() {
-      return this.getConfig().getBoolean("update-checker.enabled", true);
-   }
-
-   public boolean isUpdateCheckNotifyOps() {
-      return this.getConfig().getBoolean("update-checker.notify-ops-on-join", true);
-   }
-
-   public String getUpdateCheckModrinthId() {
-      return this.getConfig().getString("update-checker.modrinth-id", "");
-   }
-
    public boolean isColoredNamesEnabled() {
       return this.getConfig().getBoolean("general.colored-names", true);
    }
 
+   /**
+    * Raw MiniMessage color format for a teammate's name (preset, hex, or gradient), used wherever the
+    * name is rendered as a normal Adventure {@link Component} (chat, tab list) - unlike
+    * {@link #getTeammateColor()}, this is NOT limited to the 16 legacy colors.
+    */
+   public String getTeammateColorFormat() {
+      return this.getConfig().getString("general.teammate-color", "<green>");
+   }
+
+   /** Same as {@link #getTeammateColorFormat()}, for the allies relation. */
+   public String getAlliesColorFormat() {
+      return this.getConfig().getString("general.allies-color", "<blue>");
+   }
+
+   /** Same as {@link #getTeammateColorFormat()}, for the enemies relation. */
+   public String getEnemysColorFormat() {
+      return this.getConfig().getString("general.enemys-color", "<white>");
+   }
+
+   /**
+    * Nearest legacy {@link ChatColor} for the teammate relation color - used only where the color has
+    * to go through a Bukkit scoreboard Team (which can't render hex/gradient). Prefer
+    * {@link #getTeammateColorFormat()} for anything rendered as a normal Component.
+    */
    public ChatColor getTeammateColor() {
-      return this.parseChatColor(this.getConfig().getString("general.teammate-color", "<green>"), ChatColor.GREEN);
+      return this.parseChatColor(this.getTeammateColorFormat(), ChatColor.GREEN);
    }
 
+   /** Same as {@link #getTeammateColor()}, for the allies relation. */
    public ChatColor getAlliesColor() {
-      return this.parseChatColor(this.getConfig().getString("general.allies-color", "<blue>"), ChatColor.BLUE);
+      return this.parseChatColor(this.getAlliesColorFormat(), ChatColor.BLUE);
    }
 
+   /** Same as {@link #getTeammateColor()}, for the enemies relation. */
    public ChatColor getEnemysColor() {
-      return this.parseChatColor(this.getConfig().getString("general.enemys-color", "<white>"), ChatColor.WHITE);
+      return this.parseChatColor(this.getEnemysColorFormat(), ChatColor.WHITE);
    }
 
    public EnumSet<ConfigManager.ColorShow> getColorShows() {
@@ -305,6 +536,11 @@ public class ConfigManager {
       return this.getColorShows().contains(show);
    }
 
+   /**
+    * Resolves a config color value (preset name, MiniMessage hex/gradient tag, or legacy code) down to
+    * the nearest of the 16 legacy {@link ChatColor} values, for contexts (scoreboard teams) that can't
+    * render true hex/gradient colors.
+    */
    private ChatColor parseChatColor(String name, ChatColor fallback) {
       if (name == null) {
          return fallback;
@@ -313,75 +549,7 @@ public class ConfigManager {
       try {
          return ChatColor.valueOf(name.trim().toUpperCase());
       } catch (IllegalArgumentException ignored) {
-         Component component = this.miniMessage.deserialize(name);
-         TextColor textColor = component.color();
-         if (textColor != null && textColor instanceof NamedTextColor namedTextColor) {
-            if (namedTextColor.equals(NamedTextColor.BLACK)) {
-               return ChatColor.BLACK;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.DARK_BLUE)) {
-               return ChatColor.DARK_BLUE;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.DARK_GREEN)) {
-               return ChatColor.DARK_GREEN;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.DARK_AQUA)) {
-               return ChatColor.DARK_AQUA;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.DARK_RED)) {
-               return ChatColor.DARK_RED;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.DARK_PURPLE)) {
-               return ChatColor.DARK_PURPLE;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.GOLD)) {
-               return ChatColor.GOLD;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.GRAY)) {
-               return ChatColor.GRAY;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.DARK_GRAY)) {
-               return ChatColor.DARK_GRAY;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.BLUE)) {
-               return ChatColor.BLUE;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.GREEN)) {
-               return ChatColor.GREEN;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.AQUA)) {
-               return ChatColor.AQUA;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.RED)) {
-               return ChatColor.RED;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.LIGHT_PURPLE)) {
-               return ChatColor.LIGHT_PURPLE;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.YELLOW)) {
-               return ChatColor.YELLOW;
-            }
-
-            if (namedTextColor.equals(NamedTextColor.WHITE)) {
-               return ChatColor.WHITE;
-            }
-         }
-
-         return fallback;
+         return this.nearestChatColorFor(name, fallback);
       }
    }
 

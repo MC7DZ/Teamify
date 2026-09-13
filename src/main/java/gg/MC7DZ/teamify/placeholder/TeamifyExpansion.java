@@ -57,6 +57,11 @@ public class TeamifyExpansion extends PlaceholderExpansion {
             return team == null ? "" : team.getName();
          case "tag":
             return team == null ? "" : team.getTag();
+         case "team_colored":
+         case "team_name_colored":
+            return team == null ? "" : this.plugin.getConfigManager().colorTeamTextLegacy(team.getColorFormat(), team.getColor(), team.getName());
+         case "tag_colored":
+            return team == null ? "" : this.plugin.getConfigManager().colorTeamTextLegacy(team.getColorFormat(), team.getColor(), team.getTag());
          case "level":
             return team == null ? "0" : String.valueOf(team.getLevel());
          case "xp":

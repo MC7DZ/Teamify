@@ -120,6 +120,8 @@ messages:
   # Team customization (color & custom item)
   team-color-changed: "<green>Couleur de l'équipe définie sur {color}."
   team-color-disabled: "<red>La personnalisation de la couleur de l'équipe est désactivée."
+  team-color-prompt: "<green>Tapez la nouvelle couleur de votre équipe dans le chat (ou \"cancel\").\n<gray>Préréglages: <red>\\<red></red><gray>, <yellow>\\<yellow></yellow><gray>, <aqua>\\<aqua></aqua>\n<gray>Hex: <#ff0000>\\<#ff0000></color><gray>, <#00ffaa>\\<#00ffaa></color><gray>, <#8844ff>\\<#8844ff></color>\n<gray>Dégradés: <gradient:green:yellow:red>\\<gradient:green:yellow:red></gradient><gray>, <gradient:#ff0055:#5500ff>\\<gradient:#ff0055:#5500ff></gradient>"
+  invalid-team-color-format: "<red>Couleur invalide. Essayez un préréglage comme <red>red<red>, un code hexadécimal comme <#ff8800>, ou un dégradé comme <gradient:red:blue>."
   team-item-disabled: "<red>La personnalisation de l'objet d'équipe est désactivée."
   team-item-apply-empty: "<red>Placez d'abord un objet dans l'emplacement, puis cliquez sur appliquer."
   team-item-applied: "<green>L'objet de votre équipe a été mis à jour ! Vous avez récupéré votre objet."

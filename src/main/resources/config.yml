@@ -2,20 +2,8 @@
 #                    TeamsPlugin Config
 #      Every setting the plugin uses lives in here.
 # =======================================================
-
-# =======================================================
-#                    Update Checker
-# =======================================================
-update-checker:
-  # Checks Modrinth for a newer version of Teamify when the server starts and
-  # logs a console message if one is available. Does not download or
-  # install anything automatically - purely a notification.
-  enabled: true
-  # Also notify players with the "teamify.admin" permission (or OPs) in
-  # chat when they join, if an update was found on startup.
-  notify-ops-on-join: true
-  # DONT CHANGE THAT IF YOU DONT KNOW WHAT ARE YOU DOING
-  modrinth-id: "teamify"
+# Note: update notifications now live in update.yml, not here -
+# see that file (and UpdateNotifier.java) for details.
 
 general:
   # Prefix used in all plugin chat messages
@@ -41,8 +29,9 @@ general:
   # actually shows anywhere is controlled by "color-shows" below - this is
   # just the master on/off switch.
   colored-names: true
-  # The color used for each relation. Accepts MiniMessage format (e.g., "<green>", "<#FF00FF>").
-  # Currently NOT WORKING !!
+  # The color used for each relation. Accepts a preset (e.g. "<green>") or hex (e.g.
+  # "<#FF00FF>"). Hex renders in full in chat and the tab list; the nametag (via the
+  # scoreboard) only supports the 16 legacy colors, so hex shows there as its nearest match.
   teammate-color: "<green>"
   allies-color: "<blue>"
   enemys-color: "<white>"

@@ -331,7 +331,14 @@ public class TeamCommand implements CommandExecutor {
             } else if (cm.isBlockDuplicateNames() && tm.getTeamByName(name) != null) {
                player.sendMessage(cm.getMessage("invalid-name"));
             } else {
-               String tag = args.length >= 3 ? args[2] : name.substring(0, Math.min(4, name.length())).toUpperCase();
+               int minTagLength = cm.getMinTagLength();
+               int maxTagLength = cm.getMaxTagLength();
+               String tag = args.length >= 3 ? args[2] : name.substring(0, Math.min(maxTagLength, name.length())).toUpperCase();
+               if (tag.length() < minTagLength || tag.length() > maxTagLength) {
+                  player.sendMessage(cm.getMessage("invalid-tag-length", "min", String.valueOf(minTagLength), "max", String.valueOf(maxTagLength)));
+                  return;
+               }
+
                double creationCost = cm.getCreationCost();
                if (creationCost > 0.0) {
                   if (!this.plugin.getEconomyManager().isEnabled()) {
@@ -691,9 +698,9 @@ public class TeamCommand implements CommandExecutor {
                .append(
                   cm.color(
                      "<aqua>Team: <white>"
-                        + team.getName()
+                        + team.getColoredName()
                         + " <gray>| <aqua>Tag: <white>"
-                        + team.getTag()
+                        + team.getColoredTag()
                         + " <gray>| <aqua>Level: <white>"
                         + team.getLevel()
                         + " <gray>| <aqua>Members: <white>"

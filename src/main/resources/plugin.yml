@@ -12,6 +12,7 @@ softdepend: [Vault, PlaceholderAPI]
 config-files:
   - config.yml
   - gui.yml
+  - update.yml
 
 commands:
   team:

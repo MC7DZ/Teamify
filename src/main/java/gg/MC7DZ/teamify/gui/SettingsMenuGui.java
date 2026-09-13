@@ -10,7 +10,6 @@ import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
@@ -236,18 +235,13 @@ public class SettingsMenuGui extends GuiHolder {
 
    private ItemStack buildColorItem(boolean canCustomize) {
       ConfigurationSection itemCfg = this.itemsCfg != null ? this.itemsCfg.getConfigurationSection("color") : null;
-      String currentColor = this.miniColorTag(this.team.getColor());
+      String currentColor = this.team.getColoredName();
       ItemStack item = GuiItem.fromConfig(this.getViewer(), itemCfg, "color", currentColor);
       if (!canCustomize) {
          this.appendLoreLine(item, this.plugin.getConfigManager().color("<gray>Your role can't change this."));
       }
 
       return item;
-   }
-
-   private String miniColorTag(ChatColor c) {
-      String tag = c.name().toLowerCase();
-      return "<" + tag + ">" + c.name() + "</" + tag + ">";
    }
 
    private void appendLoreLine(ItemStack item, Component line) {
@@ -270,7 +264,7 @@ public class SettingsMenuGui extends GuiHolder {
             this.plugin
                .getConfigManager()
                .color(
-                  line.replace("{tag}", this.team.getTag())
+                  line.replace("{tag}", this.team.getColoredTag())
                      .replace("{min_tag_length}", String.valueOf(this.plugin.getConfigManager().getMinTagLength()))
                      .replace("{max_tag_length}", String.valueOf(this.plugin.getConfigManager().getMaxTagLength()))
                )
@@ -293,7 +287,7 @@ public class SettingsMenuGui extends GuiHolder {
       } else if (slot == this.pvpSlot) {
          this.handlePvpToggle(p, cfg);
       } else if (slot == this.colorSlot) {
-         this.handleColorCycle(p, cfg, clickType);
+         this.handleColorClick(p);
       } else if (slot == this.itemApplySlot) {
          this.handleApplyItem(p, cfg);
       } else if (slot == this.itemClearSlot) {
@@ -326,7 +320,7 @@ public class SettingsMenuGui extends GuiHolder {
       }
    }
 
-   private void handleColorCycle(Player p, ConfigurationSection cfg, ClickType clickType) {
+   private void handleColorClick(Player p) {
       if (!this.plugin.getConfigManager().isTeamColorEnabled()) {
          p.sendMessage(this.plugin.getConfigManager().getMessage("team-color-disabled"));
          SoundUtil.play(p, this.plugin.getConfigManager().getGuiErrorSound());
@@ -334,29 +328,10 @@ public class SettingsMenuGui extends GuiHolder {
          p.sendMessage(this.plugin.getConfigManager().getMessage("not-enough-permission-role"));
          SoundUtil.play(p, this.plugin.getConfigManager().getGuiErrorSound());
       } else {
-         List<String> colors = this.plugin.getConfigManager().getAvailableTeamColors();
-         int current = colors.indexOf(this.team.getColor().name());
-         int next;
-         if (current < 0) {
-            next = 0;
-         } else if (clickType.isRightClick()) {
-            next = (current - 1 + colors.size()) % colors.size();
-         } else {
-            next = (current + 1) % colors.size();
-         }
-
-         try {
-            ChatColor newColor = ChatColor.valueOf(colors.get(next).toUpperCase());
-            this.team.setColor(newColor);
-            this.plugin.getTeamManager().saveTeam(this.team);
-            p.sendMessage(this.plugin.getConfigManager().getMessage("team-color-changed", "color", this.miniColorTag(newColor)));
-            SoundUtil.play(p, this.plugin.getConfigManager().getGuiSuccessSound());
-            this.setSlotItem(
-               this.getInventory(), this.colorSlot, this.itemsCfg != null ? this.itemsCfg.getConfigurationSection("color") : null, this.buildColorItem(true)
-            );
-         } catch (IllegalArgumentException ex) {
-            SoundUtil.play(p, this.plugin.getConfigManager().getGuiErrorSound());
-         }
+         p.closeInventory();
+         this.plugin.getPlayerListener().awaitInput(p.getUniqueId(), PlayerListener.PendingInputType.TEAM_COLOR);
+         p.sendMessage(this.plugin.getConfigManager().getMessage("team-color-prompt"));
+         SoundUtil.play(p, this.plugin.getConfigManager().getGuiOpenSound());
       }
    }
 

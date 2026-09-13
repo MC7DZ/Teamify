@@ -163,7 +163,7 @@ public class RequestsMenuGui extends GuiHolder {
          .getConfigManager()
          .color(
             text.replace("{team}", other.getColoredName())
-               .replace("{tag}", other.getTag())
+               .replace("{tag}", other.getColoredTag())
                .replace("{level}", String.valueOf(other.getLevel()))
                .replace("{members}", String.valueOf(other.getSize()))
          );

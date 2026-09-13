@@ -283,7 +283,7 @@ gui:
     filler-item: "GRAY_STAINED_GLASS_PANE"
     filler-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 49, 50, 51, 52, 53]
     ally-material: "LIME_WOOL"
-    item-name-format: "{name}"
+    item-name-format: "{team}"
     item-lore:
       - "<gray>Relation: <green>{relation}"
       - "<gray>Tag: <white>{tag}"
@@ -318,7 +318,7 @@ gui:
     filler-slots: [45, 46, 47, 48, 49, 50, 51, 52, 53]
     teams-per-page: 36
     sort-by: "NAME"
-    item-name-format: "{color}{name} <gray>[{tag}]"
+    item-name-format: "{color}{team} <gray>[{tag}<gray>]"
     item-lore:
       - "<gray>Level: <white>{level}"
       - "<gray>Members: <white>{members}"
@@ -416,10 +416,9 @@ gui:
         name: "<aqua><bold>Team Color"
         lore:
           - "<gray>Current: {color}"
-          - "<gray>Change your team's"
-          - "<gray>display color."
-          - "<gray>Left-click: next color"
-          - "<gray>Right-click: previous color"
+          - "<gray>Click to type a new color"
+          - "<gray>in chat: a preset, a hex"
+          - "<gray>code, or a gradient."
       description:
         slot: 24
         hide: false

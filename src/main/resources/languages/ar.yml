@@ -115,6 +115,8 @@ messages:
   # تخصيص الفريق (اللون والعنصر المخصص)
   team-color-changed: "<green>تم تعيين لون الفريق إلى {color}."
   team-color-disabled: "<red>تخصيص لون الفريق معطل."
+  team-color-prompt: "<green>اكتب لون فريقك الجديد في الشات (أو \"cancel\").\n<gray>الألوان الجاهزة: <red>\\<red></red><gray>, <yellow>\\<yellow></yellow><gray>, <aqua>\\<aqua></aqua>\n<gray>الهيكس: <#ff0000>\\<#ff0000></color><gray>, <#00ffaa>\\<#00ffaa></color><gray>, <#8844ff>\\<#8844ff></color>\n<gray>التدرج: <gradient:green:yellow:red>\\<gradient:green:yellow:red></gradient><gray>, <gradient:#ff0055:#5500ff>\\<gradient:#ff0055:#5500ff></gradient>"
+  invalid-team-color-format: "<red>هذا ليس لونًا صالحًا. جرّب لونًا جاهزًا مثل <red>red<red>، أو كود هيكس مثل <#ff8800>، أو تدرجًا مثل <gradient:red:blue>."
   team-item-disabled: "<red>تخصيص عنصر الفريق معطل."
   team-item-apply-empty: "<red>ضع عنصرًا في الخانة أولاً ثم اضغط تطبيق."
   team-item-applied: "<green>تم تحديث عنصر فريقك! تم إرجاع عنصرك إليك."

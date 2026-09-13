@@ -37,7 +37,7 @@ public class TeamListMenuGui extends GuiHolder {
       Component title = this.plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>All Teams"));
       int size = cfg.getInt("size", 54);
       String sortBy = cfg.getString("sort-by", "LEVEL");
-      String itemNameFormat = cfg.getString("item-name-format", "{color}{name} <gray>[{tag}]");
+      String itemNameFormat = cfg.getString("item-name-format", "{color}{team} <gray>[{tag}]");
       List<String> itemLoreConfig = cfg.getStringList("item-lore");
       List<Team> teams = new ArrayList<>(this.plugin.getTeamManager().getTeams());
 
@@ -112,11 +112,11 @@ public class TeamListMenuGui extends GuiHolder {
       return this.plugin
          .getConfigManager()
          .color(
-            text.replace("{color}", team.getColor().toString())
-               .replace("{name}", team.getName())
+            text.replace("{color}", team.getColorPrefix())
+               .replace("{team}", team.getName())
                .replace("{level}", String.valueOf(team.getLevel()))
                .replace("{members}", String.valueOf(team.getSize()))
-               .replace("{tag}", team.getTag())
+               .replace("{tag}", team.getColoredTag())
                .replace("{owner_name}", ownerName)
                .replace("{bank_balance}", this.plugin.getEconomyManager().format(team.getBankBalance()))
                .replace("{xp}", String.valueOf(team.getXp()))

@@ -1,0 +1,46 @@
+# =====================================================================
+#                    Teamify Update Notifier
+# =====================================================================
+# This checks a plain JSON file (the URL is set in the plugin's code,
+# not here) for the latest version number and a download link, then
+# pings OPs and staff with the "teamify.admin" permission with a
+# clickable chat message that opens the link in their browser.
+#
+# That JSON file must look like this - just two fields, nothing else
+# required:
+#
+#   {
+#     "version": "1.2.0",
+#     "url": "https://yoursite.com/downloads/teamify-1.2.0.jar"
+#   }
+#
+#   "version" -> the latest version number. Compared against
+#                "current-version" below to decide if an update exists.
+#   "url"     -> the link opened in the player's browser when they
+#                click the "Click here to download" button in chat.
+#
+# This file only controls whether the notifier runs and who it
+# notifies - the JSON URL itself is hardcoded in UpdateNotifier.java
+# (JSON_URL constant) so it can't be pointed somewhere else by editing
+# a config file.
+
+# Notify OPs and players with the "teamify.admin" permission in chat
+# when they join, if a newer version was found on the last check.
+notify-ops: true
+
+# Automatically check for a new version when the server starts (runs
+# asynchronously, does not lag the server).
+auto-check-updates: true
+
+# =====================================================================
+# DO NOT TOUCH "current-version" BELOW.
+# =====================================================================
+# What this does: the plugin compares this value against the
+# "version" field from your JSON file to figure out whether an
+# update is available. It is NOT a setting - it's just the running
+# plugin's own version number, and Teamify keeps it in sync
+# automatically every time it starts. Editing it by hand doesn't
+# change what version you're running; it will only make the update
+# notifier compare against the wrong number and give you wrong
+# "update available" messages (false positives or false negatives).
+current-version: "1.1.0"

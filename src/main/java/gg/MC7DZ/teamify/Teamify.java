@@ -12,7 +12,7 @@ import gg.MC7DZ.teamify.listeners.TeamPvpListener;
 import gg.MC7DZ.teamify.placeholder.TeamifyExpansion;
 import gg.MC7DZ.teamify.player.PlayerManager;
 import gg.MC7DZ.teamify.team.TeamManager;
-import gg.MC7DZ.teamify.update.ModrinthUpdateChecker;
+import gg.MC7DZ.teamify.update.UpdateNotifier;
 import gg.MC7DZ.teamify.visibility.VisibilityManager;
 import java.io.File;
 import java.io.IOException;
@@ -35,12 +35,14 @@ public final class Teamify extends JavaPlugin {
    private EconomyManager economyManager;
    private TeamCommand teamCommand;
    private FileConfiguration guiConfig;
-   private ModrinthUpdateChecker updateChecker;
+   private FileConfiguration updateConfig;
+   private UpdateNotifier updateNotifier;
 
    public void onEnable() {
       instance = this;
       this.saveDefaultConfig();
       this.saveDefaultGuiConfig();
+      this.saveDefaultUpdateConfig();
       this.configManager = new ConfigManager(this);
       this.teamManager = new TeamManager(this);
       this.teamManager.loadAll();
@@ -72,8 +74,8 @@ public final class Teamify extends JavaPlugin {
       }
 
       this.getServer().getScheduler().runTaskTimer(this, () -> this.visibilityManager.refreshAll(), 40L, 100L);
-      this.updateChecker = new ModrinthUpdateChecker(this);
-      this.updateChecker.check();
+      this.updateNotifier = new UpdateNotifier(this);
+      this.updateNotifier.check();
       this.getLogger().info("Teamify has been enabled with " + this.teamManager.getTeams().size() + " teams loaded.");
    }
 
@@ -168,6 +170,59 @@ public final class Teamify extends JavaPlugin {
       return this.guiConfig;
    }
 
+   /**
+    * Loads update.yml (creating it from the bundled default on first run), fills in any
+    * options missing from an older copy (same merge behavior as gui.yml), and re-syncs
+    * "current-version" to the plugin's actual running version - see the big warning
+    * comment in update.yml for why that field is not meant to be hand-edited.
+    */
+   public void saveDefaultUpdateConfig() {
+      File updateFile = new File(this.getDataFolder(), "update.yml");
+      if (!updateFile.exists()) {
+         this.saveResource("update.yml", false);
+      }
+
+      this.loadAndMergeUpdateConfig(updateFile);
+   }
+
+   public void reloadUpdateConfig() {
+      File updateFile = new File(this.getDataFolder(), "update.yml");
+      this.loadAndMergeUpdateConfig(updateFile);
+   }
+
+   private void loadAndMergeUpdateConfig(File updateFile) {
+      this.updateConfig = YamlConfiguration.loadConfiguration(updateFile);
+      boolean changed = false;
+
+      try (InputStream defStream = this.getResource("update.yml")) {
+         if (defStream != null) {
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(defStream, StandardCharsets.UTF_8));
+            changed = this.mergeMissingKeys(this.updateConfig, defaults);
+            this.updateConfig.setDefaults(defaults);
+         }
+      } catch (Exception ignored) {
+         this.getLogger().warning("Failed to load default update.yml: " + ignored.getMessage());
+      }
+
+      String runningVersion = this.getDescription().getVersion();
+      if (!runningVersion.equals(this.updateConfig.getString("current-version"))) {
+         this.updateConfig.set("current-version", runningVersion);
+         changed = true;
+      }
+
+      if (changed) {
+         try {
+            this.updateConfig.save(updateFile);
+         } catch (IOException e) {
+            this.getLogger().warning("Failed to save update.yml: " + e.getMessage());
+         }
+      }
+   }
+
+   public FileConfiguration getUpdateConfig() {
+      return this.updateConfig;
+   }
+
    public static Teamify getInstance() {
       return instance;
    }
@@ -176,8 +231,8 @@ public final class Teamify extends JavaPlugin {
       return this.configManager;
    }
 
-   public ModrinthUpdateChecker getUpdateChecker() {
-      return this.updateChecker;
+   public UpdateNotifier getUpdateNotifier() {
+      return this.updateNotifier;
    }
 
    public TeamManager getTeamManager() {

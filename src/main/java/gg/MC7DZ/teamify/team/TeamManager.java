@@ -196,6 +196,8 @@ public class TeamManager {
                   }
                }
 
+               team.setColorFormat(cfg.getString("color-format"));
+
                if (cfg.get("custom-item") instanceof ItemStack itemStack) {
                   team.setCustomItem(itemStack);
                }
@@ -297,6 +299,9 @@ public class TeamManager {
       cfg.set("created-at", team.getCreatedAt());
       cfg.set("pvp-enabled", team.isPvpEnabled());
       cfg.set("color", team.getColor().name());
+      if (team.getColorFormat() != null) {
+         cfg.set("color-format", team.getColorFormat());
+      }
       if (team.hasCustomItem()) {
          cfg.set("custom-item", team.getCustomItem());
       }

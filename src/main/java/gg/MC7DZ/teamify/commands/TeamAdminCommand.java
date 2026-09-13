@@ -32,6 +32,11 @@ public class TeamAdminCommand implements CommandExecutor {
       switch (sub) {
          case "reload":
             cm.reload();
+            this.plugin.reloadUpdateConfig();
+            if (this.plugin.getUpdateNotifier() != null) {
+               this.plugin.getUpdateNotifier().check();
+            }
+
             boolean economyHooked = this.plugin.getEconomyManager().setup();
             sender.sendMessage(
                cm.getPrefix()

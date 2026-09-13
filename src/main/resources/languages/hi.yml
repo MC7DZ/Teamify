@@ -120,6 +120,8 @@ messages:
   # Team customization (टीम कस्टमाइज़ेशन)
   team-color-changed: "<green>टीम का रंग {color} पर सेट कर दिया गया है।"
   team-color-disabled: "<red>टीम रंग कस्टमाइज़ेशन अक्षम है।"
+  team-color-prompt: "<green>चैट में अपनी टीम का नया रंग टाइप करें (या \"cancel\")।\n<gray>प्रीसेट: <red>\\<red></red><gray>, <yellow>\\<yellow></yellow><gray>, <aqua>\\<aqua></aqua>\n<gray>हेक्स: <#ff0000>\\<#ff0000></color><gray>, <#00ffaa>\\<#00ffaa></color><gray>, <#8844ff>\\<#8844ff></color>\n<gray>ग्रेडिएंट: <gradient:green:yellow:red>\\<gradient:green:yellow:red></gradient><gray>, <gradient:#ff0055:#5500ff>\\<gradient:#ff0055:#5500ff></gradient>"
+  invalid-team-color-format: "<red>यह मान्य रंग नहीं है। <red>red<red> जैसा प्रीसेट, <#ff8800> जैसा हेक्स कोड, या <gradient:red:blue> जैसा ग्रेडिएंट आज़माएं।"
   team-item-disabled: "<red>टीम आइटम कस्टमाइज़ेशन अक्षम है।"
   team-item-apply-empty: "<red>कृपया पहले स्लॉट में आइटम रखें, फिर लागू करें पर क्लिक करें।"
   team-item-applied: "<green>आपकी टीम का आइटम अपडेट हो गया है! आपने अपना आइटम वापस प्राप्त कर लिया है।"

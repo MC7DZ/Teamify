@@ -39,7 +39,7 @@ public class RelationsMenuGui extends GuiHolder {
       Component title = this.plugin.getConfigManager().color(cfg.getString("title", "<dark_gray>Allies"));
       int size = cfg.getInt("size", 54);
       Material allyMat = this.parse(cfg.getString("ally-material", "LIME_WOOL"), Material.LIME_WOOL);
-      String itemNameFormat = cfg.getString("item-name-format", "{name}");
+      String itemNameFormat = cfg.getString("item-name-format", "{team}");
       List<String> itemLoreConfig = cfg.getStringList("item-lore");
       Inventory inv = Bukkit.createInventory(this, size, title);
       Set<Integer> reservedSlots = new HashSet<>();
@@ -93,8 +93,8 @@ public class RelationsMenuGui extends GuiHolder {
                Component displayName = this.plugin
                   .getConfigManager()
                   .color(
-                     itemNameFormat.replace("{name}", other.getColoredName())
-                        .replace("{tag}", other.getTag())
+                     itemNameFormat.replace("{team}", other.getColoredName())
+                        .replace("{tag}", other.getColoredTag())
                         .replace("{level}", String.valueOf(other.getLevel()))
                         .replace("{members}", String.valueOf(other.getSize()))
                         .replace("{online}", String.valueOf(this.countVisibleOnline(other)))
@@ -105,8 +105,8 @@ public class RelationsMenuGui extends GuiHolder {
                      line -> this.plugin
                         .getConfigManager()
                         .color(
-                           line.replace("{name}", other.getColoredName())
-                              .replace("{tag}", other.getTag())
+                           line.replace("{team}", other.getColoredName())
+                              .replace("{tag}", other.getColoredTag())
                               .replace("{level}", String.valueOf(other.getLevel()))
                               .replace("{members}", String.valueOf(other.getSize()))
                               .replace("{online}", String.valueOf(this.countVisibleOnline(other)))

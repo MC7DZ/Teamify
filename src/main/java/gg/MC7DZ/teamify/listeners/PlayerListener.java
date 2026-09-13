@@ -34,29 +34,15 @@ public class PlayerListener implements Listener {
       this.plugin.getVisibilityManager().refresh(event.getPlayer());
       this.plugin.getPlayerManager().updatePlayerData(event.getPlayer());
       this.plugin.getPlayerManager().savePlayers();
-      this.notifyUpdateIfAvailable(event.getPlayer());
+      this.notifyCustomUpdateIfAvailable(event.getPlayer());
    }
 
-   private void notifyUpdateIfAvailable(Player player) {
-      if (this.plugin.getConfigManager().isUpdateCheckEnabled() && this.plugin.getConfigManager().isUpdateCheckNotifyOps()) {
-         if (this.plugin.getUpdateChecker() != null && this.plugin.getUpdateChecker().isUpdateAvailable()) {
+   /** Clickable-link notice from the JSON update notifier (update.yml + UpdateNotifier.JSON_URL). */
+   private void notifyCustomUpdateIfAvailable(Player player) {
+      if (this.plugin.getUpdateConfig() != null && this.plugin.getUpdateConfig().getBoolean("notify-ops", true)) {
+         if (this.plugin.getUpdateNotifier() != null && this.plugin.getUpdateNotifier().isUpdateAvailable()) {
             if (player.isOp() || player.hasPermission("teamify.admin")) {
-               player.sendMessage(
-                  this.plugin
-                     .getConfigManager()
-                     .getPrefix()
-                     .append(
-                        this.plugin
-                           .getConfigManager()
-                           .color(
-                              "<yellow>A new Teamify update is available: <white>"
-                                 + this.plugin.getUpdateChecker().getLatestVersion()
-                                 + " <yellow>(running <white>"
-                                 + this.plugin.getDescription().getVersion()
-                                 + "<yellow>)."
-                           )
-                     )
-               );
+               this.plugin.getUpdateNotifier().sendClickableNotice(player);
             }
          }
       }
@@ -129,6 +115,19 @@ public class PlayerListener implements Listener {
                         case TEAM_DESCRIPTION:
                            this.plugin.getTeamCommand().setDescription(player, team, message);
                            break;
+                        case TEAM_COLOR:
+                           ConfigManager cm = this.plugin.getConfigManager();
+                           if (!cm.isValidTeamColorFormat(message)) {
+                              player.sendMessage(cm.getMessage("invalid-team-color-format"));
+                              return;
+                           }
+
+                           String colorFormat = message.trim();
+                           team.setColorFormat(colorFormat);
+                           team.setColor(cm.nearestChatColorFor(colorFormat, team.getColor()));
+                           this.plugin.getTeamManager().saveTeam(team);
+                           player.sendMessage(cm.getMessage("team-color-changed", "color", team.getColoredName()));
+                           break;
                         case TEAM_TAG:
                            String newTag = message;
                            int minTagLength = this.plugin.getConfigManager().getMinTagLength();
@@ -187,7 +186,7 @@ public class PlayerListener implements Listener {
       String role = team.getRole(player.getUniqueId()).name();
       Component playerNameComponent;
       if (this.isChatColorEnabled()) {
-         playerNameComponent = this.plugin.getConfigManager().color(this.plugin.getConfigManager().getTeammateColor().toString() + player.getName());
+         playerNameComponent = this.plugin.getConfigManager().color(this.plugin.getConfigManager().getTeammateColorFormat() + player.getName());
       } else {
          playerNameComponent = Component.text(player.getName());
       }
@@ -210,14 +209,14 @@ public class PlayerListener implements Listener {
       boolean chatColor = this.isChatColorEnabled();
       Component teammateNameComponent;
       if (chatColor) {
-         teammateNameComponent = this.plugin.getConfigManager().color(this.plugin.getConfigManager().getTeammateColor().toString() + player.getName());
+         teammateNameComponent = this.plugin.getConfigManager().color(this.plugin.getConfigManager().getTeammateColorFormat() + player.getName());
       } else {
          teammateNameComponent = Component.text(player.getName());
       }
 
       Component allyNameComponent;
       if (chatColor) {
-         allyNameComponent = this.plugin.getConfigManager().color(this.plugin.getConfigManager().getAlliesColor().toString() + player.getName());
+         allyNameComponent = this.plugin.getConfigManager().color(this.plugin.getConfigManager().getAlliesColorFormat() + player.getName());
       } else {
          allyNameComponent = Component.text(player.getName());
       }
@@ -265,6 +264,7 @@ public class PlayerListener implements Listener {
       BANK_DEPOSIT,
       BANK_WITHDRAW,
       TEAM_DESCRIPTION,
-      TEAM_TAG;
+      TEAM_TAG,
+      TEAM_COLOR;
    }
 }

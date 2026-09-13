@@ -31,6 +31,7 @@ public class Team {
    private boolean pvpEnabled = false;
    private long createdAt;
    private ChatColor color = ChatColor.WHITE;
+   private String colorFormat;
    private ItemStack customItem;
    private ItemStack[] echestContents = new ItemStack[54];
 
@@ -271,8 +272,39 @@ public class Team {
       this.color = color == null ? ChatColor.WHITE : color;
    }
 
+   /**
+    * A custom MiniMessage color/gradient/rainbow tag chosen by the team (e.g. {@code <red>},
+    * {@code <#ff8800>}, {@code <gradient:red:blue>}). Null means "use the legacy {@link #getColor()}".
+    */
+   public String getColorFormat() {
+      return this.colorFormat;
+   }
+
+   public void setColorFormat(String colorFormat) {
+      this.colorFormat = colorFormat == null || colorFormat.isBlank() ? null : colorFormat;
+   }
+
+   /**
+    * The MiniMessage-parseable color prefix for this team - its custom color format
+    * (hex/gradient/rainbow) if set, or its legacy scoreboard color otherwise.
+    */
+   public String getColorPrefix() {
+      return this.colorFormat != null ? this.colorFormat : this.getColor().toString();
+   }
+
+   /**
+    * The team's name prefixed with its color as a MiniMessage-parseable string - either its custom
+    * color format (hex/gradient/rainbow) if set, or its legacy scoreboard color otherwise.
+    */
    public String getColoredName() {
-      return this.getColor() + this.name;
+      return this.getColorPrefix() + this.name;
+   }
+
+   /**
+    * Same as {@link #getColoredName()} but for the team's tag, so the tag always matches the team's color.
+    */
+   public String getColoredTag() {
+      return this.getColorPrefix() + this.tag;
    }
 
    public ItemStack getCustomItem() {
