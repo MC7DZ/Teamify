@@ -1,8 +1,11 @@
 package gg.MC7DZ.teamify.team;
 
 import gg.MC7DZ.teamify.Teamify;
+import gg.MC7DZ.teamify.storage.DatabaseManager;
+import gg.MC7DZ.teamify.storage.StorageType;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,12 +27,38 @@ public class TeamManager {
    private final Map<UUID, Long> creationCooldowns = new HashMap<>();
    private final Map<UUID, Long> disbandCooldowns = new HashMap<>();
    private File dataFolder;
+   private final StorageType storageType;
+   private DatabaseManager db;
 
    public TeamManager(Teamify plugin) {
       this.plugin = plugin;
       this.dataFolder = new File(plugin.getDataFolder(), "teams");
       if (!this.dataFolder.exists()) {
          this.dataFolder.mkdirs();
+      }
+
+      this.storageType = StorageType.fromConfig(plugin.getConfigManager().getStorageType());
+      if (this.storageType != StorageType.YAML) {
+         this.db = new DatabaseManager(plugin, this.storageType);
+
+         try {
+            this.db.connect();
+            this.plugin.getLogger().info("Teams storage: connected using " + this.storageType + " backend.");
+         } catch (Exception e) {
+            this.plugin.getLogger()
+               .severe("Failed to connect to " + this.storageType + " storage for teams, falling back to YAML: " + e.getMessage());
+            this.db = null;
+         }
+      }
+   }
+
+   private boolean usingDatabase() {
+      return this.db != null;
+   }
+
+   public void shutdown() {
+      if (this.db != null) {
+         this.db.close();
       }
    }
 
@@ -86,9 +115,13 @@ public class TeamManager {
 
       this.teamsById.remove(team.getId());
       this.disbandCooldowns.put(team.getOwner(), System.currentTimeMillis());
-      File f = this.teamFile(team);
-      if (f.exists()) {
-         f.delete();
+      if (this.usingDatabase()) {
+         this.db.deleteTeam(team.getId());
+      } else {
+         File f = this.teamFile(team);
+         if (f.exists()) {
+            f.delete();
+         }
       }
    }
 
@@ -165,109 +198,34 @@ public class TeamManager {
    }
 
    public void loadAll() {
+      if (this.usingDatabase()) {
+         for (Map.Entry<UUID, String> entry : this.db.loadAllTeams().entrySet()) {
+            try {
+               YamlConfiguration cfg = YamlConfiguration.loadConfiguration(new StringReader(entry.getValue()));
+               Team team = this.parseTeam(cfg, entry.getKey());
+               if (team != null) {
+                  this.teamsById.put(team.getId(), team);
+               }
+            } catch (Exception ex) {
+               this.plugin.getLogger().warning("Failed to load team " + entry.getKey() + " from database: " + ex.getMessage());
+            }
+         }
+
+         return;
+      }
+
       if (this.dataFolder.listFiles() != null) {
          for (File file : Objects.requireNonNull(this.dataFolder.listFiles((d, n) -> n.endsWith(".yml")))) {
             try {
                YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
-               String name = cfg.getString("name");
-               String tag = cfg.getString("tag");
-               UUID owner = UUID.fromString(cfg.getString("owner"));
                String idStr = cfg.getString("id");
-               UUID id;
-               if (idStr != null) {
-                  id = UUID.fromString(idStr);
-               } else {
-                  id = UUID.fromString(file.getName().replace(".yml", ""));
+               UUID fallbackId = idStr != null ? UUID.fromString(idStr) : UUID.fromString(file.getName().replace(".yml", ""));
+               Team team = this.parseTeam(cfg, fallbackId);
+               if (team == null) {
+                  continue;
                }
 
-               Team team = new Team(id, name, tag, owner);
-               team.setDescription(cfg.getString("description"));
-               team.setBankBalance(cfg.getDouble("bank-balance", 0.0));
-               team.setCreationCostPaid(cfg.getDouble("creation-cost-paid", 0.0));
-               team.setLevel(cfg.getInt("level", 1));
-               team.setXp(cfg.getLong("xp", 0L));
-               team.setCreatedAt(cfg.getLong("created-at", System.currentTimeMillis()));
-               team.setPvpEnabled(cfg.getBoolean("pvp-enabled", false));
-               String colorName = cfg.getString("color");
-               if (colorName != null) {
-                  try {
-                     team.setColor(ChatColor.valueOf(colorName));
-                  } catch (IllegalArgumentException ignored) {
-                  }
-               }
-
-               team.setColorFormat(cfg.getString("color-format"));
-
-               if (cfg.get("custom-item") instanceof ItemStack itemStack) {
-                  team.setCustomItem(itemStack);
-               }
-
-               for (String uuidStr : cfg.getStringList("pending-ally-invites")) {
-                  try {
-                     team.addAllyInvite(UUID.fromString(uuidStr));
-                  } catch (IllegalArgumentException ignored) {
-                  }
-               }
-
-               for (String uuidStr : cfg.getStringList("pending-join-requests")) {
-                  try {
-                     team.addJoinRequest(UUID.fromString(uuidStr));
-                  } catch (IllegalArgumentException ignored) {
-                  }
-               }
-
-               team.getMembers().clear();
-               ConfigurationSection membersSec = cfg.getConfigurationSection("members");
-               if (membersSec != null) {
-                  for (String key : membersSec.getKeys(false)) {
-                     UUID memberId = UUID.fromString(key);
-                     TeamRole role = TeamRole.valueOf(membersSec.getString(key));
-                     team.getMembers().put(memberId, role);
-                     this.memberToTeam.put(memberId, id);
-                  }
-               }
-
-               ConfigurationSection relSec = cfg.getConfigurationSection("relations");
-               if (relSec != null) {
-                  for (String key : relSec.getKeys(false)) {
-                     team.getRelations().put(UUID.fromString(key), RelationType.valueOf(relSec.getString(key)));
-                  }
-               }
-
-               ConfigurationSection homesSec = cfg.getConfigurationSection("homes");
-               if (homesSec != null) {
-                  for (String key : homesSec.getKeys(false)) {
-                     Location loc = homesSec.getLocation(key);
-                     team.getHomes().put(Integer.parseInt(key), loc);
-                  }
-               }
-
-               ConfigurationSection killsSec = cfg.getConfigurationSection("kills");
-               if (killsSec != null) {
-                  for (String key : killsSec.getKeys(false)) {
-                     try {
-                        team.setKills(UUID.fromString(key), killsSec.getInt(key));
-                     } catch (IllegalArgumentException ignored) {
-                     }
-                  }
-               }
-
-               ConfigurationSection echestSec = cfg.getConfigurationSection("echest");
-               if (echestSec != null) {
-                  ItemStack[] echest = team.getEchestContents();
-
-                  for (String key : echestSec.getKeys(false)) {
-                     try {
-                        int idx = Integer.parseInt(key);
-                        if (idx >= 0 && idx < echest.length && echestSec.get(key) instanceof ItemStack item) {
-                           echest[idx] = item;
-                        }
-                     } catch (NumberFormatException ignored) {
-                     }
-                  }
-               }
-
-               this.teamsById.put(id, team);
+               this.teamsById.put(team.getId(), team);
                File expected = this.teamFile(team);
                if (!file.equals(expected)) {
                   file.delete();
@@ -280,6 +238,107 @@ public class TeamManager {
       }
    }
 
+   /**
+    * Builds a Team from a serialized config section (used by both the YAML-file and
+    * database backends, since the database stores the same YAML representation as text).
+    */
+   private Team parseTeam(YamlConfiguration cfg, UUID fallbackId) {
+      String name = cfg.getString("name");
+      String tag = cfg.getString("tag");
+      UUID owner = UUID.fromString(cfg.getString("owner"));
+      String idStr = cfg.getString("id");
+      UUID id = idStr != null ? UUID.fromString(idStr) : fallbackId;
+
+      Team team = new Team(id, name, tag, owner);
+      team.setDescription(cfg.getString("description"));
+      team.setBankBalance(cfg.getDouble("bank-balance", 0.0));
+      team.setCreationCostPaid(cfg.getDouble("creation-cost-paid", 0.0));
+      team.setLevel(cfg.getInt("level", 1));
+      team.setXp(cfg.getLong("xp", 0L));
+      team.setCreatedAt(cfg.getLong("created-at", System.currentTimeMillis()));
+      team.setPvpEnabled(cfg.getBoolean("pvp-enabled", false));
+      String colorName = cfg.getString("color");
+      if (colorName != null) {
+         try {
+            team.setColor(ChatColor.valueOf(colorName));
+         } catch (IllegalArgumentException ignored) {
+         }
+      }
+
+      team.setColorFormat(cfg.getString("color-format"));
+
+      if (cfg.get("custom-item") instanceof ItemStack itemStack) {
+         team.setCustomItem(itemStack);
+      }
+
+      for (String uuidStr : cfg.getStringList("pending-ally-invites")) {
+         try {
+            team.addAllyInvite(UUID.fromString(uuidStr));
+         } catch (IllegalArgumentException ignored) {
+         }
+      }
+
+      for (String uuidStr : cfg.getStringList("pending-join-requests")) {
+         try {
+            team.addJoinRequest(UUID.fromString(uuidStr));
+         } catch (IllegalArgumentException ignored) {
+         }
+      }
+
+      team.getMembers().clear();
+      ConfigurationSection membersSec = cfg.getConfigurationSection("members");
+      if (membersSec != null) {
+         for (String key : membersSec.getKeys(false)) {
+            UUID memberId = UUID.fromString(key);
+            TeamRole role = TeamRole.valueOf(membersSec.getString(key));
+            team.getMembers().put(memberId, role);
+            this.memberToTeam.put(memberId, id);
+         }
+      }
+
+      ConfigurationSection relSec = cfg.getConfigurationSection("relations");
+      if (relSec != null) {
+         for (String key : relSec.getKeys(false)) {
+            team.getRelations().put(UUID.fromString(key), RelationType.valueOf(relSec.getString(key)));
+         }
+      }
+
+      ConfigurationSection homesSec = cfg.getConfigurationSection("homes");
+      if (homesSec != null) {
+         for (String key : homesSec.getKeys(false)) {
+            Location loc = homesSec.getLocation(key);
+            team.getHomes().put(Integer.parseInt(key), loc);
+         }
+      }
+
+      ConfigurationSection killsSec = cfg.getConfigurationSection("kills");
+      if (killsSec != null) {
+         for (String key : killsSec.getKeys(false)) {
+            try {
+               team.setKills(UUID.fromString(key), killsSec.getInt(key));
+            } catch (IllegalArgumentException ignored) {
+            }
+         }
+      }
+
+      ConfigurationSection echestSec = cfg.getConfigurationSection("echest");
+      if (echestSec != null) {
+         ItemStack[] echest = team.getEchestContents();
+
+         for (String key : echestSec.getKeys(false)) {
+            try {
+               int idx = Integer.parseInt(key);
+               if (idx >= 0 && idx < echest.length && echestSec.get(key) instanceof ItemStack item) {
+                  echest[idx] = item;
+               }
+            } catch (NumberFormatException ignored) {
+            }
+         }
+      }
+
+      return team;
+   }
+
    public void saveAll() {
       for (Team team : this.teamsById.values()) {
          this.saveTeam(team);
@@ -287,6 +346,19 @@ public class TeamManager {
    }
 
    public void saveTeam(Team team) {
+      YamlConfiguration cfg = this.buildTeamConfig(team);
+      if (this.usingDatabase()) {
+         this.db.upsertTeam(team.getId(), team.getName(), cfg.saveToString());
+      } else {
+         try {
+            cfg.save(this.teamFile(team));
+         } catch (IOException e) {
+            this.plugin.getLogger().warning("Failed to save team " + team.getName() + ": " + e.getMessage());
+         }
+      }
+   }
+
+   private YamlConfiguration buildTeamConfig(Team team) {
       YamlConfiguration cfg = new YamlConfiguration();
       cfg.set("id", team.getId().toString());
       cfg.set("name", team.getName());
@@ -355,17 +427,15 @@ public class TeamManager {
          }
       }
 
-      try {
-         cfg.save(this.teamFile(team));
-      } catch (IOException e) {
-         this.plugin.getLogger().warning("Failed to save team " + team.getName() + ": " + e.getMessage());
-      }
+      return cfg;
    }
 
    public void renameTeamFile(Team team, String oldName) {
-      File oldFile = new File(this.dataFolder, this.sanitizeFileName(oldName) + ".yml");
-      if (oldFile.exists()) {
-         oldFile.delete();
+      if (!this.usingDatabase()) {
+         File oldFile = new File(this.dataFolder, this.sanitizeFileName(oldName) + ".yml");
+         if (oldFile.exists()) {
+            oldFile.delete();
+         }
       }
 
       this.saveTeam(team);

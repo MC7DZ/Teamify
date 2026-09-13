@@ -773,6 +773,38 @@ public class ConfigManager {
       return this.getConfig().getString("storage.type", "YAML");
    }
 
+   public String getMysqlHost() {
+      return this.getConfig().getString("storage.mysql.host", "localhost");
+   }
+
+   public int getMysqlPort() {
+      return this.getConfig().getInt("storage.mysql.port", 3306);
+   }
+
+   public String getMysqlDatabase() {
+      return this.getConfig().getString("storage.mysql.database", "teamsplugin");
+   }
+
+   public String getMysqlUsername() {
+      return this.getConfig().getString("storage.mysql.username", "root");
+   }
+
+   public String getMysqlPassword() {
+      return this.getConfig().getString("storage.mysql.password", "password");
+   }
+
+   public boolean isMysqlUseSsl() {
+      return this.getConfig().getBoolean("storage.mysql.use-ssl", false);
+   }
+
+   public String getMysqlTablePrefix() {
+      return this.getConfig().getString("storage.mysql.table-prefix", "teams_");
+   }
+
+   public String getSqliteFileName() {
+      return this.getConfig().getString("storage.sqlite.file", "teamify.db");
+   }
+
    public boolean isGuiEnabled() {
       return this.guiConfig.getBoolean("gui.enabled", true);
    }

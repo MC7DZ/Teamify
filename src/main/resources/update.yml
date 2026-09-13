@@ -21,4 +21,4 @@ auto-check-updates: true
 # change what version you're running; it will only make the update
 # notifier compare against the wrong number and give you wrong
 # "update available" messages (false positives or false negatives).
-current-version: "1.0.0"
+current-version: "1.1.1"

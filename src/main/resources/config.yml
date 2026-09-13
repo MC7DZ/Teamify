@@ -7,7 +7,7 @@
 
 general:
   # Prefix used in all plugin chat messages
-  prefix: "<#55FFFF><bold>TEAMIFY</bold> <dark_gray>»</dark_gray> <reset>"
+  prefix: "<#55FFFF><bold>Teamify</bold> <dark_gray>»</dark_gray> <reset>"
   # Language file to use from /lang folder (en.yml, fr.yml, etc)
   language: "en"
   # Enable debug logging to console
@@ -307,8 +307,12 @@ transfer:
   require-confirmation: true
 
 storage:
+  # Did not Test it yet
   # Storage backend: YAML, SQLITE, or MYSQL
   type: "YAML"
+  sqlite:
+    # File is created inside the plugin's data folder.
+    file: "teamify.db"
   mysql:
     host: "localhost"
     port: 3306
@@ -319,16 +323,7 @@ storage:
     table-prefix: "teams_"
 
 integrations:
-  # Removed: those might not work they are experimantal and didnt touch them much
   vault:
     enabled: true
   placeholderapi:
     enabled: true
-  # Removed: worldguard:
-  # Removed:   enabled: false
-  # Removed: discord-webhook:
-  # Removed:   enabled: false
-  # Removed:   url: ""
-  # Removed:   notify-on-create: true
-  # Removed:   notify-on-disband: true
-  # Removed:   notify-on-war: true

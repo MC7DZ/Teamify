@@ -82,10 +82,12 @@ public final class Teamify extends JavaPlugin {
    public void onDisable() {
       if (this.teamManager != null) {
          this.teamManager.saveAll();
+         this.teamManager.shutdown();
       }
 
       if (this.playerManager != null) {
          this.playerManager.savePlayers();
+         this.playerManager.shutdown();
       }
 
       if (this.visibilityManager != null) {
